@@ -1,0 +1,21 @@
+node_modules
+frontend/node_modules
+.env
+.env.mainnet
+coverage
+coverage.json
+typechain
+
+#Hardhat files
+cache
+artifacts
+# OpenZeppelin
+.openzeppelin/unknown-*.json
+
+.vscode
+
+NOTE
+.DS_Store
+
+data
+ignore

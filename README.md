@@ -1,1 +1,113 @@
-# AuctionContract
+# RADA Auction Contract
+
+Configuration .env file
+
+```shell
+PRIVATE_KEY=
+RINKEBY_API_KEY=
+ETHERSCAN_API_KEY=
+BSC_API_KEY=
+MNEMONIC=
+```
+
+The following tasks:
+
+```shell
+npx hardhat accounts
+npx hardhat compile
+npx hardhat clean
+npx hardhat test
+```
+
+Step by step Deploy to testnet / mainnet
+
+```shell
+npx hardhat run scripts/RadaNftContract/1_deploy.js --network testnet
+// Copy Contract address to proxyAddresses.js
+npx hardhat run scripts/RadaAuctionContract/1_deploy.js --network testnet
+// Copy Contract address to proxyAddresses.js
+npx hardhat run scripts/RadaFixedSwapContract/1_deploy.js --network testnet
+// Copy Contract address to proxyAddresses.js
+
+# Require setMinter for 2 contract RADA above
+npx hardhat run scripts/RadaNftContract/2_setup.js --network testnet
+
+# TOKEN - Auction
+npx hardhat run scripts/RadaAuctionContract/NFT_2_createPool.js --network testnet
+npx hardhat run scripts/RadaAuctionContract/NFT_3_updatePool.js --network testnet
+# NFT - Auction
+npx hardhat run scripts/RadaAuctionContract/TOKEN_2_createPool.js --network testnet
+npx hardhat run scripts/RadaAuctionContract/TOKEN_3_updatePool.js --network testnet
+
+# TOKEN - Fixed Swap
+npx hardhat run scripts/RadaFixedSwapContract/NFT_2_createPool.js --network testnet
+npx hardhat run scripts/RadaFixedSwapContract/NFT_3_updatePool.js --network testnet
+# NFT - Fixed Swap
+npx hardhat run scripts/RadaFixedSwapContract/TOKEN_2_createPool.js --network testnet
+npx hardhat run scripts/RadaFixedSwapContract/TOKEN_3_updatePool.js --network testnet
+
+
+
+
+
+
+# npx hardhat run scripts/RadaAuctionContract/4_handleEndAuction.js --network testnet
+
+
+npx hardhat run scripts/RadaAuctionContract/getImplementationAddress.js --network testnet
+npx hardhat run scripts/RadaFixedSwapContract/getImplementationAddress.js --network testnet
+
+npx hardhat verify --network testnet 0xc7309b43eF2F9E1D90e054d9433201a034f8618c
+npx hardhat verify --network testnet 0x24825D62d4658DA1d5cB517E2CB445D1A00F65C6
+```
+
+Build & Deploy BSC testnet | RadaNftContract
+
+```shell
+
+npx hardhat run scripts/RadaNftContract/1_deploy.js --network testnet
+// Copy Token address to proxyAddresses.js
+# npx hardhat run scripts/RadaNftContract/2_setup.js --network testnet
+
+// npx hardhat verify --network testnet --contract contracts/RadaNftContract.sol:RadaNftContract 0x6d6E82862a32A16787cC6a4b7084B05d38f22948
+
+```
+
+Build & Deploy NFT contract and NftAuction Contract
+
+```shell
+
+npx hardhat run scripts/RadaAuctionContract/1_deploy.js --network testnet
+// Copy Proxy address to proxyAddresses.js
+npx hardhat run scripts/RadaAuctionContract/2_createPoolAllocationBoxAndRandom.js --network testnet
+npx hardhat run scripts/RadaAuctionContract/3_updatePool.js --network testnet
+npx hardhat run scripts/RadaAuctionContract/4_setWhitelistAddress.js --network testnet
+
+npx hardhat run scripts/RadaAuctionContract/upgradeContract_v2.js --network testnet
+npx hardhat run scripts/RadaAuctionContract/getImplementationAddress.js --network testnet
+npx hardhat verify --network testnet 0xdcEc2C5f5aF78a08c513cf4Ed139C88A3aD2eaE7
+```
+
+Build & Deploy BSC testnet | BUSDToken
+
+```shell
+
+npx hardhat run scripts/BUSDToken/deploy.js --network testnet
+// Copy Token address to tokenAddresses.js
+
+// npx hardhat verify --network testnet TODO_token_address
+// npx hardhat verify --network testnet --contract contracts/BUSDToken.sol:BUSDToken TODO_token_address
+
+```
+
+Build & Deploy BSC testnet | BoxToken
+
+```shell
+
+npx hardhat run scripts/BoxToken/deploy.js --network testnet
+// Copy Token address to tokenAddresses.js
+
+// npx hardhat verify --network testnet TODO_token_address
+// npx hardhat verify --network testnet --contract contracts/BoxToken.sol:BoxToken TODO_token_address
+
+```
