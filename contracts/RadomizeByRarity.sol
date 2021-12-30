@@ -27,7 +27,7 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
     }
     mapping(uint256 => Pool) pools;
 
-    mapping(uint256 => mapping(uint256 => uint256)) list;
+    mapping(uint256 => mapping(uint256 => uint256)) results;
     
     event DiceRolled(bytes32 requestId, uint256 poolId, uint256 index);
     event DiceLanded(uint256 poolId, uint256 index, uint256 indexed result);
@@ -102,21 +102,20 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
     /** 
      * Requests randomness 
      */
-    function getRandomNumber(uint256 _poolId, uint256 _index) public returns (bytes32 requestId) {
+    function requestRandomNumber(uint256 _poolId, uint256 _id) public returns (bytes32 requestId) {
         require (pools[_poolId].caller == msg.sender, "Permission Denied");
-        require (list[_poolId][_index] == 0, "Generated");
-        require (_index < pools[_poolId].total, "Overflow");
-
-
+        require (results[_poolId][_id] == 0, "Generated");
+        require (pools[_poolId].total > pools[_poolId].count, "Overflow");
         require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK - fill contract with faucet");
+
         requestId = requestRandomness(keyHash, fee);
         requests[requestId][0] = _poolId;
-        requests[requestId][1] = _index;
-        // list[_poolId][_index] = pools[_poolId].rarity.length + 1; // mark as generating
+        requests[requestId][1] = _id;
+        // results[_poolId][_id] = pools[_poolId].rarity.length + 1; // mark as generating
 
         lastRequestId = requestId;
 
-        emit DiceRolled(requestId, _poolId, _index);
+        emit DiceRolled(requestId, _poolId, _id);
     }
 
     function fulfillRandomnessTest(uint256 randomness) external {
@@ -129,10 +128,10 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
         // update random result into request item
         uint256 _poolId = requests[requestId][0];
-        uint256 _index = requests[requestId][1];
+        uint256 _id = requests[requestId][1];
 
         Pool memory _pool = pools[_poolId];
-        require (list[_poolId][_index] == 0, "Generated");
+        require (results[_poolId][_id] == 0, "Generated");
         require (_pool.total > _pool.count, "Something wrong");
 
         // now finding unused item in pool
@@ -149,14 +148,14 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
 
         //update pool
         pools[_poolId].rarity[_rarity] -= 1;
-        list[_poolId][_index] = _rarity;
+        results[_poolId][_id] = _rarity;
         pools[_poolId].count++;
 
-        emit DiceLanded(_poolId, _index, _rarity);
+        emit DiceLanded(_poolId, _id, _rarity);
     }
 
-    function getResult(uint256 _poolId, uint256 _index) external view returns (uint256) {
-        return list[_poolId][_index];
+    function getResult(uint256 _poolId, uint256 _id) external view returns (uint256) {
+        return results[_poolId][_id];
     }
 
     function withdrawLink() external {
