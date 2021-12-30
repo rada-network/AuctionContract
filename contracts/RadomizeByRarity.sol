@@ -57,8 +57,9 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
         admins[owner()] = true;
     }
 
-    /*
-    // for testing
+
+    /*    
+    // for testing on polygon
     constructor() 
         VRFConsumerBase(
             0x8C7382F9D8f56b33781fE506E897a4F1e2d17255, // VRF Coordinator
@@ -118,9 +119,9 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
         emit DiceRolled(requestId, _poolId, _id);
     }
 
-    function fulfillRandomnessTest(uint256 randomness) external {
-        fulfillRandomness (lastRequestId, randomness);
-    }
+    // function fulfillRandomnessTest(uint256 randomness) external {
+    //     fulfillRandomness (lastRequestId, randomness);
+    // }
 
     /**
      * Callback function used by VRF Coordinator
@@ -147,7 +148,7 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
         }
 
         //update pool
-        pools[_poolId].rarity[_rarity] -= 1;
+        pools[_poolId].rarity[_rarity-1] -= 1;
         results[_poolId][_id] = _rarity;
         pools[_poolId].count++;
 
