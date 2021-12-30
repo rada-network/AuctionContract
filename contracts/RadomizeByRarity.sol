@@ -20,21 +20,21 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
     uint256 internal fee;
 
     struct Pool {
+        string title;
         address caller;
         uint256 total;
         uint256 count;
         uint256[] rarity;
     }
-    mapping(uint256 => Pool) pools;
+    Pool[] pools;
 
     mapping(uint256 => mapping(uint256 => uint256)) results;
     
-    event DiceRolled(bytes32 requestId, uint256 poolId, uint256 index);
-    event DiceLanded(uint256 poolId, uint256 index, uint256 indexed result);
+    event DiceRolled(bytes32 requestId, uint256 poolId, uint256 itemId);
+    event DiceLanded(uint256 poolId, uint256 itemId, uint256 result);
+    event PoolCreated (uint256 poolId);
 
     mapping (bytes32 => uint256[2]) requests;
-    bytes32 lastRequestId;
-
     mapping (address => bool) public admins;
     
     /**
@@ -58,20 +58,19 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
     }
 
 
-    /*    
     // for testing on polygon
-    constructor() 
-        VRFConsumerBase(
-            0x8C7382F9D8f56b33781fE506E897a4F1e2d17255, // VRF Coordinator
-            0x326C977E6efc84E512bB9C30f76E30c160eD06FB  // LINK Token
-        )
-    {
-        keyHash = 0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4;
-        fee = 100000000000000; // 0.1 LINK (Varies by network)
-        // default admin
-        admins[owner()] = true;
-    }
-    */
+    // constructor() 
+    //     VRFConsumerBase(
+    //         0x8C7382F9D8f56b33781fE506E897a4F1e2d17255, // VRF Coordinator
+    //         0x326C977E6efc84E512bB9C30f76E30c160eD06FB  // LINK Token
+    //     )
+    // {
+    //     keyHash = 0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4;
+    //     fee = 100000000000000; // 0.1 LINK (Varies by network)
+    //     // default admin
+    //     admins[owner()] = true;
+    // }
+
 
     // admin
     function setAdmin(address _admin) external onlyOwner {
@@ -83,18 +82,22 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
         admins[_admin] = false;
     }
 
-    function addPool(address _caller, uint256 _poolId, uint256[] memory _rarity) external {
+    function addPool(string memory _title, address _caller, uint256[] memory _rarity) external {
         require(admins[msg.sender], "Permission Denied");
-
-        require (pools[_poolId].total == 0, "Pool existed");
         uint256 _total;
         for(uint256 i; i<_rarity.length; i++) _total += _rarity[i];
         // new pool
-        pools[_poolId] = Pool(_caller, _total, 0, _rarity);
+        pools.push(Pool(_title, _caller, _total, 0, _rarity));
+        
+        emit PoolCreated(pools.length - 1);
     }
 
     function getPool(uint256 _poolId) external view returns (Pool memory) {
         return pools[_poolId];
+    }
+
+    function getPoolCount() external view returns (uint256) {
+        return pools.length;
     }
     
     function setFee(uint256 _fee) external virtual {
@@ -112,9 +115,6 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
         requestId = requestRandomness(keyHash, fee);
         requests[requestId][0] = _poolId;
         requests[requestId][1] = _id;
-        // results[_poolId][_id] = pools[_poolId].rarity.length + 1; // mark as generating
-
-        lastRequestId = requestId;
 
         emit DiceRolled(requestId, _poolId, _id);
     }
