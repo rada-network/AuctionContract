@@ -16,6 +16,8 @@ contract RadaNftContract is
     mapping(address => bool) public approvalWhitelists;
     mapping(uint256 => bool) public lockedTokens;
     mapping(uint256 => bool) public usedTokens;
+    mapping(uint256 => uint16) public typeTokens;
+
     string private _baseTokenURI;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
@@ -104,6 +106,18 @@ contract RadaNftContract is
         require(_exists(_tokenId), "Must be valid tokenId");
         require(!lockedTokens[_tokenId], "Already set");
         lockedTokens[_tokenId] = _locked;
+    }
+
+    /**
+     * @dev Set type token
+     */
+    function setType(uint256 _tokenId, uint16 _type) external {
+        require(
+            approvalWhitelists[_msgSender()],
+            "Must be valid approval whitelist"
+        );
+        require(_exists(_tokenId), "Must be valid tokenId");
+        typeTokens[_tokenId] = _type;
     }
 
     /**
