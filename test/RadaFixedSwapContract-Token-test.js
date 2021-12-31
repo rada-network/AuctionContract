@@ -66,7 +66,7 @@ describe("Auction Contract - Token", function () {
     const startTime = Math.floor(Date.now() / 1000) - 86400*1; // Now - 1 day
     const endTime = Math.floor(Date.now() / 1000) + 86400*7; // Now + 7 days
     // Add pool
-    await contractRadaFixedSwap.createPool(poolId, pe("150"), addressItem, isSaleToken);
+    await contractRadaFixedSwap.addPool(poolId, pe("150"), addressItem, isSaleToken);
 
     await contractRadaFixedSwap.updatePool(poolId, addressItem, isSaleToken, startId, endId, startTime, endTime, locked, priceEach, maxBuyPerAddress, requireWhitelist);
 

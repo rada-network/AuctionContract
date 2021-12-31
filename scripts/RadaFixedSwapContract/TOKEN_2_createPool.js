@@ -24,9 +24,9 @@ async function main() {
   const startPrice = pe("150");
   const addressItem = tokenAddress; // Address of NFT or Token
   const isSaleToken = true; // Sale NFT or Token
-  await RadaFixedSwapContract.createPool(poolId, startPrice, addressItem, isSaleToken);
+  await RadaFixedSwapContract.addPool(poolId, startPrice, addressItem, isSaleToken);
 
-  console.log("createPool # "+poolId+" success");
+  console.log("addPool # "+poolId+" success");
 
   const afterDeploy = fe(await deployer.getBalance());
   console.log("Cost spent:", (beforeDeploy-afterDeploy));

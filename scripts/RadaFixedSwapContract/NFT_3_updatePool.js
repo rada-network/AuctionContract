@@ -1,6 +1,6 @@
 const { ethers, upgrades, hardhatArguments } = require('hardhat');
 const { addresses: contractAddresses } = require('./proxyAddresses');
-const { addresses: nftAddresses } = require('../RadaNftContract/proxyAddresses');
+const { addresses: nftAddresses } = require('../RadaNftAddresses');
 
 const { pe,fe,fu,pu } = require('../utils');
 
@@ -19,6 +19,7 @@ async function main() {
 
   // TODO: Fill your poolId
   const poolId = 3;
+  const title = "Token Fixed Swap";
   const startPrice = pe("150");
   const addressItem = nftAddress; // Address of NFT or Token
   const isSaleToken = false; // Sale NFT or Token
@@ -38,7 +39,7 @@ async function main() {
   const maxBuyPerAddress = 10;
   const requireWhitelist = false;
 
-  await RadaFixedSwapContract.updatePool(poolId, addressItem, isSaleToken, startId, endId, startTime, endTime, locked, startPrice, maxBuyPerAddress, requireWhitelist);
+  await RadaFixedSwapContract.updatePool(poolId, title, addressItem, isSaleToken, startId, endId, startTime, endTime, locked, startPrice, maxBuyPerAddress, requireWhitelist);
 
   console.log("updatePool "+poolId+" success");
 

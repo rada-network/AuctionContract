@@ -33,17 +33,17 @@ npx hardhat run scripts/RadaFixedSwapContract/1_deploy.js --network testnet
 npx hardhat run scripts/RadaNftContract/2_setup.js --network testnet
 
 # TOKEN - Auction
-npx hardhat run scripts/RadaAuctionContract/NFT_2_createPool.js --network testnet
+npx hardhat run scripts/RadaAuctionContract/NFT_2_addPool.js --network testnet
 npx hardhat run scripts/RadaAuctionContract/NFT_3_updatePool.js --network testnet
 # NFT - Auction
-npx hardhat run scripts/RadaAuctionContract/TOKEN_2_createPool.js --network testnet
+npx hardhat run scripts/RadaAuctionContract/TOKEN_2_addPool.js --network testnet
 npx hardhat run scripts/RadaAuctionContract/TOKEN_3_updatePool.js --network testnet
 
 # TOKEN - Fixed Swap
-npx hardhat run scripts/RadaFixedSwapContract/NFT_2_createPool.js --network testnet
+npx hardhat run scripts/RadaFixedSwapContract/NFT_2_addPool.js --network testnet
 npx hardhat run scripts/RadaFixedSwapContract/NFT_3_updatePool.js --network testnet
 # NFT - Fixed Swap
-npx hardhat run scripts/RadaFixedSwapContract/TOKEN_2_createPool.js --network testnet
+npx hardhat run scripts/RadaFixedSwapContract/TOKEN_2_addPool.js --network testnet
 npx hardhat run scripts/RadaFixedSwapContract/TOKEN_3_updatePool.js --network testnet
 
 
@@ -79,7 +79,7 @@ Build & Deploy NFT contract and NftAuction Contract
 
 npx hardhat run scripts/RadaAuctionContract/1_deploy.js --network testnet
 // Copy Proxy address to proxyAddresses.js
-npx hardhat run scripts/RadaAuctionContract/2_createPoolAllocationBoxAndRandom.js --network testnet
+npx hardhat run scripts/RadaAuctionContract/2_addPoolAllocationBoxAndRandom.js --network testnet
 npx hardhat run scripts/RadaAuctionContract/3_updatePool.js --network testnet
 npx hardhat run scripts/RadaAuctionContract/4_setWhitelistAddress.js --network testnet
 

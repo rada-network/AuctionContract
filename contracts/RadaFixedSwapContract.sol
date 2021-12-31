@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -28,6 +28,7 @@ contract RadaFixedSwapContract is
         DATA Structure
      */
     struct CAMPAIGN_INFO {
+        // string title;
         address addressItem;
         bool isSaleToken; // Sale Token or NFT
         uint256 startId; // Start tokenID
@@ -38,7 +39,7 @@ contract RadaFixedSwapContract is
         bool locked; // if locked, cannot update pool / mint / open
         bool ended; // Ended to picker winners
         bool requireWhitelist;
-        uint16 maxBuyPerAddress; // Max allow buy nft
+        // uint16 maxBuyPerAddress; // Max allow buy nft
     }
 
     struct BID_INFO {
@@ -62,6 +63,7 @@ contract RadaFixedSwapContract is
 
     // Whitelist by pool
     mapping(uint16 => mapping(address => bool)) public whitelistAddresses; // poolId => buyer => whitelist
+    mapping(uint16 => uint16) public maxBuyPerAddress; // poolId => max buy item
 
     // Buyer record
     mapping(uint16 => mapping(address => uint256)) public buyerItemsTotal; // poolId => buyer => total
@@ -131,7 +133,7 @@ contract RadaFixedSwapContract is
             "Caller is not in whitelist"
         );
         require(
-            pool.maxBuyPerAddress >=
+            maxBuyPerAddress[_poolId] >=
                 (buyerItemsTotal[_poolId][_msgSender()] + _quantity),
             "Got limited"
         );
@@ -239,8 +241,9 @@ contract RadaFixedSwapContract is
         SETTER
      */
     // Add/update pool - by Admin
-    function createPool(
+    function addPool(
         uint16 _poolId,
+        // string memory _title,
         uint256 _startPrice,
         address _addressItem,
         bool _isSaleToken
@@ -248,6 +251,7 @@ contract RadaFixedSwapContract is
         require(pools[_poolId].startPrice == 0 && _startPrice > 0, "Invalid");
 
         CAMPAIGN_INFO memory pool;
+        // pool.title = _title;
         pool.startPrice = _startPrice;
         pool.addressItem = _addressItem;
         pool.isSaleToken = _isSaleToken;
@@ -263,9 +267,7 @@ contract RadaFixedSwapContract is
         uint32 _endId,
         uint256 _startTime,
         uint256 _endTime,
-        bool _locked,
         uint256 _startPrice,
-        uint16 _maxBuyPerAddress,
         bool _requireWhitelist
     ) external onlyAdmin {
         require(
@@ -274,21 +276,28 @@ contract RadaFixedSwapContract is
         );
 
         CAMPAIGN_INFO memory pool = pools[_poolId]; // pool info
-
         require(!pool.locked, "Pool locked");
 
         // do update
         pools[_poolId].isSaleToken = _isSaleToken;
         pools[_poolId].addressItem = _addressItem;
-
         pools[_poolId].startId = _startId;
         pools[_poolId].endId = _endId;
         pools[_poolId].startTime = _startTime;
         pools[_poolId].endTime = _endTime;
         pools[_poolId].startPrice = _startPrice;
-        pools[_poolId].locked = _locked;
-        pools[_poolId].maxBuyPerAddress = _maxBuyPerAddress;
         pools[_poolId].requireWhitelist = _requireWhitelist;
+    }
+
+    function handleLockPool(uint16 _poolId, bool _locked) external onlyAdmin {
+        pools[_poolId].locked = _locked;
+    }
+
+    function handleMaxBuy(uint16 _poolId, uint16 _maxBuyPerAddress)
+        external
+        onlyAdmin
+    {
+        maxBuyPerAddress[_poolId] = _maxBuyPerAddress;
     }
 
     /* GETTER */

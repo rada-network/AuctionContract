@@ -19,6 +19,7 @@ async function main() {
 
   // TODO: Fill your poolId
   const poolId = 2;
+  // const title = "Token Auction";
   const startPrice = pe("150");
   const addressItem = tokenAddress; // Address of NFT or Token
   const isSaleToken = true; // Sale NFT or Token

@@ -1,6 +1,6 @@
 const { ethers, upgrades, hardhatArguments } = require('hardhat');
 const { addresses: contractAddresses } = require('./proxyAddresses');
-const { addresses: nftAddresses } = require('../RadaNftContract/proxyAddresses');
+const { addresses: nftAddresses } = require('../RadaNftAddresses');
 
 const { pe,fe,fu,pu } = require('../utils');
 
@@ -19,6 +19,7 @@ async function main() {
 
   // TODO: Fill your poolId
   const poolId = 1;
+  // const title = "NFT Auction";
   const startPrice = pe("150");
   const addressItem = nftAddress; // Address of NFT or Token
   const isSaleToken = false; // Sale NFT or Token

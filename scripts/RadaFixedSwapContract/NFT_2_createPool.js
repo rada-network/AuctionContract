@@ -1,6 +1,6 @@
 const { ethers, hardhatArguments } = require('hardhat');
 const { addresses: contractAddresses } = require('./proxyAddresses');
-const { addresses: nftAddresses } = require('../RadaNftContract/proxyAddresses');
+const { addresses: nftAddresses } = require('../RadaNftAddresses');
 
 const { pe,fe,fu,pu } = require('../utils');
 
@@ -21,12 +21,13 @@ async function main() {
   // Create first campaign
   // TODO: Fill your poolId
   const poolId = 3;
+  const title = "Token Fixed Swap";
   const startPrice = pe("150");
   const addressItem = nftAddress; // Address of NFT or Token
   const isSaleToken = false; // Sale NFT or Token
-  await RadaFixedSwapContract.createPool(poolId, startPrice, addressItem, isSaleToken);
+  await RadaFixedSwapContract.addPool(poolId, title, startPrice, addressItem, isSaleToken);
 
-  console.log("createPool # "+poolId+" success");
+  console.log("addPool # "+poolId+" success");
 
   const afterDeploy = fe(await deployer.getBalance());
   console.log("Cost spent:", (beforeDeploy-afterDeploy));

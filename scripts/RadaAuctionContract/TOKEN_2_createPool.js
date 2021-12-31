@@ -21,12 +21,13 @@ async function main() {
   // Create first campaign
   // TODO: Fill your poolId
   const poolId = 2;
+  // const title = "Token Auction";
   const startPrice = pe("150");
   const addressItem = tokenAddress; // Address of NFT or Token
   const isSaleToken = true; // Sale NFT or Token
-  await RadaAuctionContract.createPool(poolId, startPrice, addressItem, isSaleToken);
+  await RadaAuctionContract.addPool(poolId, startPrice, addressItem, isSaleToken);
 
-  console.log("createPool # "+poolId+" success");
+  console.log("addPool # "+poolId+" success");
 
   const afterDeploy = fe(await deployer.getBalance());
   console.log("Cost spent:", (beforeDeploy-afterDeploy));

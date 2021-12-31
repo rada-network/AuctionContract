@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.5;
+pragma solidity ^0.8.9;
 
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -13,9 +13,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * Request testnet LINK and ETH here: https://faucets.chain.link/
  * Find information on LINK Token Contracts and get the latest ETH and LINK faucets here: https://docs.chain.link/docs/link-token-contracts/
  */
- 
+
 contract RadomizeByRarity is VRFConsumerBase, Ownable {
-    
     bytes32 internal keyHash;
     uint256 internal fee;
 
@@ -29,26 +28,31 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
     Pool[] pools;
 
     mapping(uint256 => mapping(uint256 => uint256)) results;
-    
+
     event DiceRolled(bytes32 requestId, uint256 poolId, uint256 itemId);
     event DiceLanded(uint256 poolId, uint256 itemId, uint256 result);
-    event PoolCreated (uint256 poolId);
+    event PoolCreated(uint256 poolId);
 
-    mapping (bytes32 => uint256[2]) requests;
-    mapping (address => bool) public admins;
-    
+    mapping(bytes32 => uint256[2]) requests;
+    mapping(address => bool) public admins;
+
     /**
      * Constructor inherits VRFConsumerBase
-     * 
+     *
      * Network: Kovan
      * Chainlink VRF Coordinator address: 0xdD3782915140c8f3b190B5D67eAc6dc5760C46E9
      * LINK token address:                0xa36085F69e2889c224210F603D836748e7dC0088
      * Key Hash: 0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4
      */
-    constructor(address _linkToken, address _vrfCoordinator, bytes32 _keyHash, uint256 _fee) 
+    constructor(
+        address _linkToken,
+        address _vrfCoordinator,
+        bytes32 _keyHash,
+        uint256 _fee
+    )
         VRFConsumerBase(
             _vrfCoordinator, // VRF Coordinator
-            _linkToken  // LINK Token
+            _linkToken // LINK Token
         )
     {
         keyHash = _keyHash;
@@ -57,9 +61,8 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
         admins[owner()] = true;
     }
 
-
     // for testing on polygon
-    // constructor() 
+    // constructor()
     //     VRFConsumerBase(
     //         0x8C7382F9D8f56b33781fE506E897a4F1e2d17255, // VRF Coordinator
     //         0x326C977E6efc84E512bB9C30f76E30c160eD06FB  // LINK Token
@@ -71,24 +74,28 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
     //     admins[owner()] = true;
     // }
 
-
     // admin
     function setAdmin(address _admin) external onlyOwner {
         require(!admins[_admin], "Admin already");
         admins[_admin] = true;
     }
+
     function removeAdmin(address _admin) external onlyOwner {
         require(admins[_admin], "Not an admin");
         admins[_admin] = false;
     }
 
-    function addPool(string memory _title, address _caller, uint256[] memory _rarity) external {
+    function addPool(
+        string memory _title,
+        address _caller,
+        uint256[] memory _rarity
+    ) external {
         require(admins[msg.sender], "Permission Denied");
         uint256 _total;
-        for(uint256 i; i<_rarity.length; i++) _total += _rarity[i];
+        for (uint256 i; i < _rarity.length; i++) _total += _rarity[i];
         // new pool
         pools.push(Pool(_title, _caller, _total, 0, _rarity));
-        
+
         emit PoolCreated(pools.length - 1);
     }
 
@@ -99,18 +106,25 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
     function getPoolCount() external view returns (uint256) {
         return pools.length;
     }
-    
+
     function setFee(uint256 _fee) external virtual {
         fee = _fee;
     }
-    /** 
-     * Requests randomness 
+
+    /**
+     * Requests randomness
      */
-    function requestRandomNumber(uint256 _poolId, uint256 _id) public returns (bytes32 requestId) {
-        require (pools[_poolId].caller == msg.sender, "Permission Denied");
-        require (results[_poolId][_id] == 0, "Generated");
-        require (pools[_poolId].total > pools[_poolId].count, "Overflow");
-        require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK - fill contract with faucet");
+    function requestRandomNumber(uint256 _poolId, uint256 _id)
+        public
+        returns (bytes32 requestId)
+    {
+        require(pools[_poolId].caller == msg.sender, "Permission Denied");
+        require(results[_poolId][_id] == 0, "Generated");
+        require(pools[_poolId].total > pools[_poolId].count, "Overflow");
+        require(
+            LINK.balanceOf(address(this)) >= fee,
+            "Not enough LINK - fill contract with faucet"
+        );
 
         requestId = requestRandomness(keyHash, fee);
         requests[requestId][0] = _poolId;
@@ -126,41 +140,51 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
     /**
      * Callback function used by VRF Coordinator
      */
-    function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
+    function fulfillRandomness(bytes32 requestId, uint256 randomness)
+        internal
+        override
+    {
         // update random result into request item
         uint256 _poolId = requests[requestId][0];
         uint256 _id = requests[requestId][1];
 
         Pool memory _pool = pools[_poolId];
-        require (results[_poolId][_id] == 0, "Generated");
-        require (_pool.total > _pool.count, "Something wrong");
+        require(results[_poolId][_id] == 0, "Generated");
+        require(_pool.total > _pool.count, "Something wrong");
 
         // now finding unused item in pool
-        uint256 _rand = randomness % (_pool.total - _pool.count) + 1;
+        uint256 _rand = (randomness % (_pool.total - _pool.count)) + 1;
         // find rarity
         uint256 _rarity;
         uint256 _total;
         bool isDone = false;
-        while(!isDone && _rarity < _pool.rarity.length) {
+        while (!isDone && _rarity < _pool.rarity.length) {
             _rarity++;
-            _total += _pool.rarity[_rarity-1];
+            _total += _pool.rarity[_rarity - 1];
             if (_total >= _rand) isDone = true;
         }
 
         //update pool
-        pools[_poolId].rarity[_rarity-1] -= 1;
+        pools[_poolId].rarity[_rarity - 1] -= 1;
         results[_poolId][_id] = _rarity;
         pools[_poolId].count++;
 
         emit DiceLanded(_poolId, _id, _rarity);
     }
 
-    function getResult(uint256 _poolId, uint256 _id) external view returns (uint256) {
+    function getResult(uint256 _poolId, uint256 _id)
+        external
+        view
+        returns (uint256)
+    {
         return results[_poolId][_id];
     }
 
     function withdrawLink() external {
         require(admins[msg.sender], "Permission Denied");
-        require(LINK.transfer(owner(), LINK.balanceOf(address(this))), "Unable to transfer");
+        require(
+            LINK.transfer(owner(), LINK.balanceOf(address(this))),
+            "Unable to transfer"
+        );
     }
 }
