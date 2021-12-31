@@ -27,8 +27,8 @@ contract RadaFixedSwapContract is
     /**
         DATA Structure
      */
-    struct CAMPAIGN_INFO {
-        // string title;
+    struct POOL_INFO {
+        string title;
         address addressItem;
         bool isSaleToken; // Sale Token or NFT
         uint256 startId; // Start tokenID
@@ -36,9 +36,16 @@ contract RadaFixedSwapContract is
         uint256 startTime;
         uint256 endTime;
         uint256 startPrice; // Start price for bidding
-        bool locked; // if locked, cannot update pool / mint / open
+        bool isPublic; // if isPublic, cannot update pool
         bool ended; // Ended to picker winners
         bool requireWhitelist;
+        uint256 maxBuyPerAddress;
+    }
+
+    struct POOL_STATS {
+        uint32 totalBid; // Total bid in pool
+        uint256 totalBidItem; // Total bid Item in pool
+        uint256 totalSold; // Sold total
     }
 
     struct BID_INFO {
@@ -48,13 +55,9 @@ contract RadaFixedSwapContract is
         uint256 quantity;
         uint256 winQuantity;
     }
-    mapping(uint16 => CAMPAIGN_INFO) public pools;
+    mapping(uint16 => POOL_INFO) public pools;
+    mapping(uint16 => POOL_STATS) public poolStats; // poolId => pool stats
     mapping(uint16 => BID_INFO[]) public bids; // poolId => bids
-
-    // other stats
-    mapping(uint16 => uint32) public totalBid; // poolId => Total bid in pool
-    mapping(uint16 => uint256) public totalBidItem; // poolId => Total bid Item in pool
-    mapping(uint16 => uint256) public totalSold; // poolId => Sold total
 
     // Operation
     mapping(address => bool) public admins;
@@ -62,7 +65,6 @@ contract RadaFixedSwapContract is
 
     // Whitelist by pool
     mapping(uint16 => mapping(address => bool)) public whitelistAddresses; // poolId => buyer => whitelist
-    mapping(uint16 => uint16) public maxBuyPerAddress; // poolId => max buy item
 
     // Buyer record
     mapping(uint16 => mapping(address => uint256)) public buyerItemsTotal; // poolId => buyer => total
@@ -111,28 +113,28 @@ contract RadaFixedSwapContract is
         uint32 _quantity,
         uint256 _priceEach
     ) external {
-        CAMPAIGN_INFO memory pool = pools[_poolId];
+        POOL_INFO memory pool = pools[_poolId];
 
         // require pool is open
         require(
             block.timestamp >= pool.startTime &&
                 block.timestamp <= pool.endTime &&
-                !pool.locked,
-            "Not Started / Expired / Locked"
-        ); // The pool have not started / Expired / Locked
+                pool.isPublic,
+            "Not Started / Expired / is not public"
+        ); // The pool have not started / Expired / isPublic
 
         uint256 totalItems = pool.endId - pool.startId + 1;
         require(
-            totalItems >= (totalBidItem[_poolId] + _quantity),
+            totalItems >= (poolStats[_poolId].totalBidItem + _quantity),
             "Invalid quantity / sold out"
-        ); // The pool locked
+        );
 
         require(
             !pool.requireWhitelist || whitelistAddresses[_poolId][_msgSender()],
             "Caller is not in whitelist"
         );
         require(
-            maxBuyPerAddress[_poolId] >=
+            pool.maxBuyPerAddress >=
                 (buyerItemsTotal[_poolId][_msgSender()] + _quantity),
             "Got limited"
         );
@@ -166,24 +168,24 @@ contract RadaFixedSwapContract is
         // transfer BUSD to WITHDRAW_ADDRESS
         busdToken.safeTransfer(WITHDRAW_ADDRESS, totalAmount);
 
-        buyerBid[_poolId][_msgSender()].push(totalBid[_poolId]);
+        buyerBid[_poolId][_msgSender()].push(poolStats[_poolId].totalBid);
         buyerItemsTotal[_poolId][_msgSender()] += _quantity;
-        totalBidItem[_poolId] += _quantity;
-        totalBid[_poolId]++;
+        poolStats[_poolId].totalBidItem += _quantity;
+        poolStats[_poolId].totalBid++;
 
         // Send Token or NFT to user
         if (pool.isSaleToken) {
             IERC20Upgradeable itemToken = IERC20Upgradeable(pool.addressItem);
-            totalSold[_poolId] += bidding.winQuantity;
+            poolStats[_poolId].totalSold += bidding.winQuantity;
             itemToken.safeTransfer(_msgSender(), bidding.winQuantity);
         } else {
             uint256 tokenId;
             IMintableERC721 saleItemNft = IMintableERC721(pool.addressItem);
 
             for (uint8 i = 0; i < bidding.winQuantity; i++) {
-                tokenId = pool.startId + totalSold[_poolId];
+                tokenId = pool.startId + poolStats[_poolId].totalSold;
 
-                totalSold[_poolId]++;
+                poolStats[_poolId].totalSold++;
                 saleItemNft.safeMint(_msgSender(), tokenId);
             }
         }
@@ -213,7 +215,6 @@ contract RadaFixedSwapContract is
         address[] memory _addresses,
         bool _allow
     ) public onlyOwner {
-        require(!pools[_poolId].locked, "Pool locked");
         for (uint256 i = 0; i < _addresses.length; i++) {
             whitelistAddresses[_poolId][_addresses[i]] = _allow;
         }
@@ -242,24 +243,25 @@ contract RadaFixedSwapContract is
     // Add/update pool - by Admin
     function addPool(
         uint16 _poolId,
-        // string memory _title,
+        string memory _title,
         uint256 _startPrice,
         address _addressItem,
         bool _isSaleToken
     ) external onlyAdmin {
         require(pools[_poolId].startPrice == 0 && _startPrice > 0, "Invalid");
 
-        CAMPAIGN_INFO memory pool;
-        // pool.title = _title;
+        POOL_INFO memory pool;
+        pool.title = _title;
         pool.startPrice = _startPrice;
         pool.addressItem = _addressItem;
         pool.isSaleToken = _isSaleToken;
-
+        pool.isPublic = true;
         pools[_poolId] = pool;
     }
 
     function updatePool(
         uint16 _poolId,
+        string memory _title,
         address _addressItem,
         bool _isSaleToken,
         uint32 _startId,
@@ -267,17 +269,19 @@ contract RadaFixedSwapContract is
         uint256 _startTime,
         uint256 _endTime,
         uint256 _startPrice,
-        bool _requireWhitelist
+        bool _requireWhitelist,
+        uint256 _maxBuyPerAddress
     ) external onlyAdmin {
         require(
             pools[_poolId].startPrice > 0 && _startId > 0 && _endId > _startId,
             "Invalid"
         );
 
-        CAMPAIGN_INFO memory pool = pools[_poolId]; // pool info
-        require(!pool.locked, "Pool locked");
+        POOL_INFO memory pool = pools[_poolId]; // pool info
+        require(!pool.isPublic, "Pool is public");
 
         // do update
+        pool.title = _title;
         pools[_poolId].isSaleToken = _isSaleToken;
         pools[_poolId].addressItem = _addressItem;
         pools[_poolId].startId = _startId;
@@ -286,17 +290,14 @@ contract RadaFixedSwapContract is
         pools[_poolId].endTime = _endTime;
         pools[_poolId].startPrice = _startPrice;
         pools[_poolId].requireWhitelist = _requireWhitelist;
+        pools[_poolId].maxBuyPerAddress = _maxBuyPerAddress;
     }
 
-    function handleLockPool(uint16 _poolId, bool _locked) external onlyAdmin {
-        pools[_poolId].locked = _locked;
-    }
-
-    function handleMaxBuy(uint16 _poolId, uint16 _maxBuyPerAddress)
+    function handlePublicPool(uint16 _poolId, bool _isPublic)
         external
         onlyAdmin
     {
-        maxBuyPerAddress[_poolId] = _maxBuyPerAddress;
+        pools[_poolId].isPublic = _isPublic;
     }
 
     /* GETTER */

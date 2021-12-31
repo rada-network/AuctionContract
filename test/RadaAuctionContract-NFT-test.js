@@ -69,16 +69,16 @@ describe("Auction Contract - NFT", function () {
     const maxBuyPerAddress = 10;
     const isSaleToken = false;
     const requireWhitelist = true;
-    const locked = false;
+    const isPublic = true;
     const startId = 10001;
     const endId = 10100;
     const startTime = Math.floor(Date.now() / 1000) - 86400*1; // Now - 1 day
     const endTime = Math.floor(Date.now() / 1000) + 86400*7; // Now + 7 days
     // Add pool
     await contractRadaAuction.addPool(poolId, pe("150"), addressItem, isSaleToken);
-
-    await contractRadaAuction.updatePool(poolId, addressItem, isSaleToken, startId, endId,startTime, endTime, priceEach, requireWhitelist);
-    await contractRadaAuction.handleMaxBuy(poolId, maxBuyPerAddress);
+    await contractRadaAuction.handlePublicPool(poolId, false);
+    await contractRadaAuction.updatePool(poolId, addressItem, isSaleToken, startId, endId,startTime, endTime, priceEach, requireWhitelist, maxBuyPerAddress);
+    await contractRadaAuction.handlePublicPool(poolId, true);
   });
 
   it('Deploy v1 and should set right minterFactory address, right minter address', async function () {
@@ -106,11 +106,11 @@ describe("Auction Contract - NFT", function () {
     await contractRadaAuction.setWhitelist(poolId, [buyerUser.address], true);
 
     // Set maxBuyBoxPerAddress
-    // const pool = await contractRadaAuction.pools(poolId)
-
+    const pool = await contractRadaAuction.pools(poolId)
     const maxBuyPerAddress = 2;
-    await contractRadaAuction.handleMaxBuy(poolId, maxBuyPerAddress);
-    // await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, pool.requireWhitelist);
+    await contractRadaAuction.handlePublicPool(poolId, false);
+    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, pool.requireWhitelist, maxBuyPerAddress);
+    await contractRadaAuction.handlePublicPool(poolId, true);
 
     // Approve allowance
     await bUSDToken.connect(buyerUser).approve(contractRadaAuction.address, pe("300"));
@@ -121,11 +121,11 @@ describe("Auction Contract - NFT", function () {
     // Should reverted because smallest bid
     quantity = 1;
     priceEach = pe("100");
-    await expect(contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.be.reverted;
+    await expect(contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("Required valid quantity/price/balance");
 
     // Should reverted because not enough BUSD
     priceEach = pe("150");
-    await expect(contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.be.reverted;
+    await expect(contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("Required valid quantity/price/balance");
 
     // Admin top up payable token to user
     await bUSDToken.transfer(buyerUser.address, pe("250"));
@@ -152,13 +152,11 @@ describe("Auction Contract - NFT", function () {
 
 
   it('Should place Bid successfully - public', async function () {
-    // Set white list
     const pool = await contractRadaAuction.pools(poolId)
-    // Allow 10 item
     const requireWhitelist = false;
-    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist);
-    const maxBuyPerAddress = 10;
-    await contractRadaAuction.handleMaxBuy(poolId, maxBuyPerAddress);
+    await contractRadaAuction.handlePublicPool(poolId, false);
+    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress);
+    await contractRadaAuction.handlePublicPool(poolId, true);
 
     // Approve allowance
     await bUSDToken.connect(buyerUser).approve(contractRadaAuction.address, pe("2000"));
@@ -210,9 +208,43 @@ describe("Auction Contract - NFT", function () {
 
   });
 
+  it('Should place Bid successfully - claimAll - public', async function () {
+    const pool = await contractRadaAuction.pools(poolId)
+    const requireWhitelist = false;
+    await contractRadaAuction.handlePublicPool(poolId, false);
+    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress);
+    await contractRadaAuction.handlePublicPool(poolId, true);
+
+    // Approve allowance
+    await bUSDToken.connect(buyerUser).approve(contractRadaAuction.address, pe("2000"));
+    // Admin top up payable token to user
+    await bUSDToken.transfer(buyerUser.address, pe("2000"));
+
+    // Place Bid
+    quantity = 5;
+    priceEach = pe("150");
+    await contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach); // Bid 0
+    await contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach); // Bid 1
+    await expect(contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("Got limited");
+    expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("500"));
+
+    // Handle end auction and Claimed
+    await expect(contractRadaAuction.connect(buyerUser).handleEndAuction(poolId, [0,1], [1,0])).to.be.revertedWith("Caller is not an admin");
+    // Bid 0 only win 1 nft
+    await contractRadaAuction.connect(adminUser).handleEndAuction(poolId, [0,1], [1,0]);
+
+    // User 1 claim All
+    await contractRadaAuction.connect(buyerUser).claimAll(poolId); // Claim All
+    expect(await contractNFT.tokenOfOwnerByIndex(buyerUser.address, 0)).to.equal(pu("10001"));
+    expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("1850"));
+
+  });
+
   it('Should place Bid successfully and reverted over max buy allow - whitelist', async function () {
     // Set white list
+    await contractRadaAuction.handlePublicPool(poolId, false);
     await contractRadaAuction.setWhitelist(poolId, [buyerUser.address], true);
+    await contractRadaAuction.handlePublicPool(poolId, true);
 
     // Set limit buy
     // Approve allowance
@@ -230,6 +262,10 @@ describe("Auction Contract - NFT", function () {
     // Handle end auction and Claimed
     await contractRadaAuction.connect(adminUser).handleEndAuction(poolId, [0], [1]);
     await contractRadaAuction.connect(buyerUser).claim(poolId, 0);
+
+    // Try claim again
+    await expect(contractRadaAuction.connect(buyerUser).claim(poolId, 0)).to.be.revertedWith("Claimed");
+
     expect(await contractNFT.tokenOfOwnerByIndex(buyerUser.address, 0)).to.equal(pu("10001"));
   });
 
@@ -238,8 +274,9 @@ describe("Auction Contract - NFT", function () {
     // Set white list
     const pool = await contractRadaAuction.pools(poolId)
     const requireWhitelist = false;
-    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist);
-
+    await contractRadaAuction.handlePublicPool(poolId, false);
+    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress);
+    await contractRadaAuction.handlePublicPool(poolId, true);
     // Approve allowance
     await bUSDToken.connect(buyerUser).approve(contractRadaAuction.address, pe("300"));
 
@@ -266,16 +303,19 @@ describe("Auction Contract - NFT", function () {
     await bUSDToken.transfer(buyerUser.address, pe("150"));
 
     // Set white list
-    await contractRadaAuction.setWhitelist(poolId, [buyerUser.address], true);
     const pool = await contractRadaAuction.pools(poolId)
     const timeNotStart = Math.round(new Date().getTime()/1000) + 86400*2; // Today plus 2 days
-    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist);
-
+    await contractRadaAuction.handlePublicPool(poolId, false);
+    await contractRadaAuction.setWhitelist(poolId, [buyerUser.address], true);
+    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress);
+    await contractRadaAuction.handlePublicPool(poolId, true);
     // Should reverted
     await expect(contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("Not Started");
 
     const timeStart = Math.round(new Date().getTime()/1000) - 86400*2; // Today plus 2 days
-    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist);
+    await contractRadaAuction.handlePublicPool(poolId, false);
+    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress);
+    await contractRadaAuction.handlePublicPool(poolId, true);
     // Now
     // Bought success
     await contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach);
