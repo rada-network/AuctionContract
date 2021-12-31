@@ -42,7 +42,7 @@ contract RadaAuctionContract is
     }
 
     struct BID_INFO {
-        uint16 poolId;
+        uint16 poolId; // REVIEW: dont need store poolId in each bid
         address creator; // Owner of bidding
         uint256 priceEach; // Price bidding for each NFT
         uint256 quantity;
@@ -65,7 +65,7 @@ contract RadaAuctionContract is
     mapping(uint16 => mapping(address => bool)) public whitelistAddresses; // poolId => buyer => whitelist
     mapping(uint16 => uint16) public maxBuyPerAddress; // poolId => max buy item
     // Buyer record
-    mapping(uint16 => mapping(address => uint256)) public buyerItemsTotal; // poolId => buyer => total
+    mapping(uint16 => mapping(address => uint256)) public buyerItemsTotal; // poolId => buyer => total // REVIEW: calculate runtime
     mapping(uint16 => mapping(address => uint32[])) public buyerBid; // poolId => bid index
 
     event PlaceBid(
@@ -187,6 +187,9 @@ contract RadaAuctionContract is
         uint32 _quantity,
         uint256 _priceEach
     ) external {
+        // REVIEW: need verify owner of bid
+        // Then require _quality >= oldQuality && _price >= oldPrice
+
         BID_INFO storage bidding = bids[_poolId][_bidIndex];
         uint256 amountBusd = _quantity * _priceEach;
         uint256 nowBusd = bidding.quantity * bidding.priceEach;
@@ -211,7 +214,7 @@ contract RadaAuctionContract is
 
         pools[_poolId].ended = true;
 
-        uint256 sum = 0;
+        uint256 sum = 0; // REVIEW: don't need to intialize value for 0/false
         uint256 totalItems = pools[_poolId].endId - pools[_poolId].startId + 1;
 
         for (uint32 i = 0; i < quantityWin.length; i++) {
@@ -229,6 +232,8 @@ contract RadaAuctionContract is
 
     /**
      * @dev function to handle claim NFT & refund pause
+     * REVIEW: should claim all bids at once
+     * REVIEW: Require flag check claim already
      */
     function claim(uint16 _poolId, uint256 _bidIdx) external {
         BID_INFO memory bid = bids[_poolId][_bidIdx];
