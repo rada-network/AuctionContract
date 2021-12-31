@@ -14,9 +14,15 @@ contract RadaNftContract is
     Ownable
 {
     mapping(address => bool) public approvalWhitelists;
-    mapping(uint256 => bool) public lockedTokens;
-    mapping(uint256 => bool) public usedTokens;
-    mapping(uint256 => uint16) public typeTokens;
+
+    struct NFT_INFO {
+        bool locked; // Cannot transfer
+        bool used; // Use for any purpuse
+        bool isBox; // Is Box
+        uint16 typeNft; // type of NFT
+    }
+
+    mapping(uint256 => NFT_INFO) public items;
 
     string private _baseTokenURI;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -104,12 +110,12 @@ contract RadaNftContract is
             "Must be valid approval whitelist"
         );
         require(_exists(_tokenId), "Must be valid tokenId");
-        require(!lockedTokens[_tokenId], "Already set");
-        lockedTokens[_tokenId] = _locked;
+        require(!items[_tokenId].locked != _locked, "Already set");
+        items[_tokenId].locked = _locked;
     }
 
     /**
-     * @dev Set type token
+     * @dev Set type NFT
      */
     function setType(uint256 _tokenId, uint16 _type) external {
         require(
@@ -117,7 +123,21 @@ contract RadaNftContract is
             "Must be valid approval whitelist"
         );
         require(_exists(_tokenId), "Must be valid tokenId");
-        typeTokens[_tokenId] = _type;
+        require(items[_tokenId].typeNft == 0, "Cannot set type again");
+
+        items[_tokenId].typeNft = _type;
+    }
+
+    /**
+     * @dev Set is box NFT
+     */
+    function setBox(uint256 _tokenId, bool _isBox) external {
+        require(
+            approvalWhitelists[_msgSender()],
+            "Must be valid approval whitelist"
+        );
+        require(_exists(_tokenId), "Must be valid tokenId");
+        items[_tokenId].isBox = _isBox;
     }
 
     /**
@@ -129,22 +149,29 @@ contract RadaNftContract is
             "Must be valid approval whitelist"
         );
         require(_exists(_tokenId), "Must be valid tokenId");
-        require(usedTokens[_tokenId] != _used, "Already set");
-        usedTokens[_tokenId] = _used;
+        require(items[_tokenId].used != _used, "Already set");
+        items[_tokenId].used = _used;
     }
 
     /**
      * @dev Get lock status
      */
     function isLocked(uint256 _tokenId) public view returns (bool) {
-        return lockedTokens[_tokenId];
+        return items[_tokenId].locked;
     }
 
     /**
      * @dev Get use status
      */
     function isUsed(uint256 _tokenId) public view returns (bool) {
-        return usedTokens[_tokenId];
+        return items[_tokenId].used;
+    }
+
+    /**
+     * @dev Get use status
+     */
+    function isBox(uint256 _tokenId) public view returns (bool) {
+        return items[_tokenId].isBox;
     }
 
     /**
@@ -162,7 +189,7 @@ contract RadaNftContract is
         address _to,
         uint256 _tokenId
     ) internal virtual override(ERC721, ERC721Enumerable) {
-        require(!lockedTokens[_tokenId], "Can not transfer locked token");
+        require(!items[_tokenId].locked, "Can not transfer locked token");
         super._beforeTokenTransfer(_from, _to, _tokenId);
     }
 

@@ -21,7 +21,7 @@ contract RadaAuctionContract is
     using SafeMathUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    // NFT contract
+    // BUSD contract
     IERC20Upgradeable busdToken;
 
     /**
