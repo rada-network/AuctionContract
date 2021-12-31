@@ -68,8 +68,8 @@ describe("Auction Contract - Token", function () {
     // Add pool
     await contractRadaFixedSwap.addPool(poolId, pe("150"), addressItem, isSaleToken);
 
-    await contractRadaFixedSwap.updatePool(poolId, addressItem, isSaleToken, startId, endId, startTime, endTime, locked, priceEach, maxBuyPerAddress, requireWhitelist);
-
+    await contractRadaFixedSwap.updatePool(poolId, addressItem, isSaleToken, startId, endId, startTime, endTime, priceEach, requireWhitelist);
+    await contractRadaFixedSwap.handleMaxBuy(poolId, maxBuyPerAddress);
   });
 
   it('Deploy v1 and should set admin address', async function () {
@@ -96,10 +96,11 @@ describe("Auction Contract - Token", function () {
     await contractRadaFixedSwap.setWhitelist(poolId, [buyerUser.address], true);
 
     // Set maxBuyBoxPerAddress
-    const pool = await contractRadaFixedSwap.pools(poolId)
+    // const pool = await contractRadaFixedSwap.pools(poolId)
 
     const maxBuyPerAddress = 2;
-    await contractRadaFixedSwap.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.locked, pool.startPrice, maxBuyPerAddress, pool.requireWhitelist);
+    await contractRadaFixedSwap.handleMaxBuy(poolId, maxBuyPerAddress);
+    // await contractRadaFixedSwap.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, pool.requireWhitelist);
 
     // Approve allowance
     await bUSDToken.connect(buyerUser).approve(contractRadaFixedSwap.address, pe("300"));
@@ -143,9 +144,10 @@ describe("Auction Contract - Token", function () {
     // Set white list
     const pool = await contractRadaFixedSwap.pools(poolId)
     // Allow 10 item
-    const maxBuyPerAddress = 10;
     const requireWhitelist = false;
-    await contractRadaFixedSwap.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.locked, pool.startPrice, maxBuyPerAddress, requireWhitelist);
+    await contractRadaFixedSwap.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist);
+    const maxBuyPerAddress = 10;
+    await contractRadaFixedSwap.handleMaxBuy(poolId, maxBuyPerAddress);
 
     // Approve allowance
     await bUSDToken.connect(buyerUser).approve(contractRadaFixedSwap.address, pe("2000"));
@@ -202,7 +204,7 @@ describe("Auction Contract - Token", function () {
     // Set white list
     const pool = await contractRadaFixedSwap.pools(poolId)
     const requireWhitelist = false;
-    await contractRadaFixedSwap.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.locked, pool.startPrice, pool.maxBuyPerAddress, requireWhitelist);
+    await contractRadaFixedSwap.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist);
 
 
     // Approve allowance
@@ -229,13 +231,13 @@ describe("Auction Contract - Token", function () {
     await contractRadaFixedSwap.setWhitelist(poolId, [buyerUser.address], true);
     const pool = await contractRadaFixedSwap.pools(poolId)
     const timeNotStart = Math.round(new Date().getTime()/1000) + 86400*2; // Today plus 2 days
-    await contractRadaFixedSwap.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, timeNotStart, pool.endTime, pool.locked, pool.startPrice, pool.maxBuyPerAddress, pool.requireWhitelist);
+    await contractRadaFixedSwap.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist);
 
     // Should reverted
     await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.revertedWith("Not Started");
 
     const timeStart = Math.round(new Date().getTime()/1000) - 86400*2; // Today plus 2 days
-    await contractRadaFixedSwap.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, timeStart, pool.endTime, pool.locked, pool.startPrice, pool.maxBuyPerAddress, pool.requireWhitelist);
+    await contractRadaFixedSwap.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist);
     // Now
     // Bought success
     await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach);

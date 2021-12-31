@@ -39,7 +39,6 @@ contract RadaFixedSwapContract is
         bool locked; // if locked, cannot update pool / mint / open
         bool ended; // Ended to picker winners
         bool requireWhitelist;
-        // uint16 maxBuyPerAddress; // Max allow buy nft
     }
 
     struct BID_INFO {

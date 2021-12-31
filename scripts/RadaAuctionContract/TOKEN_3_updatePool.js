@@ -39,7 +39,8 @@ async function main() {
   const maxBuyPerAddress = 10;
   const requireWhitelist = false;
 
-  await RadaAuctionContract.updatePool(poolId, addressItem, isSaleToken, startId, endId, startTime, endTime, locked, startPrice, maxBuyPerAddress, requireWhitelist);
+  await RadaAuctionContract.updatePool(poolId, addressItem, isSaleToken, startId, endId, startTime, endTime, startPrice, requireWhitelist);
+  await RadaAuctionContract.handleMaxBuy(poolId, maxBuyPerAddress);
 
   console.log("updatePool "+poolId+" success");
 
