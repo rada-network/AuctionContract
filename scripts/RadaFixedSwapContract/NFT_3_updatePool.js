@@ -2,7 +2,7 @@ const { ethers, upgrades, hardhatArguments } = require('hardhat');
 const { addresses: contractAddresses } = require('./proxyAddresses');
 const { addresses: nftAddresses } = require('../RadaNftAddresses');
 
-const { pe,fe,fu,pu } = require('../utils');
+const { pe,fe,fu,pu, sleep } = require('../../utils');
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -19,7 +19,7 @@ async function main() {
 
   // TODO: Fill your poolId
   const poolId = 3;
-  const title = "Token Fixed Swap";
+  const title = "NFT Fixed Swap";
   const startPrice = pe("150");
   const addressItem = nftAddress; // Address of NFT or Token
   const isSaleToken = false; // Sale NFT or Token
@@ -35,14 +35,19 @@ async function main() {
 
   const startTime = 1640451600; // Sunday, December 26, 2021 12:00:00 AM GMT+07:00
   const endTime = 1672379856; // Friday, December 30, 2022 12:57:36 PM GMT+07:00
-  const locked = false;
   const maxBuyPerAddress = 10;
   const requireWhitelist = false;
 
-  await RadaFixedSwapContract.updatePool(poolId, addressItem, isSaleToken, startId, endId, startTime, endTime, startPrice, requireWhitelist);
-  await RadaFixedSwapContract.handleMaxBuy(poolId, maxBuyPerAddress);
-
+  await RadaFixedSwapContract.handlePublicPool(poolId, false);
+  console.log("Pool changed status: false");
+  await sleep(5000);
+  await RadaFixedSwapContract.updatePool(poolId, title, addressItem, isSaleToken, startId, endId, startTime, endTime, startPrice, requireWhitelist, maxBuyPerAddress);
   console.log("updatePool "+poolId+" success");
+  await RadaFixedSwapContract.handlePublicPool(poolId, true);
+  console.log("Pool changed status: true");
+  await sleep(5000);
+  const pool = await RadaFixedSwapContract.pools(poolId);
+  console.log("Pool status: "+pool.isPublic);
 
   const afterDeploy = fe(await deployer.getBalance());
   console.log("Cost spent:", (beforeDeploy-afterDeploy));

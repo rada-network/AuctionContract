@@ -255,7 +255,7 @@ contract RadaFixedSwapContract is
         pool.startPrice = _startPrice;
         pool.addressItem = _addressItem;
         pool.isSaleToken = _isSaleToken;
-        pool.isPublic = true;
+        pool.isPublic = false;
         pools[_poolId] = pool;
     }
 

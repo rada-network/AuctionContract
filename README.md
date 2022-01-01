@@ -29,36 +29,28 @@ npx hardhat run scripts/RadaAuctionContract/1_deploy.js --network testnet
 npx hardhat run scripts/RadaFixedSwapContract/1_deploy.js --network testnet
 // Copy Contract address to proxyAddresses.js
 
-# Require setMinter for 2 contract RADA above
-npx hardhat run scripts/RadaNftContract/2_setup.js --network testnet
+# Require setMinterFactories for 2 contract RADA above
 
-# TOKEN - Auction
+# NFT - Auction
 npx hardhat run scripts/RadaAuctionContract/NFT_2_addPool.js --network testnet
 npx hardhat run scripts/RadaAuctionContract/NFT_3_updatePool.js --network testnet
-# NFT - Auction
+# TOKEN - Auction
 npx hardhat run scripts/RadaAuctionContract/TOKEN_2_addPool.js --network testnet
 npx hardhat run scripts/RadaAuctionContract/TOKEN_3_updatePool.js --network testnet
 
-# TOKEN - Fixed Swap
+# NFT - Fixed Swap
 npx hardhat run scripts/RadaFixedSwapContract/NFT_2_addPool.js --network testnet
 npx hardhat run scripts/RadaFixedSwapContract/NFT_3_updatePool.js --network testnet
-# NFT - Fixed Swap
+# TOKEN - Fixed Swap
 npx hardhat run scripts/RadaFixedSwapContract/TOKEN_2_addPool.js --network testnet
 npx hardhat run scripts/RadaFixedSwapContract/TOKEN_3_updatePool.js --network testnet
 
-
-
-
-
-
 # npx hardhat run scripts/RadaAuctionContract/4_handleEndAuction.js --network testnet
-
 
 npx hardhat run scripts/RadaAuctionContract/getImplementationAddress.js --network testnet
 npx hardhat run scripts/RadaFixedSwapContract/getImplementationAddress.js --network testnet
 
 npx hardhat verify --network testnet 0xc7309b43eF2F9E1D90e054d9433201a034f8618c
-npx hardhat verify --network testnet 0x24825D62d4658DA1d5cB517E2CB445D1A00F65C6
 ```
 
 Build & Deploy BSC testnet | RadaNftContract
@@ -106,6 +98,10 @@ Build & Deploy BSC testnet | BoxToken
 
 npx hardhat run scripts/BoxToken/deploy.js --network testnet
 // Copy Token address to tokenAddresses.js
+
+// Test
+npx hardhat run scripts/BoxToken/sendTokentest.js --network testnet
+
 
 // npx hardhat verify --network testnet TODO_token_address
 // npx hardhat verify --network testnet --contract contracts/BoxToken.sol:BoxToken TODO_token_address
