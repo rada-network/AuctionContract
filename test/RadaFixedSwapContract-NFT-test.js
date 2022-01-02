@@ -122,21 +122,18 @@ describe("NFT Contract", function () {
 
     // Should reverted because smallest bid
     quantity = 1;
-    priceEach = pe("100");
-    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.revertedWith("Required valid quantity/price/balance");;
+    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Required valid quantity/price/balance");;
 
     // Should reverted because not enough BUSD
-    priceEach = pe("150");
-    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.revertedWith("Required valid quantity/price/balance");;
+    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Required valid quantity/price/balance");;
 
     // Admin top up payable token to user
     await bUSDToken.transfer(buyerUser.address, pe("250"));
 
     // Place Order
     /* console.log(fe(await bUSDToken.balanceOf(buyerUser.address)));
-    console.log(fe(priceEach));
     console.log(quantity); */
-    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach);
+    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity);
     // console.log(await contractRadaFixedSwap.bids(poolId, 0));
     // console.log(fe(await bUSDToken.balanceOf(buyerUser.address)));
     expect(await contractNFT.tokenOfOwnerByIndex(buyerUser.address, 0)).to.equal(pu("10001"));
@@ -157,12 +154,12 @@ describe("NFT Contract", function () {
     // Not in white list should revert
     await bUSDToken.transfer(buyerUser2.address, pe("150"));
     await bUSDToken.connect(buyerUser2).approve(contractRadaFixedSwap.address, pe("150"));
-    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.revertedWith("Caller is not in whitelist");
+    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Caller is not in whitelist");
 
   });
 
 
-  it('Should place order successfully - public', async function () {
+  it('Should place order successfully with multi users - public', async function () {
 
     // Approve allowance
     const fundUser1 = 3000; // BUSD
@@ -173,15 +170,14 @@ describe("NFT Contract", function () {
 
     // Place Order
     quantity = 5;
-    const price = 200; // BUSD
-    priceEach = pe((price).toString());
-    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach); // Order 1
-    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach); // Order 2
-    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.revertedWith("Got limited");
+    priceEach = 150;
+    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity); // Order 1
+    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity); // Order 2
+    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Got limited");
 
     // User 1
     expect(await contractNFT.tokenOfOwnerByIndex(buyerUser.address, 0)).to.equal(pu("10001"));
-    expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe((fundUser1-price*quantity*2).toString()));
+    expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe((fundUser1-priceEach*quantity*2).toString()));
 
     // Use 2
     const fundUser2 = 400; // BUSD
@@ -189,8 +185,7 @@ describe("NFT Contract", function () {
     await bUSDToken.connect(buyerUser2).approve(contractRadaFixedSwap.address, pe((fundUser2).toString()));
     await bUSDToken.transfer(buyerUser2.address, pe((fundUser2).toString()));
 
-    priceEach = pe("200");
-    await contractRadaFixedSwap.connect(buyerUser2).placeOrder(poolId, quantity, priceEach);
+    await contractRadaFixedSwap.connect(buyerUser2).placeOrder(poolId, quantity);
     expect(await contractNFT.tokenOfOwnerByIndex(buyerUser2.address, 0)).to.equal(pu("10011"));
     expect(await contractNFT.tokenOfOwnerByIndex(buyerUser2.address, 1)).to.equal(pu("10012"));
     // Check remain
@@ -215,13 +210,13 @@ describe("NFT Contract", function () {
     await bUSDToken.transfer(buyerUser.address, pe("3000"));
     // Place Order
     quantity = 9
-    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach);
+    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity);
     // console.log(fu(await contractRadaFixedSwap.buyerItemsTotal(poolId, buyerUser.address)));
     quantity = 1
-    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach);
+    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity);
     // console.log(fu(await contractRadaFixedSwap.buyerItemsTotal(poolId, buyerUser.address)));
     // Should reverted
-    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.revertedWith("Got limited");
+    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Got limited");
 
     // Check bought
     expect(await contractNFT.tokenOfOwnerByIndex(buyerUser.address, 0)).to.equal(pu("10001"));
@@ -231,11 +226,10 @@ describe("NFT Contract", function () {
   it('Should place order successfully - public', async function () {
     // Approve allowance
     await bUSDToken.connect(buyerUser).approve(contractRadaFixedSwap.address, pe("300"));
-    // Admin top up payable token to user
     await bUSDToken.transfer(buyerUser.address, pe("300"));
 
-    // Place Order with quantity 1, price 150
-    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach);
+    // Place Order with quantity 1
+    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity);
 
     expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("150"));
 
@@ -259,7 +253,7 @@ describe("NFT Contract", function () {
     // Today plus 2 days
 
     // Should reverted
-    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.revertedWith("Not Started");
+    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Not Started");
 
     const timeStart = Math.round(new Date().getTime()/1000) - 86400*2; // Today sub 2 days
     await contractRadaFixedSwap.handlePublicPool(poolId, false);
@@ -268,7 +262,7 @@ describe("NFT Contract", function () {
 
     // Now
     // Bought success
-    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach);
+    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity);
 
     const START_TIME = Math.floor(Date.now() / 1000);
     const increaseDays = 600;
@@ -278,7 +272,7 @@ describe("NFT Contract", function () {
     await ethers.provider.send("evm_mine", []) // force mine the next block
 
     // Should reverted
-    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.revertedWith("Expired");;
+    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Expired");;
 
   });
 

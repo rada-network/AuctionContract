@@ -10,6 +10,13 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 interface IUpdateERC721 is IERC721Upgradeable {
+    struct NFT_INFO {
+        bool locked; // Cannot transfer
+        bool used; // Use for any purpuse
+        bool isBox; // Is Box
+        uint16 typeNft; // type of NFT
+    }
+
     function burn(uint256 tokenId) external;
 
     function safeMint(address to, uint256 tokenId) external;
@@ -18,7 +25,9 @@ interface IUpdateERC721 is IERC721Upgradeable {
 
     function setType(uint256 _tokenId, uint16 _type) external;
 
-    function ownerOf(uint256 tokenId) external view returns (address owner);
+    function ownerOf(uint256 tokenId) external view returns (address);
+
+    function items(uint256 tokenId) external view returns (NFT_INFO memory);
 }
 
 contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
@@ -89,7 +98,7 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             itemNft.ownerOf(_tokenId) == _msgSender(),
             "Caller must be owner"
         );
-
+        require(itemNft.items(_tokenId).typeNft == 0, "Not box");
         itemNft.burn(_tokenId);
         // itemNft.handleUse(_tokenId, true);
         // Mint new NFT
@@ -128,11 +137,16 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         SETTER
      */
     // Add/update pool - by Admin
-    function addPool(uint16 _poolId, address _addressItem) external onlyAdmin {
+    function addPool(
+        uint16 _poolId,
+        string memory _title,
+        address _addressItem
+    ) external onlyAdmin {
         require(_addressItem != address(0), "Invalid address");
 
         POOL_INFO memory pool;
         pool.addressItem = _addressItem;
+        pool.title = _title;
         pools[_poolId] = pool;
     }
 

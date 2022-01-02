@@ -108,11 +108,7 @@ contract RadaFixedSwapContract is
     /**
      * @dev function to place order
      */
-    function placeOrder(
-        uint16 _poolId,
-        uint32 _quantity,
-        uint256 _priceEach
-    ) external {
+    function placeOrder(uint16 _poolId, uint32 _quantity) external {
         POOL_INFO memory pool = pools[_poolId];
 
         // require pool is open
@@ -140,11 +136,9 @@ contract RadaFixedSwapContract is
         );
 
         // Check balance BUSD
-        uint256 totalAmount = _priceEach.mul(_quantity);
+        uint256 totalAmount = pool.startPrice.mul(_quantity);
         require(
-            _quantity > 0 &&
-                _priceEach >= pool.startPrice &&
-                totalAmount <= busdToken.balanceOf(_msgSender()),
+            _quantity > 0 && totalAmount <= busdToken.balanceOf(_msgSender()),
             "Required valid quantity/price/balance"
         ); // Not allow quantity = 0, valid price
 
@@ -159,7 +153,7 @@ contract RadaFixedSwapContract is
         BID_INFO memory bidding = BID_INFO({
             poolId: _poolId,
             creator: _msgSender(),
-            priceEach: _priceEach,
+            priceEach: pool.startPrice,
             quantity: _quantity,
             winQuantity: _quantity // Fixed price
         });
@@ -190,7 +184,7 @@ contract RadaFixedSwapContract is
             }
         }
 
-        emit PlaceOrder(_msgSender(), _poolId, _quantity, _priceEach);
+        emit PlaceOrder(_msgSender(), _poolId, _quantity, pool.startPrice);
     }
 
     /**

@@ -107,22 +107,21 @@ describe("Auction Contract - Token", function () {
     await bUSDToken.connect(buyerUser).approve(contractRadaFixedSwap.address, pe("300"));
 
     // Admin top up payable token to user
-    await bUSDToken.transfer(buyerUser.address, pe("50"));
+    await bUSDToken.transfer(buyerUser.address, pe("50")); // 50
 
-    // Should reverted because smallest bid
+    // Should reverted because quantity = 0
+    quantity = 0;
+    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.reverted;
+
     quantity = 1;
-    priceEach = pe("100");
-    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.reverted;
-
     // Should reverted because not enough BUSD
-    priceEach = pe("150");
-    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.reverted;
+    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.reverted;
 
     // Admin top up payable token to user
-    await bUSDToken.transfer(buyerUser.address, pe("250"));
+    await bUSDToken.transfer(buyerUser.address, pe("250")); // = 300
 
     // Place Order
-    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach);
+    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity);
 
     expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("150"));
 
@@ -135,8 +134,8 @@ describe("Auction Contract - Token", function () {
     // Not in white list should revert
     await bUSDToken.transfer(buyerUser2.address, pe("150"));
     await bUSDToken.connect(buyerUser2).approve(contractRadaFixedSwap.address, pe("150"));
-    // await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.reverted;
-    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.revertedWith("Caller is not in whitelist");
+    // await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.reverted;
+    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Caller is not in whitelist");
 
   });
 
@@ -162,17 +161,15 @@ describe("Auction Contract - Token", function () {
 
     // Place Order
     quantity = 5;
-    priceEach = pe("150");
-    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach); // Order 0
-    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach); // Order 1
-    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.revertedWith("Got limited");
+    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity); // Order 0
+    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity); // Order 1
+    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Got limited");
     expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("500"));
     expect(await contractERC20.balanceOf(buyerUser.address)).to.equal(pu((quantity*2).toString()));
 
-    priceEach = pe("200");
     quantity = 2;
-    await contractRadaFixedSwap.connect(buyerUser2).placeOrder(poolId, quantity, priceEach); // Order 2
-    expect(await bUSDToken.balanceOf(buyerUser2.address)).to.equal(pe("0"));
+    await contractRadaFixedSwap.connect(buyerUser2).placeOrder(poolId, quantity); // Order 2
+    expect(await bUSDToken.balanceOf(buyerUser2.address)).to.equal(pe("100"));
     expect(await contractERC20.balanceOf(buyerUser2.address)).to.equal(pu(quantity.toString()));
 
     /* console.log(await contractRadaFixedSwap.bids(poolId, 0));
@@ -193,10 +190,10 @@ describe("Auction Contract - Token", function () {
     await bUSDToken.transfer(buyerUser.address, pe("3000"));
     // Place Order
     quantity = 10;
-    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach);
+    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity);
 
     // Should reverted
-    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.revertedWith("Got limited");
+    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Got limited");
 
     expect(await contractERC20.balanceOf(buyerUser.address)).to.equal(pu(quantity.toString()));
   });
@@ -217,7 +214,7 @@ describe("Auction Contract - Token", function () {
     await bUSDToken.transfer(buyerUser.address, pe("300"));
 
     // Place Order with Flat price
-    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach);
+    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity);
 
     expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("150"));
 
@@ -238,7 +235,7 @@ describe("Auction Contract - Token", function () {
     await contractRadaFixedSwap.updatePool(poolId, pool.title, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress);
     await contractRadaFixedSwap.handlePublicPool(poolId, true);
     // Should reverted
-    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.revertedWith("Not Started");
+    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Not Started");
 
     const timeStart = Math.round(new Date().getTime()/1000) - 86400*2; // Today plus 2 days
     await contractRadaFixedSwap.handlePublicPool(poolId, false);
@@ -246,7 +243,7 @@ describe("Auction Contract - Token", function () {
     await contractRadaFixedSwap.handlePublicPool(poolId, true);
     // Now
     // Bought success
-    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach);
+    await contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity);
 
     const START_TIME = Math.floor(Date.now() / 1000);
     const increaseDays = 600;
@@ -256,7 +253,7 @@ describe("Auction Contract - Token", function () {
     await ethers.provider.send("evm_mine", []) // force mine the next block
 
     // Should reverted
-    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity, priceEach)).to.be.revertedWith("Expired");;
+    await expect(contractRadaFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Expired");;
 
   });
 

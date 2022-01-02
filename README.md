@@ -47,10 +47,19 @@ npx hardhat run scripts/RadaFixedSwapContract/TOKEN_3_updatePool.js --network te
 
 # npx hardhat run scripts/RadaAuctionContract/4_handleEndAuction.js --network testnet
 
-npx hardhat run scripts/RadaAuctionContract/getImplementationAddress.js --network testnet
-npx hardhat run scripts/RadaFixedSwapContract/getImplementationAddress.js --network testnet
+```
 
-npx hardhat verify --network testnet 0xc7309b43eF2F9E1D90e054d9433201a034f8618c
+Step by step Deploy OpenBox to testnet / mainnet
+
+```shell
+npx hardhat run scripts/OpenBoxContract/1_deploy.js --network testnet
+# Copy Contract address to proxyAddresses.js
+npx hardhat run scripts/OpenBoxContract/NFT_2_addPool.js --network testnet
+npx hardhat run scripts/OpenBoxContract/NFT_3_updatePool.js --network testnet
+npx hardhat run scripts/OpenBoxContract/setAdmin.js --network testnet
+
+npx hardhat run scripts/OpenBoxContract/getImplementationAddress.js --network testnet
+npx hardhat verify --network testnet DDDDDDDDD
 ```
 
 Build & Deploy BSC testnet | RadaNftContract
@@ -65,18 +74,13 @@ npx hardhat run scripts/RadaNftContract/1_deploy.js --network testnet
 
 ```
 
-Build & Deploy NFT contract and NftAuction Contract
+Build & run script
 
 ```shell
 
-npx hardhat run scripts/RadaAuctionContract/1_deploy.js --network testnet
-// Copy Proxy address to proxyAddresses.js
-npx hardhat run scripts/RadaAuctionContract/2_addPoolAllocationBoxAndRandom.js --network testnet
-npx hardhat run scripts/RadaAuctionContract/3_updatePool.js --network testnet
-npx hardhat run scripts/RadaAuctionContract/4_setWhitelistAddress.js --network testnet
+npx hardhat run scripts/RadaFixedSwapContract/upgradeContract_v2.js --network testnet
 
-npx hardhat run scripts/RadaAuctionContract/upgradeContract_v2.js --network testnet
-npx hardhat run scripts/RadaAuctionContract/getImplementationAddress.js --network testnet
+npx hardhat run scripts/RadaFixedSwapContract/getImplementationAddress.js --network testnet
 npx hardhat verify --network testnet 0xdcEc2C5f5aF78a08c513cf4Ed139C88A3aD2eaE7
 ```
 

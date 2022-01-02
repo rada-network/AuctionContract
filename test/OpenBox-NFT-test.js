@@ -68,7 +68,7 @@ describe("OpenBox - NFT Contract", function () {
     const endId = 20100;
     const title = "Open Box #10"
     // Add pool
-    await contractOpenBox.addPool(poolId, addressItem);
+    await contractOpenBox.addPool(poolId, title, addressItem);
     await contractOpenBox.updatePool(poolId, title, addressItem, startId, endId);
 
   });
