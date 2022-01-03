@@ -78,9 +78,9 @@ Build & run script
 
 ```shell
 
-npx hardhat run scripts/RadaFixedSwapContract/upgradeContract_v2.js --network testnet
+npx hardhat run scripts/RadaAuctionContract/upgradeContract_v2.js --network testnet
 
-npx hardhat run scripts/RadaFixedSwapContract/getImplementationAddress.js --network testnet
+npx hardhat run scripts/RadaAuctionContract/getImplementationAddress.js --network testnet
 npx hardhat verify --network testnet 0xdcEc2C5f5aF78a08c513cf4Ed139C88A3aD2eaE7
 ```
 

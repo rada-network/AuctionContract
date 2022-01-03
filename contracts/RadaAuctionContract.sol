@@ -44,7 +44,9 @@ contract RadaAuctionContract is
     struct POOL_STATS {
         uint32 totalBid; // Total bid in pool
         uint256 totalBidItem; // Total bid ITEM in pool
+        uint256 totalBidAmount; // Total amount bid
         uint256 totalSold; // Sold total
+        uint256 totalSoldAmount; // Total amount sold
         uint256 highestPrice; // highest price
     }
 
@@ -180,6 +182,8 @@ contract RadaAuctionContract is
         buyerBid[_poolId][_msgSender()].push(poolStats[_poolId].totalBid);
         // buyerItemsTotal[_poolId][_msgSender()] += _quantity;
         // Pool stats
+
+        poolStats[_poolId].totalBidAmount += totalAmount;
         poolStats[_poolId].totalBidItem += _quantity;
         poolStats[_poolId].totalBid++;
 
@@ -199,7 +203,7 @@ contract RadaAuctionContract is
         BID_INFO storage bid = bids[_poolId][_bidIndex];
 
         require(
-            bid.quantity >= _quantity && bid.priceEach >= _priceEach,
+            _quantity >= bid.quantity && _priceEach >= bid.priceEach,
             "Bid not valid"
         );
         require(_msgSender() == bid.creator, "Required owner");
@@ -216,6 +220,13 @@ contract RadaAuctionContract is
 
         bid.quantity = _quantity;
         bid.priceEach = _priceEach;
+
+        // Update Stats
+        if (poolStats[_poolId].highestPrice < _priceEach) {
+            poolStats[_poolId].highestPrice = _priceEach;
+        }
+        poolStats[_poolId].totalBidItem += _quantity - bid.quantity;
+        poolStats[_poolId].totalBidAmount += amountBusd.sub(newAmountBusd);
 
         emit IncreaseBid(_msgSender(), _poolId, _quantity, _priceEach);
     }
@@ -237,6 +248,7 @@ contract RadaAuctionContract is
             sum = sum + quantityWin[i];
         }
         require(totalItems >= sum, "Wrong quantity");
+
         for (uint32 i = 0; i < bidsIndex.length; i++) {
             require(
                 bids[_poolId][bidsIndex[i]].quantity >= quantityWin[i],
@@ -253,9 +265,11 @@ contract RadaAuctionContract is
     function claim(uint16 _poolId, uint256 _bidIdx) public {
         BID_INFO memory bid = bids[_poolId][_bidIdx];
         POOL_INFO memory pool = pools[_poolId];
-        require(pool.ended && pool.isPublic, "Pool not end yet / isPublic");
+        require(
+            pool.ended && pool.isPublic && bid.claimed == false,
+            "Invalid claim"
+        ); // Pool not end yet / isPublic / Claimed
         require(bid.creator == _msgSender(), "Invalid claim");
-        require(bid.claimed == false, "Claimed");
 
         uint256 totalAmount = bid.priceEach.mul(bid.quantity);
         uint256 remainBusd = bid.priceEach.mul(bid.quantity - bid.winQuantity);
@@ -294,6 +308,7 @@ contract RadaAuctionContract is
         if (soldAmount > 0) {
             busdToken.safeTransfer(WITHDRAW_ADDRESS, soldAmount);
         }
+        poolStats[_poolId].totalSoldAmount = soldAmount;
 
         emit Claim(_msgSender(), _poolId, _bidIdx);
     }

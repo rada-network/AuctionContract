@@ -264,7 +264,7 @@ describe("Auction Contract - NFT", function () {
     await contractRadaAuction.connect(buyerUser).claim(poolId, 0);
 
     // Try claim again
-    await expect(contractRadaAuction.connect(buyerUser).claim(poolId, 0)).to.be.revertedWith("Claimed");
+    await expect(contractRadaAuction.connect(buyerUser).claim(poolId, 0)).to.be.revertedWith("Invalid claim");
 
     expect(await contractNFT.tokenOfOwnerByIndex(buyerUser.address, 0)).to.equal(pu("10001"));
   });
@@ -278,22 +278,42 @@ describe("Auction Contract - NFT", function () {
     await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress);
     await contractRadaAuction.handlePublicPool(poolId, true);
     // Approve allowance
-    await bUSDToken.connect(buyerUser).approve(contractRadaAuction.address, pe("300"));
+    await bUSDToken.connect(buyerUser).approve(contractRadaAuction.address, pe("3000"));
 
     // Admin top up payable token to user
-    await bUSDToken.transfer(buyerUser.address, pe("300"));
+    await bUSDToken.transfer(buyerUser.address, pe("3000"));
 
     // Place Bid with Flat price
+    quantity = 5;
+    priceEach = pe("200")
     await contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach);
 
-    expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("150"));
+    expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("2000"));
 
     // Handle End Bid
-    await contractRadaAuction.connect(adminUser).handleEndAuction(poolId, [0], [1]);
+    const winQuantity = 4;
+    await contractRadaAuction.connect(adminUser).handleEndAuction(poolId, [0], [winQuantity]);
+
 
     // Claim NFT
     await contractRadaAuction.connect(buyerUser).claim(poolId, 0);
-    expect(await contractNFT.tokenOfOwnerByIndex(buyerUser.address, 0)).to.equal(pu("10001"));
+    expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("2200"));
+    for (var i;i<4;i++) {
+      expect(await contractNFT.tokenOfOwnerByIndex(buyerUser.address, i)).to.equal(pu("1000"+(i+1)));
+    }
+
+    // Check Pool stats
+    const stats = await contractRadaAuction.poolStats(poolId);
+
+    expect(stats.totalBidItem).to.equal(quantity);
+    expect(stats.totalSold).to.equal(winQuantity);
+    /* console.log(stats);
+    console.log(fu(stats.totalBid));
+    console.log(fu(stats.totalBidItem));
+    console.log(fe(stats.totalBidAmount));
+    console.log(fu(stats.totalSold));
+    console.log(fe(stats.totalSoldAmount)); */
+
   });
 
 
