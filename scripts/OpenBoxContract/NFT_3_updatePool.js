@@ -21,7 +21,7 @@ async function main() {
   const poolId = 3; // 1 is auction, 3 is fixed swap
   const title = "NFT Box - Fixed Swap";
   const addressItem = nftAddress; // Address of NFT or Token
-  var startId = 20001;
+  var startId = 20101;
   var endId = 21000;
 
   await OpenBoxContract.updatePool(poolId, title, addressItem, startId, endId);

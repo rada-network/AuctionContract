@@ -55,13 +55,14 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     event OpenBox(
         address buyerAddress,
         uint16 indexed poolId,
-        uint256 indexed tokenId
+        uint256 indexed tokenId,
+        uint256[] indexed newTokenIds
     );
     event UpdateNFT(
         address buyerAddress,
         uint16 indexed poolId,
         uint256 indexed tokenId,
-        uint256 typeRarity
+        uint256 indexed typeRarity
     );
 
     function initialize() public initializer {
@@ -105,9 +106,11 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint256 tokenId = pool.startId + pool.totalOpen;
         itemNft.safeMint(_msgSender(), tokenId);
 
+        uint256[] memory newTokenIds = new uint256[](tokenId);
+
         pools[_poolId].totalOpen++;
 
-        emit OpenBox(_msgSender(), _poolId, _tokenId);
+        emit OpenBox(_msgSender(), _poolId, _tokenId, newTokenIds);
     }
 
     /**

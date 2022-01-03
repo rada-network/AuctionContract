@@ -58,6 +58,8 @@ npx hardhat run scripts/OpenBoxContract/NFT_2_addPool.js --network testnet
 npx hardhat run scripts/OpenBoxContract/NFT_3_updatePool.js --network testnet
 npx hardhat run scripts/OpenBoxContract/setAdmin.js --network testnet
 
+npx hardhat run scripts/OpenBoxContract/upgradeContract_v2.js --network testnet
+
 npx hardhat run scripts/OpenBoxContract/getImplementationAddress.js --network testnet
 npx hardhat verify --network testnet DDDDDDDDD
 ```
