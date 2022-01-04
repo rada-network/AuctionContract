@@ -14,24 +14,24 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * Find information on LINK Token Contracts and get the latest ETH and LINK faucets here: https://docs.chain.link/docs/link-token-contracts/
  */
 
-contract RadomizeByRarity is VRFConsumerBase, Ownable {
+contract RandomizeByRarity is VRFConsumerBase, Ownable {
     bytes32 internal keyHash;
     uint256 internal fee;
 
     struct Pool {
         string title;
-        address caller;
         uint256 total;
         uint256 count;
         uint256[] rarity;
     }
-    Pool[] pools;
+    mapping(uint256 => Pool) public pools;
 
     mapping(uint256 => mapping(uint256 => uint256)) results;
 
     event DiceRolled(bytes32 requestId, uint256 poolId, uint256 itemId);
     event DiceLanded(uint256 poolId, uint256 itemId, uint256 result);
-    event PoolCreated(uint256 poolId);
+    event AddPool(uint256 poolId);
+    event UpdatePool(uint256 poolId);
 
     mapping(bytes32 => uint256[2]) requests;
     mapping(address => bool) public admins;
@@ -74,6 +74,18 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
     //     admins[owner()] = true;
     // }
 
+    /**
+        Modifiers
+     */
+    modifier onlyAdmin() {
+        require(_checkAdmin(), "Caller is not an admin");
+        _;
+    }
+
+    function _checkAdmin() private view returns (bool) {
+        return admins[_msgSender()] == true;
+    }
+
     // admin
     function setAdmin(address _admin) external onlyOwner {
         require(!admins[_admin], "Admin already");
@@ -86,25 +98,41 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
     }
 
     function addPool(
+        uint256 _poolId,
         string memory _title,
-        address _caller,
         uint256[] memory _rarity
-    ) external {
-        require(admins[msg.sender], "Permission Denied");
+    ) external onlyAdmin {
+        require(pools[_poolId].rarity.length == 0, "Pool existing");
+        require(_rarity.length > 0, "Invalid Rarity");
+
         uint256 _total;
         for (uint256 i; i < _rarity.length; i++) _total += _rarity[i];
         // new pool
-        pools.push(Pool(_title, _caller, _total, 0, _rarity));
+        pools[_poolId] = Pool(_title, _total, 0, _rarity);
 
-        emit PoolCreated(pools.length - 1);
+        emit AddPool(_poolId);
+    }
+
+    function updatePool(
+        uint256 _poolId,
+        string memory _title,
+        uint256[] memory _rarity
+    ) external onlyAdmin {
+        require(pools[_poolId].rarity.length > 0, "Invalid");
+
+        uint256 _total;
+        for (uint256 i; i < _rarity.length; i++) _total += _rarity[i];
+        // Update pool
+        Pool storage pool = pools[_poolId];
+        pool.title = _title;
+        pool.total = _total;
+        pool.rarity = _rarity;
+
+        emit UpdatePool(_poolId);
     }
 
     function getPool(uint256 _poolId) external view returns (Pool memory) {
         return pools[_poolId];
-    }
-
-    function getPoolCount() external view returns (uint256) {
-        return pools.length;
     }
 
     function setFee(uint256 _fee) external virtual {
@@ -116,9 +144,9 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
      */
     function requestRandomNumber(uint256 _poolId, uint256 _id)
         public
+        onlyAdmin
         returns (bytes32 requestId)
     {
-        require(pools[_poolId].caller == msg.sender, "Permission Denied");
         require(results[_poolId][_id] == 0, "Generated");
         require(pools[_poolId].total > pools[_poolId].count, "Overflow");
         require(
@@ -181,7 +209,7 @@ contract RadomizeByRarity is VRFConsumerBase, Ownable {
     }
 
     function withdrawLink() external {
-        require(admins[msg.sender], "Permission Denied");
+        require(admins[_msgSender()], "Permission Denied");
         require(
             LINK.transfer(owner(), LINK.balanceOf(address(this))),
             "Unable to transfer"

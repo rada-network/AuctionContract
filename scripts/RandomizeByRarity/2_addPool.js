@@ -1,6 +1,5 @@
 const { ethers, hardhatArguments } = require('hardhat');
 const { addresses: contractAddresses } = require('./proxyAddresses');
-const { addresses: tokenAddresses } = require('../BoxTokenAddresses');
 
 const { pe,fe,fu,pu } = require('../../utils');
 
@@ -10,22 +9,22 @@ async function main() {
 
   const network = hardhatArguments.network;
   const contractAddress = contractAddresses[network];
-  const tokenAddress = tokenAddresses[network];
 
   console.log("With the account:", deployer.address);
-  console.log("With RadaAuctionContract address:", contractAddress);
+  console.log("With RandomizeByRarity address:", contractAddress);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const RadaAuctionContract = await ethers.getContractAt("RadaAuctionContract",contractAddress);
+  const RandomizeByRarity = await ethers.getContractAt("RandomizeByRarity",contractAddress);
 
   // Create first campaign
   // TODO: Fill your poolId
-  const poolId = 5; // 2
-  // const title = "Token Auction";
-  const startPrice = pe("150");
-  const addressItem = tokenAddress; // Address of NFT or Token
-  const isSaleToken = true; // Sale NFT or Token
-  await RadaAuctionContract.addPool(poolId, startPrice, addressItem, isSaleToken);
+  const poolId = 5; // 1 is auction, 3 is fixed swap, 5 Auction Token Box
+
+  const title = "Token Box - Auction";
+  const rarity = [1000,10,10,3,3,3,2,2,2,1,1,1];
+
+  await RandomizeByRarity.addPool(poolId, title, rarity);
+
 
   console.log("addPool # "+poolId+" success");
 

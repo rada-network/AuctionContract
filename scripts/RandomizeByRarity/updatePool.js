@@ -1,6 +1,5 @@
 const { ethers, upgrades, hardhatArguments } = require('hardhat');
 const { addresses: contractAddresses } = require('./proxyAddresses');
-const { addresses: nftAddresses } = require('../RadaNftAddresses');
 
 const { pe,fe,fu,pu, sleep } = require('../../utils');
 
@@ -11,23 +10,17 @@ async function main() {
   const contractAddress = contractAddresses[network];
 
   console.log("With the account:", deployer.address);
-  console.log("With OpenBoxContract address:", contractAddress);
+  console.log("With RandomizeByRarity address:", contractAddress);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const OpenBoxContract = await ethers.getContractAt("OpenBoxContract",contractAddress);
+  const RandomizeByRarity = await ethers.getContractAt("RandomizeByRarity",contractAddress);
 
   // TODO: Fill your poolId
-  const poolId = 3; // 1 is auction, 3 is fixed swap
-  const title = "NFT Box - Fixed Swap";
-  const nftAddress = nftAddresses[network];
+  const poolId = 5; // 1 is auction, 3 is fixed swap, 5 Auction Token Box
+  const title = "Token Box - Auction";
+  const rarity = [];
 
-  var startId = 20101;
-  var endId = 21000;
-  var isSaleToken = false;
-  const tokenAddress = ethers.constants.AddressZero;
-
-
-  await OpenBoxContract.updatePool(poolId, title, nftAddress, startId, endId, isSaleToken, tokenAddress);
+  await RandomizeByRarity.updatePool(poolId, title, rarity);
   console.log("updatePool "+poolId+" success");
 
   const afterDeploy = fe(await deployer.getBalance());

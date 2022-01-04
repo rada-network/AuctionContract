@@ -1,5 +1,6 @@
 const { ethers, hardhatArguments } = require('hardhat');
 const { addresses: contractAddresses } = require('./proxyAddresses');
+const { addresses: nftAddresses } = require('../RadaNftAddresses');
 const { addresses: tokenAddresses } = require('../BoxTokenAddresses');
 
 const { pe,fe,fu,pu } = require('../../utils');
@@ -10,22 +11,23 @@ async function main() {
 
   const network = hardhatArguments.network;
   const contractAddress = contractAddresses[network];
-  const tokenAddress = tokenAddresses[network];
 
   console.log("With the account:", deployer.address);
-  console.log("With RadaAuctionContract address:", contractAddress);
+  console.log("With OpenBoxContract address:", contractAddress);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const RadaAuctionContract = await ethers.getContractAt("RadaAuctionContract",contractAddress);
+  const OpenBoxContract = await ethers.getContractAt("OpenBoxContract",contractAddress);
 
   // Create first campaign
   // TODO: Fill your poolId
-  const poolId = 5; // 2
-  // const title = "Token Auction";
-  const startPrice = pe("150");
-  const addressItem = tokenAddress; // Address of NFT or Token
-  const isSaleToken = true; // Sale NFT or Token
-  await RadaAuctionContract.addPool(poolId, startPrice, addressItem, isSaleToken);
+  const poolId = 5; // 1 is auction, 3 is fixed swap, 5 Auction Token Box
+  const title = "Token Box - Auction";
+  const nftAddress = nftAddresses[network];
+  var isSaleToken = true;
+  const tokenAddress = tokenAddresses[network];
+
+  await OpenBoxContract.addPool(poolId, title, nftAddress, isSaleToken, tokenAddress);
+
 
   console.log("addPool # "+poolId+" success");
 

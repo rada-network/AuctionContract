@@ -39,7 +39,7 @@ describe("Auction Contract - Token", function () {
     const BUSDToken = await ethers.getContractFactory("BUSDToken");
     bUSDToken = await BUSDToken.deploy();
 
-    const ERC20Token = await ethers.getContractFactory("BUSDToken");
+    const ERC20Token = await ethers.getContractFactory("BoxToken");
     contractERC20 = await ERC20Token.deploy();
 
     // Get the ContractFactory

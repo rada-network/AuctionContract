@@ -36,16 +36,19 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     // NFT contract
     IUpdateERC721 itemNft;
+    IERC20Upgradeable tokenBox;
 
     /**
         DATA Structure
      */
     struct POOL_INFO {
         string title;
-        address addressItem;
+        address nftAddress;
         uint256 startId; // Start tokenID
         uint256 endId; // End tokenID
         uint32 totalOpen; // Total opened in pool
+        bool isSaleToken; // Sale Token or NFT
+        address tokenAddress;
     }
 
     // Operation
@@ -55,8 +58,7 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     event OpenBox(
         address buyerAddress,
         uint16 indexed poolId,
-        uint256 indexed tokenId,
-        uint256[] indexed newTokenIds
+        uint256 indexed newTokenId
     );
     event UpdateNFT(
         address buyerAddress,
@@ -91,26 +93,42 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     /**
      * @dev function to Open box NFT
      */
-    function openBox(uint16 _poolId, uint256 _tokenId) external {
-        POOL_INFO memory pool = pools[_poolId];
-        itemNft = IUpdateERC721(pool.addressItem);
+    function openBox(uint16 _poolId, uint256 _boxesId) external {
+        POOL_INFO storage pool = pools[_poolId];
+        itemNft = IUpdateERC721(pool.nftAddress);
 
-        require(
-            itemNft.ownerOf(_tokenId) == _msgSender(),
-            "Caller must be owner"
-        );
-        require(itemNft.items(_tokenId).typeNft == 0, "Not box");
-        itemNft.burn(_tokenId);
-        // itemNft.handleUse(_tokenId, true);
-        // Mint new NFT
-        uint256 tokenId = pool.startId + pool.totalOpen;
-        itemNft.safeMint(_msgSender(), tokenId);
+        if (pool.isSaleToken) {
+            tokenBox = IERC20Upgradeable(pool.tokenAddress);
+            require(
+                tokenBox.balanceOf(_msgSender()) >= _boxesId,
+                "Not enough Token"
+            );
 
-        uint256[] memory newTokenIds = new uint256[](tokenId);
+            // transfer box to contract
+            tokenBox.safeTransferFrom(_msgSender(), address(this), _boxesId);
 
-        pools[_poolId].totalOpen++;
+            // mint nfts
+            for (uint256 i = 0; i < _boxesId; i++) {
+                // Mint new NFT
+                uint256 newTokenId = pool.startId + pool.totalOpen;
+                itemNft.safeMint(_msgSender(), newTokenId);
+                pool.totalOpen++;
+                emit OpenBox(_msgSender(), _poolId, newTokenId);
+            }
+        } else {
+            require(
+                itemNft.ownerOf(_boxesId) == _msgSender(),
+                "Caller must be owner"
+            );
+            require(itemNft.items(_boxesId).typeNft == 0, "Not box");
+            itemNft.burn(_boxesId);
+            // Mint new NFT
+            uint256 newTokenId = pool.startId + pool.totalOpen;
+            itemNft.safeMint(_msgSender(), newTokenId);
 
-        emit OpenBox(_msgSender(), _poolId, _tokenId, newTokenIds);
+            pool.totalOpen++;
+            emit OpenBox(_msgSender(), _poolId, newTokenId);
+        }
     }
 
     /**
@@ -122,7 +140,7 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint16 _typeRarity
     ) external onlyAdmin {
         POOL_INFO memory pool = pools[_poolId];
-        itemNft = IUpdateERC721(pool.addressItem);
+        itemNft = IUpdateERC721(pool.nftAddress);
 
         itemNft.setType(_tokenId, _typeRarity);
 
@@ -143,34 +161,48 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     function addPool(
         uint16 _poolId,
         string memory _title,
-        address _addressItem
+        address _nftAddress,
+        bool _isSaleToken,
+        address _tokenAddress
     ) external onlyAdmin {
-        require(_addressItem != address(0), "Invalid address");
+        require(_nftAddress != address(0), "Invalid address");
+        if (_isSaleToken) {
+            require(_tokenAddress != address(0), "Invalid address Token Box");
+        }
+        require(pools[_poolId].nftAddress == address(0), "Pool existing");
 
         POOL_INFO memory pool;
-        pool.addressItem = _addressItem;
+        pool.nftAddress = _nftAddress;
         pool.title = _title;
+        pool.isSaleToken = _isSaleToken;
+        pool.tokenAddress = _tokenAddress;
         pools[_poolId] = pool;
     }
 
-    // 1219 bytes
     function updatePool(
         uint16 _poolId,
         string memory _title,
-        address _addressItem,
+        address _nftAddress,
         uint32 _startId,
-        uint32 _endId
+        uint32 _endId,
+        bool _isSaleToken,
+        address _tokenAddress
     ) external onlyAdmin {
-        require(_addressItem != address(0), "Invalid address");
+        require(_nftAddress != address(0), "Invalid address");
+        if (_isSaleToken) {
+            require(_tokenAddress != address(0), "Invalid address Token Box");
+        }
 
         POOL_INFO memory pool = pools[_poolId]; // pool info
-        require(pool.addressItem != address(0), "Invalid pool");
+        require(pool.nftAddress != address(0), "Invalid pool");
 
         // do update
         pools[_poolId].title = _title;
-        pools[_poolId].addressItem = _addressItem;
+        pools[_poolId].nftAddress = _nftAddress;
         pools[_poolId].startId = _startId;
         pools[_poolId].endId = _endId;
+        pools[_poolId].isSaleToken = _isSaleToken;
+        pools[_poolId].tokenAddress = _tokenAddress;
     }
 
     function version() public pure virtual returns (string memory) {

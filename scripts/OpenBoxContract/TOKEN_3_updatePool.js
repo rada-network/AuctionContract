@@ -1,6 +1,7 @@
 const { ethers, upgrades, hardhatArguments } = require('hardhat');
 const { addresses: contractAddresses } = require('./proxyAddresses');
 const { addresses: nftAddresses } = require('../RadaNftAddresses');
+const { addresses: tokenAddresses } = require('../BoxTokenAddresses');
 
 const { pe,fe,fu,pu, sleep } = require('../../utils');
 
@@ -17,15 +18,13 @@ async function main() {
   const OpenBoxContract = await ethers.getContractAt("OpenBoxContract",contractAddress);
 
   // TODO: Fill your poolId
-  const poolId = 3; // 1 is auction, 3 is fixed swap
-  const title = "NFT Box - Fixed Swap";
-  const nftAddress = nftAddresses[network];
-
+  const poolId = 5; // 1 is auction, 3 is fixed swap, 5 Auction Token Box
+  const title = "Token Box - Auction";
   var startId = 20101;
   var endId = 21000;
-  var isSaleToken = false;
-  const tokenAddress = ethers.constants.AddressZero;
-
+  const nftAddress = nftAddresses[network];
+  var isSaleToken = true;
+  const tokenAddress = tokenAddresses[network];
 
   await OpenBoxContract.updatePool(poolId, title, nftAddress, startId, endId, isSaleToken, tokenAddress);
   console.log("updatePool "+poolId+" success");

@@ -11,6 +11,7 @@ require('hardhat-contract-sizer');
 const RINKEBY_API_KEY = process.env.RINKEBY_API_KEY;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 const BSC_API_KEY = process.env.BSC_API_KEY;
+const PLO_API_KEY = process.env.PLO_API_KEY;
 
 // Replace this private key with your Ropsten account private key
 // To export your private key from Metamask, open Metamask and
@@ -38,21 +39,12 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
  */
 module.exports = {
   solidity: "0.8.9",
-  etherscan: {
-    // Your API key for Etherscan
-    // Obtain one at https://etherscan.io/
-    //apiKey: ETHERSCAN_API_KEY
-    apiKey: BSC_API_KEY
-  },
+
   networks: {
     localhost: {
       url: "http://127.0.0.1:7545",
     },
     hardhat: {},
-    // rinkeby: {
-    //   url: `https://rinkeby.infura.io/v3/${RINKEBY_API_KEY}`,
-    //   accounts: [`0x${PRIVATE_KEY}`],
-    // },
     testnet: {
       url: "https://data-seed-prebsc-2-s3.binance.org:8545/",
       chainId: 97,
@@ -79,6 +71,20 @@ module.exports = {
         count: 20
       } */
     },
+    polygon: {
+      url: "https://polygon-rpc.com",
+      accounts: [`0x${PRIVATE_KEY}`],
+      chainId: 137
+    },
+    polygonMumbai: {
+      url: "https://rpc-mumbai.maticvigil.com",
+      accounts: [`0x${PRIVATE_KEY}`],
+      chainId: 80001
+    }
+  },
+  etherscan: {
+    // apiKey: BSC_API_KEY
+    apiKey: PLO_API_KEY
   },
   gasReporter: {
     enabled: false,
@@ -92,6 +98,6 @@ module.exports = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
-    only: ['RadaAuctionContract','RadaFixedSwapContract', 'OpenBoxContract'],
+    only: ['RadaAuctionContract','RadaFixedSwapContract', 'OpenBoxContract', 'RandomizeByRarity'],
   }
 };

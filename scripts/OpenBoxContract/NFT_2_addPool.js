@@ -10,7 +10,6 @@ async function main() {
 
   const network = hardhatArguments.network;
   const contractAddress = contractAddresses[network];
-  const nftAddress = nftAddresses[network];
 
   console.log("With the account:", deployer.address);
   console.log("With OpenBoxContract address:", contractAddress);
@@ -22,8 +21,11 @@ async function main() {
   // TODO: Fill your poolId
   const poolId = 3; // 1 is auction, 3 is fixed swap
   const title = "NFT Box - Fixed Swap";
-  const addressItem = nftAddress; // Address of NFT
-  await OpenBoxContract.addPool(poolId, title, addressItem);
+  const nftAddress = nftAddresses[network];
+  const isSaleToken = false;
+  const tokenAddress = ethers.constants.AddressZero;
+
+  await OpenBoxContract.addPool(poolId, title, nftAddress, isSaleToken, tokenAddress);
 
 
   console.log("addPool # "+poolId+" success");

@@ -132,10 +132,12 @@ contract RadaAuctionContract is
             "Not Started / Expired / isPublic"
         ); // The pool have not started / Expired / isPublic
 
-        require(
-            !pool.requireWhitelist || whitelistAddresses[_poolId][_msgSender()],
-            "Caller is not in whitelist"
-        );
+        if (pool.requireWhitelist) {
+            require(
+                whitelistAddresses[_poolId][_msgSender()],
+                "Caller is not in whitelist"
+            );
+        }
 
         uint256 totalItemBought;
         for (uint256 i = 0; i < buyerBid[_poolId][_msgSender()].length; i++) {
@@ -452,9 +454,5 @@ contract RadaAuctionContract is
         returns (uint32[] memory)
     {
         return buyerBid[_poolId][_address];
-    }
-
-    function version() public pure virtual returns (string memory) {
-        return "v1";
     }
 }

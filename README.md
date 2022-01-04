@@ -29,7 +29,7 @@ npx hardhat run scripts/RadaAuctionContract/1_deploy.js --network testnet
 npx hardhat run scripts/RadaFixedSwapContract/1_deploy.js --network testnet
 // Copy Contract address to proxyAddresses.js
 
-# Require setMinterFactories for 2 contract RADA above
+# TODO: Require setMinterFactories for 3 contract RADA above and OpenBox Contract
 
 # NFT - Auction
 npx hardhat run scripts/RadaAuctionContract/NFT_2_addPool.js --network testnet
@@ -54,14 +54,34 @@ Step by step Deploy OpenBox to testnet / mainnet
 ```shell
 npx hardhat run scripts/OpenBoxContract/1_deploy.js --network testnet
 # Copy Contract address to proxyAddresses.js
+# Token Box
+npx hardhat run scripts/OpenBoxContract/TOKEN_2_addPool.js --network testnet
+npx hardhat run scripts/OpenBoxContract/TOKEN_3_updatePool.js --network testnet
+
+# NFT Box
 npx hardhat run scripts/OpenBoxContract/NFT_2_addPool.js --network testnet
 npx hardhat run scripts/OpenBoxContract/NFT_3_updatePool.js --network testnet
+
 npx hardhat run scripts/OpenBoxContract/setAdmin.js --network testnet
 
 npx hardhat run scripts/OpenBoxContract/upgradeContract_v2.js --network testnet
 
 npx hardhat run scripts/OpenBoxContract/getImplementationAddress.js --network testnet
 npx hardhat verify --network testnet DDDDDDDDD
+```
+
+Step by step Deploy RandomizeByRarity to polygonMumbai / polygon
+
+```shell
+npx hardhat run scripts/RandomizeByRarity/1_deploy.js --network polygonMumbai
+# Copy Contract address to proxyAddresses.js
+npx hardhat run scripts/RandomizeByRarity/2_addPool.js --network polygonMumbai
+
+# npx hardhat run scripts/RandomizeByRarity/updatePool.js --network polygonMumbai
+
+npx hardhat run scripts/RandomizeByRarity/setAdmin.js --network polygonMumbai
+
+npx hardhat verify --network polygonMumbai 0x04e2ef94a049c77ffef48cec03a9fdb9240c559b "0x326C977E6efc84E512bB9C30f76E30c160eD06FB" "0x8C7382F9D8f56b33781fE506E897a4F1e2d17255" "0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4" 100000000000
 ```
 
 Build & Deploy BSC testnet | RadaNftContract
