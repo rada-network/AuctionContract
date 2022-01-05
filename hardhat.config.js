@@ -86,6 +86,14 @@ module.exports = {
     // apiKey: BSC_API_KEY
     apiKey: PLO_API_KEY
   },
+  /* etherscan: {
+    apiKey: {
+      bsc: BSC_API_KEY,
+      bscTestnet: BSC_API_KEY,
+      polygon: PLO_API_KEY,
+      polygonMumbai: PLO_API_KEY,
+    }
+  }, */
   gasReporter: {
     enabled: false,
     excludeContracts: ['RIRToken', 'MEOToken'],

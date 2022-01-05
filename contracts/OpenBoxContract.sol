@@ -205,6 +205,23 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         pools[_poolId].tokenAddress = _tokenAddress;
     }
 
+    /**
+     * @dev function to withdraw all fund
+     */
+    function withdrawFund(address _tokenAddress, uint256 _amount)
+        external
+        onlyOwner
+    {
+        IERC20Upgradeable token = IERC20Upgradeable(_tokenAddress);
+        require(
+            token.balanceOf(address(this)) >= _amount &&
+                owner() != address(0),
+            "Invalid"
+        );
+
+        token.safeTransfer(owner(), _amount);
+    }
+
     function version() public pure virtual returns (string memory) {
         return "v1";
     }

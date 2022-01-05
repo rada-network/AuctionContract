@@ -133,3 +133,7 @@ npx hardhat run scripts/BoxToken/sendTokentest.js --network testnet
 // npx hardhat verify --network testnet --contract contracts/BoxToken.sol:BoxToken TODO_token_address
 
 ```
+
+```shell
+remixd -s ./ --remix-ide https://remix.ethereum.org
+```
