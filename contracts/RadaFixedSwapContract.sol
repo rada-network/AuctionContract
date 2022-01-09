@@ -57,6 +57,7 @@ contract RadaFixedSwapContract is
     }
     mapping(uint16 => POOL_INFO) public pools;
     uint16[] public poolIds;
+
     mapping(uint16 => POOL_STATS) public poolStats; // poolId => pool stats
     mapping(uint16 => BID_INFO[]) public bids; // poolId => bids
 
@@ -209,7 +210,7 @@ contract RadaFixedSwapContract is
         uint16 _poolId,
         address[] memory _addresses,
         bool _allow
-    ) public onlyOwner {
+    ) public onlyAdmin {
         for (uint256 i = 0; i < _addresses.length; i++) {
             whitelistAddresses[_poolId][_addresses[i]] = _allow;
         }

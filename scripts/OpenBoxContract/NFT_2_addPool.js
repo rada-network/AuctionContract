@@ -24,8 +24,9 @@ async function main() {
   const nftAddress = nftAddresses[network];
   const isSaleToken = false;
   const tokenAddress = ethers.constants.AddressZero;
+  const nftBoxAddress = nftAddresses[network];
 
-  await OpenBoxContract.addPool(poolId, title, nftAddress, isSaleToken, tokenAddress);
+  await OpenBoxContract.addPool(poolId, title, nftAddress, isSaleToken, tokenAddress, nftBoxAddress);
 
 
   console.log("addPool # "+poolId+" success");

@@ -1,7 +1,7 @@
 
 module.exports = {
   addresses: {
-    "testnet": "0x49117A8E02872C0B6b399829823bD912Bf74B097",
+    "testnet": "0xB94f9f965Fdd16c409226B6A70d25A34D2bB7f76",
     "mainnet": ""
   }
 };

@@ -22,12 +22,12 @@ npx hardhat test
 Step by step Deploy to testnet / mainnet
 
 ```shell
-npx hardhat run scripts/RadaNftContract/1_deploy.js --network testnet
-// Copy Contract address to proxyAddresses.js
+npx hardhat run scripts/OpenBoxContract/1_deploy.js --network testnet
+# Copy Contract address to proxyAddresses.js
 npx hardhat run scripts/RadaAuctionContract/1_deploy.js --network testnet
-// Copy Contract address to proxyAddresses.js
+# Copy Contract address to proxyAddresses.js
 npx hardhat run scripts/RadaFixedSwapContract/1_deploy.js --network testnet
-// Copy Contract address to proxyAddresses.js
+# Copy Contract address to proxyAddresses.js
 
 # TODO: Require setMinterFactories for 3 contract RADA above and OpenBox Contract
 
@@ -81,19 +81,7 @@ npx hardhat run scripts/RandomizeByRarity/2_addPool.js --network polygonMumbai
 
 npx hardhat run scripts/RandomizeByRarity/setAdmin.js --network polygonMumbai
 
-npx hardhat verify --network polygonMumbai 0x04e2ef94a049c77ffef48cec03a9fdb9240c559b "0x326C977E6efc84E512bB9C30f76E30c160eD06FB" "0x8C7382F9D8f56b33781fE506E897a4F1e2d17255" "0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4" 100000000000
-```
-
-Build & Deploy BSC testnet | RadaNftContract
-
-```shell
-
-npx hardhat run scripts/RadaNftContract/1_deploy.js --network testnet
-// Copy Token address to proxyAddresses.js
-# npx hardhat run scripts/RadaNftContract/2_setup.js --network testnet
-
-// npx hardhat verify --network testnet --contract contracts/RadaNftContract.sol:RadaNftContract 0x6d6E82862a32A16787cC6a4b7084B05d38f22948
-
+npx hardhat verify --network polygonMumbai 0x7a789f5620408a44219e63a5b037f12a5f36196b "0x326C977E6efc84E512bB9C30f76E30c160eD06FB" "0x8C7382F9D8f56b33781fE506E897a4F1e2d17255" "0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4" 100000000000
 ```
 
 Build & run script
@@ -103,7 +91,11 @@ Build & run script
 npx hardhat run scripts/RadaAuctionContract/upgradeContract_v2.js --network testnet
 
 npx hardhat run scripts/RadaAuctionContract/getImplementationAddress.js --network testnet
-npx hardhat verify --network testnet 0xdcEc2C5f5aF78a08c513cf4Ed139C88A3aD2eaE7
+npx hardhat verify --network testnet ADDRESS_ABOVE
+
+
+npx hardhat run scripts/RadaFixedSwapContract/getImplementationAddress.js --network testnet
+npx hardhat verify --network testnet ADDRESS_ABOVE
 ```
 
 Build & Deploy BSC testnet | BUSDToken

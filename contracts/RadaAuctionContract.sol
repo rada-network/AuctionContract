@@ -58,8 +58,8 @@ contract RadaAuctionContract is
         bool claimed;
     }
     mapping(uint16 => POOL_INFO) public pools;
-    mapping(uint16 => POOL_STATS) public poolStats; // poolId => pool stats
     uint16[] public poolIds;
+    mapping(uint16 => POOL_STATS) public poolStats; // poolId => pool stats
     mapping(uint16 => BID_INFO[]) public bids; // poolId => bids
 
     // Operation
@@ -205,10 +205,11 @@ contract RadaAuctionContract is
         BID_INFO storage bid = bids[_poolId][_bidIndex];
 
         require(
-            _quantity >= bid.quantity && _priceEach >= bid.priceEach,
+            _quantity >= bid.quantity &&
+                _priceEach >= bid.priceEach &&
+                _msgSender() == bid.creator,
             "Bid not valid"
         );
-        require(_msgSender() == bid.creator, "Required owner");
 
         uint256 amountBusd = _quantity * _priceEach;
         uint256 newAmountBusd = bid.quantity * bid.priceEach;
@@ -268,10 +269,12 @@ contract RadaAuctionContract is
         BID_INFO memory bid = bids[_poolId][_bidIdx];
         POOL_INFO memory pool = pools[_poolId];
         require(
-            pool.ended && pool.isPublic && bid.claimed == false,
+            pool.ended &&
+                pool.isPublic &&
+                bid.claimed == false &&
+                bid.creator == _msgSender(),
             "Invalid claim"
         ); // Pool not end yet / isPublic / Claimed
-        require(bid.creator == _msgSender(), "Invalid claim");
 
         uint256 totalAmount = bid.priceEach.mul(bid.quantity);
         uint256 remainBusd = bid.priceEach.mul(bid.quantity - bid.winQuantity);
@@ -344,7 +347,7 @@ contract RadaAuctionContract is
         uint16 _poolId,
         address[] memory _addresses,
         bool _allow
-    ) public onlyOwner {
+    ) public onlyAdmin {
         for (uint256 i = 0; i < _addresses.length; i++) {
             whitelistAddresses[_poolId][_addresses[i]] = _allow;
         }
@@ -412,13 +415,14 @@ contract RadaAuctionContract is
         bool _requireWhitelist,
         uint256 _maxBuyPerAddress
     ) external onlyAdmin {
+        POOL_INFO memory pool = pools[_poolId]; // pool info
         require(
-            pools[_poolId].startPrice > 0 && _startId > 0 && _endId > _startId,
+            pool.startPrice > 0 &&
+                _startId > 0 &&
+                _endId > _startId &&
+                !pool.isPublic,
             "Invalid"
         );
-
-        POOL_INFO memory pool = pools[_poolId]; // pool info
-        require(!pool.isPublic, "Pool is public");
 
         // do update
         // pools[_poolId].title = _title;
