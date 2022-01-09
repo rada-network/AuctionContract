@@ -205,7 +205,7 @@ describe("Auction Contract - Token", function () {
     // User 2 claim
     await contractRadaAuction.connect(buyerUser2).claim(poolId, 2); // Claim bid 2
     // Try claim illegal
-    await expect(contractRadaAuction.connect(buyerUser2).claim(poolId, 2)).to.be.revertedWith("Claimed");
+    await expect(contractRadaAuction.connect(buyerUser2).claim(poolId, 2)).to.be.revertedWith("Invalid claim");
 
     expect(await contractERC20.balanceOf(buyerUser2.address)).to.equal(pu("2"));
     // Check remain
@@ -235,7 +235,7 @@ describe("Auction Contract - Token", function () {
     await contractRadaAuction.connect(buyerUser).claim(poolId, 0);
 
     // Try claim again
-    await expect(contractRadaAuction.connect(buyerUser).claim(poolId, 0)).to.be.revertedWith("Claimed");
+    await expect(contractRadaAuction.connect(buyerUser).claim(poolId, 0)).to.be.revertedWith("Invalid claim");
 
     expect(await contractERC20.balanceOf(buyerUser.address)).to.equal(pu("5"));
   });

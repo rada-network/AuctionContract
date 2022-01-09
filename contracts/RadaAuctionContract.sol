@@ -59,7 +59,7 @@ contract RadaAuctionContract is
     }
     mapping(uint16 => POOL_INFO) public pools;
     mapping(uint16 => POOL_STATS) public poolStats; // poolId => pool stats
-
+    uint16[] public poolIds;
     mapping(uint16 => BID_INFO[]) public bids; // poolId => bids
 
     // Operation
@@ -394,6 +394,8 @@ contract RadaAuctionContract is
         pool.isSaleToken = _isSaleToken;
         pool.isPublic = false;
         pools[_poolId] = pool;
+
+        poolIds.push(_poolId);
     }
 
     // 1219 bytes
@@ -454,5 +456,9 @@ contract RadaAuctionContract is
         returns (uint32[] memory)
     {
         return buyerBid[_poolId][_address];
+    }
+
+    function getPoolIds() public view returns (uint16[] memory) {
+        return poolIds;
     }
 }

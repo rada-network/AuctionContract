@@ -18,13 +18,14 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
     bytes32 internal keyHash;
     uint256 internal fee;
 
-    struct Pool {
+    struct POOL_INFO {
         string title;
         uint256 total;
         uint256 count;
         uint256[] rarity;
     }
-    mapping(uint256 => Pool) public pools;
+    mapping(uint256 => POOL_INFO) public pools;
+    uint256[] public poolIds;
 
     mapping(uint256 => mapping(uint256 => uint256)) results;
 
@@ -108,7 +109,8 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
         uint256 _total;
         for (uint256 i; i < _rarity.length; i++) _total += _rarity[i];
         // new pool
-        pools[_poolId] = Pool(_title, _total, 0, _rarity);
+        pools[_poolId] = POOL_INFO(_title, _total, 0, _rarity);
+        poolIds.push(_poolId);
 
         emit AddPool(_poolId);
     }
@@ -123,7 +125,7 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
         uint256 _total;
         for (uint256 i; i < _rarity.length; i++) _total += _rarity[i];
         // Update pool
-        Pool storage pool = pools[_poolId];
+        POOL_INFO storage pool = pools[_poolId];
         pool.title = _title;
         pool.total = _total;
         pool.rarity = _rarity;
@@ -131,7 +133,7 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
         emit UpdatePool(_poolId);
     }
 
-    function getPool(uint256 _poolId) external view returns (Pool memory) {
+    function getPool(uint256 _poolId) external view returns (POOL_INFO memory) {
         return pools[_poolId];
     }
 
@@ -176,7 +178,7 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
         uint256 _poolId = requests[requestId][0];
         uint256 _id = requests[requestId][1];
 
-        Pool memory _pool = pools[_poolId];
+        POOL_INFO memory _pool = pools[_poolId];
         require(results[_poolId][_id] == 0, "Generated");
         require(_pool.total > _pool.count, "Something wrong");
 
@@ -214,5 +216,9 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
             LINK.transfer(owner(), LINK.balanceOf(address(this))),
             "Unable to transfer"
         );
+    }
+
+    function getPoolIds() public view returns (uint256[] memory) {
+        return poolIds;
     }
 }

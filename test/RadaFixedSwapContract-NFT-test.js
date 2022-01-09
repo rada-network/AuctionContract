@@ -189,7 +189,9 @@ describe("NFT Contract", function () {
     expect(await contractNFT.tokenOfOwnerByIndex(buyerUser2.address, 0)).to.equal(pu("10011"));
     expect(await contractNFT.tokenOfOwnerByIndex(buyerUser2.address, 1)).to.equal(pu("10012"));
     // Check remain
-    expect(await bUSDToken.balanceOf(buyerUser2.address)).to.equal(pe("0"));
+    // expect(await bUSDToken.balanceOf(buyerUser2.address)).to.equal(pe("0"));
+    expect(await bUSDToken.balanceOf(buyerUser2.address)).to.equal(pe((fundUser2-priceEach*quantity).toString()));
+
 
   });
 

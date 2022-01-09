@@ -54,6 +54,7 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // Operation
     mapping(address => bool) public admins;
     mapping(uint16 => POOL_INFO) public pools;
+    uint16[] public poolIds;
 
     event OpenBox(
         address buyerAddress,
@@ -95,6 +96,8 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
      */
     function openBox(uint16 _poolId, uint256 _boxesId) external {
         POOL_INFO storage pool = pools[_poolId];
+        require(pool.nftAddress != address(0), "Pool not found");
+
         itemNft = IUpdateERC721(pool.nftAddress);
 
         if (pool.isSaleToken) {
@@ -140,6 +143,8 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint16 _typeRarity
     ) external onlyAdmin {
         POOL_INFO memory pool = pools[_poolId];
+        require(pool.nftAddress != address(0), "Pool not found");
+
         itemNft = IUpdateERC721(pool.nftAddress);
 
         itemNft.setType(_tokenId, _typeRarity);
@@ -177,6 +182,8 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         pool.isSaleToken = _isSaleToken;
         pool.tokenAddress = _tokenAddress;
         pools[_poolId] = pool;
+
+        poolIds.push(_poolId);
     }
 
     function updatePool(
@@ -194,7 +201,7 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         }
 
         POOL_INFO memory pool = pools[_poolId]; // pool info
-        require(pool.nftAddress != address(0), "Invalid pool");
+        require(pool.nftAddress != address(0), "Pool not found");
 
         // do update
         pools[_poolId].title = _title;
@@ -214,15 +221,14 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     {
         IERC20Upgradeable token = IERC20Upgradeable(_tokenAddress);
         require(
-            token.balanceOf(address(this)) >= _amount &&
-                owner() != address(0),
+            token.balanceOf(address(this)) >= _amount && owner() != address(0),
             "Invalid"
         );
 
         token.safeTransfer(owner(), _amount);
     }
 
-    function version() public pure virtual returns (string memory) {
-        return "v1";
+    function getPoolIds() public view returns (uint16[] memory) {
+        return poolIds;
     }
 }

@@ -56,6 +56,7 @@ contract RadaFixedSwapContract is
         uint256 winQuantity;
     }
     mapping(uint16 => POOL_INFO) public pools;
+    uint16[] public poolIds;
     mapping(uint16 => POOL_STATS) public poolStats; // poolId => pool stats
     mapping(uint16 => BID_INFO[]) public bids; // poolId => bids
 
@@ -251,6 +252,8 @@ contract RadaFixedSwapContract is
         pool.isSaleToken = _isSaleToken;
         pool.isPublic = false;
         pools[_poolId] = pool;
+
+        poolIds.push(_poolId);
     }
 
     function updatePool(
@@ -311,7 +314,7 @@ contract RadaFixedSwapContract is
         return buyerBid[_poolId][_address];
     }
 
-    function version() public pure virtual returns (string memory) {
-        return "v1";
+    function getPoolIds() public view returns (uint16[] memory) {
+        return poolIds;
     }
 }
