@@ -31,6 +31,10 @@ npx hardhat run scripts/RadaFixedSwapContract/1_deploy.js --network testnet
 
 # TODO: Require setMinterFactories for 3 contract RADA above and OpenBox Contract
 
+npx hardhat run scripts/RadaFixedSwapContract/setAdmin.js --network testnet
+npx hardhat run scripts/RadaAuctionContract/setAdmin.js --network testnet
+npx hardhat run scripts/OpenBoxContract/setAdmin.js --network testnet
+
 # NFT - Auction
 npx hardhat run scripts/RadaAuctionContract/NFT_2_addPool.js --network testnet
 npx hardhat run scripts/RadaAuctionContract/NFT_3_updatePool.js --network testnet

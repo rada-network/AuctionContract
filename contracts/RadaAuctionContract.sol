@@ -1,4 +1,15 @@
 // SPDX-License-Identifier: MIT
+/***********************************************
+'...########:::::'###::::'########:::::'###::::
+....##.... ##:::'## ##::: ##.... ##:::'## ##:::
+....##:::: ##::'##:. ##:: ##:::: ##::'##:. ##::
+....########::'##:::. ##: ##:::: ##:'##:::. ##:
+....##.. ##::: #########: ##:::: ##: #########:
+....##::. ##:: ##.... ##: ##:::: ##: ##.... ##:
+....##:::. ##: ##:::: ##: ########:: ##:::: ##:
+...:::::..::..:::::..::........:::..:::::..::
+***********************************************/
+
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
@@ -8,6 +19,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 interface IMintableERC721 is IERC721Upgradeable {
     function safeMint(address to, uint256 tokenId) external;
@@ -16,7 +28,8 @@ interface IMintableERC721 is IERC721Upgradeable {
 contract RadaAuctionContract is
     Initializable,
     UUPSUpgradeable,
-    OwnableUpgradeable
+    OwnableUpgradeable,
+    ReentrancyGuardUpgradeable
 {
     using SafeMathUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -28,7 +41,6 @@ contract RadaAuctionContract is
         DATA Structure
      */
     struct POOL_INFO {
-        // string title;
         address addressItem;
         bool isSaleToken; // Sale Token or NFT
         uint256 startId; // Start tokenID
@@ -121,7 +133,7 @@ contract RadaAuctionContract is
         uint16 _poolId,
         uint256 _quantity,
         uint256 _priceEach
-    ) external {
+    ) external nonReentrant {
         POOL_INFO memory pool = pools[_poolId];
 
         // require pool is open
@@ -153,8 +165,7 @@ contract RadaAuctionContract is
         uint256 totalAmount = _priceEach.mul(_quantity);
         require(
             _quantity > 0 &&
-                _priceEach >= pool.startPrice &&
-                totalAmount <= busdToken.balanceOf(_msgSender()),
+                _priceEach >= pool.startPrice,
             "Required valid quantity/price/balance"
         ); // Not allow quantity = 0, valid price
 
@@ -201,7 +212,7 @@ contract RadaAuctionContract is
         uint16 _bidIndex,
         uint32 _quantity,
         uint256 _priceEach
-    ) external {
+    ) external nonReentrant {
         BID_INFO storage bid = bids[_poolId][_bidIndex];
 
         require(
@@ -265,7 +276,7 @@ contract RadaAuctionContract is
      * @dev function to handle claim NFT & refund pause
      */
     // 2695 bytes
-    function claim(uint16 _poolId, uint256 _bidIdx) public {
+    function claim(uint16 _poolId, uint256 _bidIdx) public nonReentrant {
         BID_INFO memory bid = bids[_poolId][_bidIdx];
         POOL_INFO memory pool = pools[_poolId];
         require(
@@ -287,10 +298,6 @@ contract RadaAuctionContract is
             if (pool.isSaleToken) {
                 IERC20Upgradeable itemToken = IERC20Upgradeable(
                     pool.addressItem
-                );
-                require(
-                    itemToken.balanceOf(address(this)) >= bid.winQuantity,
-                    "Not enough Token"
                 );
 
                 poolStats[_poolId].totalSold += bid.winQuantity;
@@ -318,12 +325,11 @@ contract RadaAuctionContract is
         emit Claim(_msgSender(), _poolId, _bidIdx);
     }
 
-    // 350 bytes
-    function claimAll(uint16 _poolId) public {
+    /* function claimAll(uint16 _poolId) public nonReentrant {
         for (uint256 i = 0; i < buyerBid[_poolId][_msgSender()].length; i++) {
             claim(_poolId, buyerBid[_poolId][_msgSender()][i]);
         }
-    }
+    } */
 
     /**
      * @dev function to set Admin
@@ -404,7 +410,6 @@ contract RadaAuctionContract is
     // 1219 bytes
     function updatePool(
         uint16 _poolId,
-        // string memory _title,
         address _addressItem,
         bool _isSaleToken,
         uint32 _startId,
@@ -425,7 +430,6 @@ contract RadaAuctionContract is
         );
 
         // do update
-        // pools[_poolId].title = _title;
         pools[_poolId].isSaleToken = _isSaleToken;
         pools[_poolId].addressItem = _addressItem;
         pools[_poolId].startId = _startId;

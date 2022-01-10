@@ -18,8 +18,7 @@ async function main() {
   const OpenBoxContract = await ethers.getContractAt("OpenBoxContract",contractAddress);
 
   // TODO: Fill your poolId
-  const poolId = 5; // 1 is auction, 3 is fixed swap, 5 Auction Token Box
-  const title = "Token Box - Auction";
+  const poolId = 2; // 2 auction, 4 fixed
   var startId = 20101;
   var endId = 21000;
   const nftAddress = nftAddresses[network];
@@ -27,7 +26,7 @@ async function main() {
   const tokenAddress = tokenAddresses[network];
   const nftBoxAddress = ethers.constants.AddressZero;
 
-  await OpenBoxContract.updatePool(poolId, title, nftAddress, startId, endId, isSaleToken, tokenAddress, nftBoxAddress);
+  await OpenBoxContract.updatePool(poolId, nftAddress, startId, endId, isSaleToken, tokenAddress, nftBoxAddress);
   console.log("updatePool "+poolId+" success");
 
   const afterDeploy = fe(await deployer.getBalance());

@@ -115,7 +115,7 @@ describe("Auction Contract - Token", function () {
 
     // Should reverted because not enough BUSD
     priceEach = pe("150");
-    await expect(contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("Required valid quantity/price/balance");
+    await expect(contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("ERC20: transfer amount exceeds balance");
 
     // Admin top up payable token to user
     await bUSDToken.transfer(buyerUser.address, pe("250"));

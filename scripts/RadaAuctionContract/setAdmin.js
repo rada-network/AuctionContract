@@ -1,16 +1,12 @@
-const { ethers, hardhatArguments } = require('hardhat');
+const { ethers, upgrades, hardhatArguments } = require('hardhat');
 const { addresses: contractAddresses } = require('./proxyAddresses');
-const { addresses: tokenAddresses } = require('../BoxTokenAddresses');
-
 const { pe,fe,fu,pu } = require('../../utils');
 
 async function main() {
-
   const [deployer] = await ethers.getSigners();
 
   const network = hardhatArguments.network;
   const contractAddress = contractAddresses[network];
-  const tokenAddress = tokenAddresses[network];
 
   console.log("With the account:", deployer.address);
   console.log("With RadaAuctionContract address:", contractAddress);
@@ -18,15 +14,18 @@ async function main() {
 
   const RadaAuctionContract = await ethers.getContractAt("RadaAuctionContract",contractAddress);
 
-  // Create first campaign
-  // TODO: Fill your poolId
-  const poolId = 2; // 2
-  const startPrice = pe("150");
-  const addressItem = tokenAddress; // Address of NFT or Token
-  const isSaleToken = true; // Sale NFT or Token
-  await RadaAuctionContract.addPool(poolId, startPrice, addressItem, isSaleToken);
+  // TODO: add real whitelist
+  const admins = [
+    "0xAE51701F3eB7b897eB6EE5ecdf35c4fEE29BFAe6", // Quang
+    "0xA8f68bB8d525f5874df9202c63C1f02eeC3dFE1f", // Tan
+    "0x0c1954CEB2227e3C5E6155B40fd929C1fF64F5f5", // HieuVector
+    "0xE8AE51B507CeB672712E99588a8b3Aa991A05420", // Lu
+  ];
 
-  console.log("addPool # "+poolId+" success");
+  for (var i=0;i<admins.length;i++) {
+    await RadaAuctionContract.setAdmin(admins[i],true);
+    console.log("setAdmin " + admins[i]);
+  }
 
   const afterDeploy = fe(await deployer.getBalance());
   console.log("Cost spent:", (beforeDeploy-afterDeploy));

@@ -68,7 +68,6 @@ describe("NFT Contract", function () {
     poolId = 10;
     addressItem = contractNFT.address;
     const maxBuyPerAddress = 10;
-    const title = "NFT Fixed Swap";
     const isSaleToken = false;
     const requireWhitelist = false;
     const isPublic = true;
@@ -77,9 +76,9 @@ describe("NFT Contract", function () {
     const startTime = Math.floor(Date.now() / 1000) - 86400*1; // Now - 1 day
     const endTime = Math.floor(Date.now() / 1000) + 86400*7; // Now + 7 days
     // Add pool
-    await contractRadaFixedSwap.addPool(poolId, title, pe("150"), addressItem, isSaleToken);
+    await contractRadaFixedSwap.addPool(poolId, pe("150"), addressItem, isSaleToken);
     await contractRadaFixedSwap.handlePublicPool(poolId, false);
-    await contractRadaFixedSwap.updatePool(poolId, title, addressItem, isSaleToken, startId, endId,startTime, endTime, priceEach, requireWhitelist, maxBuyPerAddress);
+    await contractRadaFixedSwap.updatePool(poolId, addressItem, isSaleToken, startId, endId,startTime, endTime, priceEach, requireWhitelist, maxBuyPerAddress);
     await contractRadaFixedSwap.handlePublicPool(poolId, true);
 
   });
@@ -112,7 +111,7 @@ describe("NFT Contract", function () {
     const pool = await contractRadaFixedSwap.pools(poolId)
     const requireWhitelist = true;
     await contractRadaFixedSwap.handlePublicPool(poolId, false);
-    await contractRadaFixedSwap.updatePool(poolId, pool.title, pool.addressItem, pool.isSaleToken, pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress);
+    await contractRadaFixedSwap.updatePool(poolId, pool.addressItem, pool.isSaleToken, pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress);
     await contractRadaFixedSwap.handlePublicPool(poolId, true);
     // Approve allowance
     await bUSDToken.connect(buyerUser).approve(contractRadaFixedSwap.address, pe("300"));
@@ -146,7 +145,7 @@ describe("NFT Contract", function () {
     const pool = await contractRadaFixedSwap.pools(poolId)
     const requireWhitelist = true;
     await contractRadaFixedSwap.handlePublicPool(poolId, false);
-    await contractRadaFixedSwap.updatePool(poolId, pool.title, pool.addressItem, pool.isSaleToken, pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress);
+    await contractRadaFixedSwap.updatePool(poolId, pool.addressItem, pool.isSaleToken, pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress);
     await contractRadaFixedSwap.handlePublicPool(poolId, true);
 
     // Approve allowance
@@ -202,7 +201,7 @@ describe("NFT Contract", function () {
     const pool = await contractRadaFixedSwap.pools(poolId)
     const requireWhitelist = true;
     await contractRadaFixedSwap.handlePublicPool(poolId, false);
-    await contractRadaFixedSwap.updatePool(poolId, pool.title, pool.addressItem, pool.isSaleToken, pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress);
+    await contractRadaFixedSwap.updatePool(poolId, pool.addressItem, pool.isSaleToken, pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress);
     await contractRadaFixedSwap.handlePublicPool(poolId, true);
     // Set limit buy
     // Approve allowance
@@ -250,7 +249,7 @@ describe("NFT Contract", function () {
     const pool = await contractRadaFixedSwap.pools(poolId)
     const timeNotStart = Math.round(new Date().getTime()/1000) + 86400*2;
     await contractRadaFixedSwap.handlePublicPool(poolId, false);
-    await contractRadaFixedSwap.updatePool(poolId, pool.title, pool.addressItem,pool.isSaleToken, pool.startId, pool.endId, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress);
+    await contractRadaFixedSwap.updatePool(poolId, pool.addressItem,pool.isSaleToken, pool.startId, pool.endId, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress);
     await contractRadaFixedSwap.handlePublicPool(poolId, true);
     // Today plus 2 days
 
@@ -259,7 +258,7 @@ describe("NFT Contract", function () {
 
     const timeStart = Math.round(new Date().getTime()/1000) - 86400*2; // Today sub 2 days
     await contractRadaFixedSwap.handlePublicPool(poolId, false);
-    await contractRadaFixedSwap.updatePool(poolId, pool.title, pool.addressItem,pool.isSaleToken, pool.startId, pool.endId, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress);
+    await contractRadaFixedSwap.updatePool(poolId, pool.addressItem,pool.isSaleToken, pool.startId, pool.endId, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress);
     await contractRadaFixedSwap.handlePublicPool(poolId, true);
 
     // Now

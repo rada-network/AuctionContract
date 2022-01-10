@@ -16,7 +16,7 @@ async function main() {
   const RandomizeByRarity = await ethers.getContractAt("RandomizeByRarity",contractAddress);
 
   // TODO: Fill your poolId
-  const poolId = 5; // 1 is auction, 3 is fixed swap, 5 Auction Token Box
+  const poolId = 2; // 2 Auction Token
   const title = "Token Box - Auction";
   const rarity = [];
 

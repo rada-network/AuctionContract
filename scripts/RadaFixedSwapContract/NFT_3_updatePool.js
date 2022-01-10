@@ -19,7 +19,6 @@ async function main() {
 
   // TODO: Fill your poolId
   const poolId = 3;
-  const title = "NFT Fixed Swap";
   const startPrice = pe("150");
   const addressItem = nftAddress; // Address of NFT or Token
   const isSaleToken = false; // Sale NFT or Token
@@ -41,7 +40,7 @@ async function main() {
   await RadaFixedSwapContract.handlePublicPool(poolId, false);
   console.log("Pool changed status: false");
   await sleep(5000);
-  await RadaFixedSwapContract.updatePool(poolId, title, addressItem, isSaleToken, startId, endId, startTime, endTime, startPrice, requireWhitelist, maxBuyPerAddress);
+  await RadaFixedSwapContract.updatePool(poolId, addressItem, isSaleToken, startId, endId, startTime, endTime, startPrice, requireWhitelist, maxBuyPerAddress);
   console.log("updatePool "+poolId+" success");
   await RadaFixedSwapContract.handlePublicPool(poolId, true);
   console.log("Pool changed status: true");

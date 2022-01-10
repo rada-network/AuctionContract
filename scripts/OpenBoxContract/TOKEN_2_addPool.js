@@ -20,14 +20,13 @@ async function main() {
 
   // Create first campaign
   // TODO: Fill your poolId
-  const poolId = 5; // 1 is auction, 3 is fixed swap, 5 Auction Token Box
-  const title = "Token Box - Auction";
+  const poolId = 2; // 2 auction, 4 fixed
   const nftAddress = nftAddresses[network];
   var isSaleToken = true;
   const tokenAddress = tokenAddresses[network];
   const nftBoxAddress = ethers.constants.AddressZero;
 
-  await OpenBoxContract.addPool(poolId, title, nftAddress, isSaleToken, tokenAddress, nftBoxAddress);
+  await OpenBoxContract.addPool(poolId, nftAddress, isSaleToken, tokenAddress, nftBoxAddress);
 
 
   console.log("addPool # "+poolId+" success");

@@ -1,4 +1,15 @@
 // SPDX-License-Identifier: MIT
+/***********************************************
+'...########:::::'###::::'########:::::'###::::
+....##.... ##:::'## ##::: ##.... ##:::'## ##:::
+....##:::: ##::'##:. ##:: ##:::: ##::'##:. ##::
+....########::'##:::. ##: ##:::: ##:'##:::. ##:
+....##.. ##::: #########: ##:::: ##: #########:
+....##::. ##:: ##.... ##: ##:::: ##: ##.... ##:
+....##:::. ##: ##:::: ##: ########:: ##:::: ##:
+...:::::..::..:::::..::........:::..:::::..::
+***********************************************/
+
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
@@ -8,6 +19,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 interface IMintableERC721 is IERC721Upgradeable {
     function safeMint(address to, uint256 tokenId) external;
@@ -16,7 +28,8 @@ interface IMintableERC721 is IERC721Upgradeable {
 contract RadaFixedSwapContract is
     Initializable,
     UUPSUpgradeable,
-    OwnableUpgradeable
+    OwnableUpgradeable,
+    ReentrancyGuardUpgradeable
 {
     using SafeMathUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -28,7 +41,6 @@ contract RadaFixedSwapContract is
         DATA Structure
      */
     struct POOL_INFO {
-        string title;
         address addressItem;
         bool isSaleToken; // Sale Token or NFT
         uint256 startId; // Start tokenID
@@ -110,7 +122,7 @@ contract RadaFixedSwapContract is
     /**
      * @dev function to place order
      */
-    function placeOrder(uint16 _poolId, uint32 _quantity) external {
+    function placeOrder(uint16 _poolId, uint32 _quantity) external nonReentrant {
         POOL_INFO memory pool = pools[_poolId];
 
         // require pool is open
@@ -239,7 +251,6 @@ contract RadaFixedSwapContract is
     // Add/update pool - by Admin
     function addPool(
         uint16 _poolId,
-        string memory _title,
         uint256 _startPrice,
         address _addressItem,
         bool _isSaleToken
@@ -247,7 +258,6 @@ contract RadaFixedSwapContract is
         require(pools[_poolId].startPrice == 0 && _startPrice > 0, "Invalid");
 
         POOL_INFO memory pool;
-        pool.title = _title;
         pool.startPrice = _startPrice;
         pool.addressItem = _addressItem;
         pool.isSaleToken = _isSaleToken;
@@ -259,7 +269,6 @@ contract RadaFixedSwapContract is
 
     function updatePool(
         uint16 _poolId,
-        string memory _title,
         address _addressItem,
         bool _isSaleToken,
         uint32 _startId,
@@ -279,7 +288,6 @@ contract RadaFixedSwapContract is
         require(!pool.isPublic, "Pool is public");
 
         // do update
-        pool.title = _title;
         pools[_poolId].isSaleToken = _isSaleToken;
         pools[_poolId].addressItem = _addressItem;
         pools[_poolId].startId = _startId;

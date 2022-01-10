@@ -1,4 +1,15 @@
 // SPDX-License-Identifier: MIT
+/***********************************************
+'...########:::::'###::::'########:::::'###::::
+....##.... ##:::'## ##::: ##.... ##:::'## ##:::
+....##:::: ##::'##:. ##:: ##:::: ##::'##:. ##::
+....########::'##:::. ##: ##:::: ##:'##:::. ##:
+....##.. ##::: #########: ##:::: ##: #########:
+....##::. ##:: ##.... ##: ##:::: ##: ##.... ##:
+....##:::. ##: ##:::: ##: ########:: ##:::: ##:
+...:::::..::..:::::..::........:::..:::::..::
+***********************************************/
+
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
@@ -8,6 +19,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 interface IUpdateERC721 is IERC721Upgradeable {
     struct NFT_INFO {
@@ -30,7 +42,7 @@ interface IUpdateERC721 is IERC721Upgradeable {
     function items(uint256 tokenId) external view returns (NFT_INFO memory);
 }
 
-contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
+contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeMathUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -43,7 +55,6 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         DATA Structure
      */
     struct POOL_INFO {
-        string title;
         address nftAddress;
         uint256 startId; // Start tokenID
         uint256 endId; // End tokenID
@@ -96,7 +107,7 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     /**
      * @dev function to Open box
      */
-    function openBox(uint16 _poolId, uint256 _boxesId) external {
+    function openBox(uint16 _poolId, uint256 _boxesId) external nonReentrant {
         POOL_INFO storage pool = pools[_poolId];
         require(pool.nftAddress != address(0), "Pool not found");
 
@@ -168,7 +179,6 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // Add/update pool - by Admin
     function addPool(
         uint16 _poolId,
-        string memory _title,
         address _nftAddress,
         bool _isSaleToken,
         address _tokenAddress,
@@ -191,7 +201,6 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
         POOL_INFO memory pool;
         pool.nftAddress = _nftAddress;
-        pool.title = _title;
         pool.isSaleToken = _isSaleToken;
         pool.tokenAddress = _tokenAddress;
         pool.nftBoxAddress = _nftBoxAddress;
@@ -202,7 +211,6 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     function updatePool(
         uint16 _poolId,
-        string memory _title,
         address _nftAddress,
         uint32 _startId,
         uint32 _endId,
@@ -227,7 +235,6 @@ contract OpenBoxContract is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         require(pool.nftAddress != address(0), "Pool not found");
 
         // do update
-        pool.title = _title;
         pool.nftAddress = _nftAddress;
         pool.startId = _startId;
         pool.endId = _endId;

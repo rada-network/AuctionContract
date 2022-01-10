@@ -79,14 +79,13 @@ describe("OpenBox Contract", function () {
       nftAddress = contractNFT.address;
       const startId = 20001;
       const endId = 20100;
-      const title = "Open Box #10"
       const isSaleToken = false;
       const tokenAddress = ethers.constants.AddressZero;
       const nftBoxAddress = nftAddress;
 
       // Add pool
-      await contractOpenBox.addPool(poolId, title, nftAddress,isSaleToken, tokenAddress, nftBoxAddress);
-      await contractOpenBox.updatePool(poolId, title, nftAddress, startId, endId, isSaleToken, tokenAddress, nftBoxAddress);
+      await contractOpenBox.addPool(poolId, nftAddress,isSaleToken, tokenAddress, nftBoxAddress);
+      await contractOpenBox.updatePool(poolId, nftAddress, startId, endId, isSaleToken, tokenAddress, nftBoxAddress);
 
     });
     it('Should open the box', async function () {
@@ -130,14 +129,13 @@ describe("OpenBox Contract", function () {
       nftAddress = contractNFT.address;
       const startId = 20001;
       const endId = 20100;
-      const title = "Open Box #10"
       const isSaleToken = true;
       const tokenAddress = contractTokenBox.address;
       const nftBoxAddress = ethers.constants.AddressZero;
 
       // Add pool
-      await contractOpenBox.addPool(poolId, title, nftAddress,isSaleToken, tokenAddress, nftBoxAddress);
-      await contractOpenBox.updatePool(poolId, title, nftAddress, startId, endId, isSaleToken, tokenAddress, nftBoxAddress);
+      await contractOpenBox.addPool(poolId, nftAddress,isSaleToken, tokenAddress, nftBoxAddress);
+      await contractOpenBox.updatePool(poolId, nftAddress, startId, endId, isSaleToken, tokenAddress, nftBoxAddress);
 
     });
     it('Should open the box', async function () {
