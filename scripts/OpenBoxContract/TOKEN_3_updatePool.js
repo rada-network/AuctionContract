@@ -19,8 +19,8 @@ async function main() {
 
   // TODO: Fill your poolId
   const poolId = 2; // 2 auction, 4 fixed
-  var startId = 20101;
-  var endId = 21000;
+  var startId = 30101;
+  var endId = 31000;
   const nftAddress = nftAddresses[network];
   var isSaleToken = true;
   const tokenAddress = tokenAddresses[network];
