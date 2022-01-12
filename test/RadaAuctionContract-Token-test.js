@@ -60,17 +60,15 @@ describe("Auction Contract - Token", function () {
     poolId = 10;
     addressItem = contractERC20.address;
     const maxBuyPerAddress = 10;
-    const isSaleToken = true; // Sale Token
     const requireWhitelist = true;
     const isPublic = true;
-    const startId = 1; // Always start with 1
-    const endId = 1000;
+    const totalItems = 1000;
     const startTime = Math.floor(Date.now() / 1000) - 86400*1; // Now - 1 day
     const endTime = Math.floor(Date.now() / 1000) + 86400*7; // Now + 7 days
     // Add pool
-    await contractRadaAuction.addPool(poolId, pe("150"), addressItem, isSaleToken);
+    await contractRadaAuction.addPool(poolId, pe("150"), addressItem);
     await contractRadaAuction.handlePublicPool(poolId, false);
-    await contractRadaAuction.updatePool(poolId, addressItem, isSaleToken, startId, endId,startTime, endTime, priceEach, requireWhitelist, maxBuyPerAddress);
+    await contractRadaAuction.updatePool(poolId, addressItem, totalItems,startTime, endTime, priceEach, requireWhitelist, maxBuyPerAddress);
     await contractRadaAuction.handlePublicPool(poolId, true);
   });
 
@@ -101,7 +99,7 @@ describe("Auction Contract - Token", function () {
     const pool = await contractRadaAuction.pools(poolId)
     const maxBuyPerAddress = 2;
     await contractRadaAuction.handlePublicPool(poolId, false);
-    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, pool.requireWhitelist, maxBuyPerAddress);
+    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.totalItems, pool.startTime, pool.endTime, pool.startPrice, pool.requireWhitelist, maxBuyPerAddress);
     await contractRadaAuction.handlePublicPool(poolId, true);
     await bUSDToken.connect(buyerUser).approve(contractRadaAuction.address, pe("300"));
 
@@ -155,7 +153,7 @@ describe("Auction Contract - Token", function () {
     const requireWhitelist = false;
     await contractRadaAuction.handlePublicPool(poolId, false);
     const maxBuyPerAddress = 10;
-    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, maxBuyPerAddress);
+    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.totalItems, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, maxBuyPerAddress);
     await contractRadaAuction.handlePublicPool(poolId, true);
     // Approve allowance
     await bUSDToken.connect(buyerUser).approve(contractRadaAuction.address, pe("2000"));
@@ -246,7 +244,7 @@ describe("Auction Contract - Token", function () {
     const pool = await contractRadaAuction.pools(poolId)
     const requireWhitelist = false;
     await contractRadaAuction.handlePublicPool(poolId, false);
-    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress);
+    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.totalItems, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress);
     await contractRadaAuction.handlePublicPool(poolId, true);
 
 
@@ -281,14 +279,14 @@ describe("Auction Contract - Token", function () {
     const pool = await contractRadaAuction.pools(poolId)
     const timeNotStart = Math.round(new Date().getTime()/1000) + 86400*2; // Today plus 2 days
     await contractRadaAuction.handlePublicPool(poolId, false);
-    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress);
+    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.totalItems, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress);
     await contractRadaAuction.handlePublicPool(poolId, true);
     // Should reverted
     await expect(contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("Not Started");
 
     const timeStart = Math.round(new Date().getTime()/1000) - 86400*2; // Today plus 2 days
     await contractRadaAuction.handlePublicPool(poolId, false);
-    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.isSaleToken,pool.startId, pool.endId, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress);
+    await contractRadaAuction.updatePool(poolId, pool.addressItem,pool.totalItems, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress);
     await contractRadaAuction.handlePublicPool(poolId, true);
     // Now
     // Bought success

@@ -7,12 +7,11 @@
 ....##.. ##::: #########: ##:::: ##: #########:
 ....##::. ##:: ##.... ##: ##:::: ##: ##.... ##:
 ....##:::. ##: ##:::: ##: ########:: ##:::: ##:
-...:::::..::..:::::..::........:::..:::::..::
+....:::::...::..:::::..::........:::..:::::..::
 ***********************************************/
 
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -20,16 +19,14 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-
-interface IMintableERC721 is IERC721Upgradeable {
-    function safeMint(address to, uint256 tokenId) external;
-}
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 contract RadaAuctionContract is
     Initializable,
     UUPSUpgradeable,
     OwnableUpgradeable,
-    ReentrancyGuardUpgradeable
+    ReentrancyGuardUpgradeable,
+    PausableUpgradeable
 {
     using SafeMathUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -42,9 +39,7 @@ contract RadaAuctionContract is
      */
     struct POOL_INFO {
         address addressItem;
-        bool isSaleToken; // Sale Token or NFT
-        uint256 startId; // Start tokenID
-        uint256 endId; // End tokenID
+        uint256 totalItems; // Total tickets/boxes
         uint256 startTime;
         uint256 endTime;
         uint256 startPrice; // Start price for bidding
@@ -133,7 +128,7 @@ contract RadaAuctionContract is
         uint16 _poolId,
         uint256 _quantity,
         uint256 _priceEach
-    ) external nonReentrant {
+    ) external nonReentrant whenNotPaused {
         POOL_INFO memory pool = pools[_poolId];
 
         // require pool is open
@@ -164,8 +159,7 @@ contract RadaAuctionContract is
         // Check balance BUSD
         uint256 totalAmount = _priceEach.mul(_quantity);
         require(
-            _quantity > 0 &&
-                _priceEach >= pool.startPrice,
+            _quantity > 0 && _priceEach >= pool.startPrice,
             "Required valid quantity/price/balance"
         ); // Not allow quantity = 0, valid price
 
@@ -256,12 +250,11 @@ contract RadaAuctionContract is
         pools[_poolId].ended = true;
 
         uint256 sum;
-        uint256 totalItems = pools[_poolId].endId - pools[_poolId].startId + 1;
 
         for (uint32 i = 0; i < quantityWin.length; i++) {
             sum = sum + quantityWin[i];
         }
-        require(totalItems >= sum, "Wrong quantity");
+        require(pools[_poolId].totalItems >= sum, "Wrong quantity");
 
         for (uint32 i = 0; i < bidsIndex.length; i++) {
             require(
@@ -276,7 +269,11 @@ contract RadaAuctionContract is
      * @dev function to handle claim NFT & refund pause
      */
     // 2695 bytes
-    function claim(uint16 _poolId, uint256 _bidIdx) public nonReentrant {
+    function claim(uint16 _poolId, uint256 _bidIdx)
+        public
+        nonReentrant
+        whenNotPaused
+    {
         BID_INFO memory bid = bids[_poolId][_bidIdx];
         POOL_INFO memory pool = pools[_poolId];
         require(
@@ -295,24 +292,10 @@ contract RadaAuctionContract is
         bids[_poolId][_bidIdx].claimed = true;
 
         if (bid.winQuantity > 0) {
-            if (pool.isSaleToken) {
-                IERC20Upgradeable itemToken = IERC20Upgradeable(
-                    pool.addressItem
-                );
+            IERC20Upgradeable itemToken = IERC20Upgradeable(pool.addressItem);
 
-                poolStats[_poolId].totalSold += bid.winQuantity;
-                itemToken.safeTransfer(_msgSender(), bid.winQuantity);
-            } else {
-                uint256 tokenId;
-                IMintableERC721 saleItemNft = IMintableERC721(pool.addressItem);
-
-                for (uint8 i = 0; i < bid.winQuantity; i++) {
-                    tokenId = pool.startId + poolStats[_poolId].totalSold;
-
-                    poolStats[_poolId].totalSold++;
-                    saleItemNft.safeMint(_msgSender(), tokenId);
-                }
-            }
+            poolStats[_poolId].totalSold += bid.winQuantity;
+            itemToken.safeTransfer(_msgSender(), bid.winQuantity);
         }
         if (remainBusd > 0) {
             busdToken.safeTransfer(bid.creator, remainBusd);
@@ -323,6 +306,63 @@ contract RadaAuctionContract is
         poolStats[_poolId].totalSoldAmount = soldAmount;
 
         emit Claim(_msgSender(), _poolId, _bidIdx);
+    }
+
+    /* function claim(uint16 _poolId, uint256 _bidIdx)
+        public
+        nonReentrant
+        whenNotPaused
+    {
+        POOL_INFO memory pool = pools[_poolId];
+        require(pool.ended && pool.isPublic, "Invalid pool"); // Pool not end yet / isPublic / Claimed
+
+        uint256 remainBusd;
+        uint256 soldAmount;
+        for (uint256 i = 0; i < buyerBid[_poolId][_msgSender()].length; i++) {
+            (uint256 _remainBusd, uint256 _soldAmount) = getAmount(
+                _poolId,
+                buyerBid[_poolId][_msgSender()][i]
+            ); // gas savings
+
+            bids[_poolId][_bidIdx].claimed = true;
+
+            remainBusd += _remainBusd;
+            soldAmount += _soldAmount;
+        }
+
+        // Set Claimed
+
+        if (bid.winQuantity > 0) {
+            IERC20Upgradeable itemToken = IERC20Upgradeable(pool.addressItem);
+
+            poolStats[_poolId].totalSold += bid.winQuantity;
+            itemToken.safeTransfer(_msgSender(), bid.winQuantity);
+        }
+        if (remainBusd > 0) {
+            busdToken.safeTransfer(bid.creator, remainBusd);
+        }
+        if (soldAmount > 0) {
+            busdToken.safeTransfer(WITHDRAW_ADDRESS, soldAmount);
+        }
+        poolStats[_poolId].totalSoldAmount = soldAmount;
+
+        emit Claim(_msgSender(), _poolId, _bidIdx);
+    } */
+
+    function getAmount(uint16 _poolId, uint256 _bidIdx)
+        internal
+        view
+        returns (uint256 _remainBusd, uint256 _soldAmount)
+    {
+        BID_INFO memory bid = bids[_poolId][_bidIdx];
+        require(
+            bid.claimed == false && bid.creator == _msgSender(),
+            "Invalid claim"
+        ); // Pool not end yet / isPublic / Claimed
+
+        uint256 totalAmount = bid.priceEach.mul(bid.quantity);
+        _remainBusd = bid.priceEach.mul(bid.quantity - bid.winQuantity);
+        _soldAmount = totalAmount - _remainBusd;
     }
 
     /* function claimAll(uint16 _poolId) public nonReentrant {
@@ -392,15 +432,13 @@ contract RadaAuctionContract is
     function addPool(
         uint16 _poolId,
         uint256 _startPrice,
-        address _addressItem,
-        bool _isSaleToken
+        address _addressItem
     ) external onlyAdmin {
         require(pools[_poolId].startPrice == 0 && _startPrice > 0, "Invalid");
 
         POOL_INFO memory pool;
         pool.startPrice = _startPrice;
         pool.addressItem = _addressItem;
-        pool.isSaleToken = _isSaleToken;
         pool.isPublic = false;
         pools[_poolId] = pool;
 
@@ -411,9 +449,7 @@ contract RadaAuctionContract is
     function updatePool(
         uint16 _poolId,
         address _addressItem,
-        bool _isSaleToken,
-        uint32 _startId,
-        uint32 _endId,
+        uint32 _totalItems,
         uint256 _startTime,
         uint256 _endTime,
         uint256 _startPrice,
@@ -422,18 +458,13 @@ contract RadaAuctionContract is
     ) external onlyAdmin {
         POOL_INFO memory pool = pools[_poolId]; // pool info
         require(
-            pool.startPrice > 0 &&
-                _startId > 0 &&
-                _endId > _startId &&
-                !pool.isPublic,
+            pool.startPrice > 0 && _totalItems > 0 && !pool.isPublic,
             "Invalid"
         );
 
         // do update
-        pools[_poolId].isSaleToken = _isSaleToken;
         pools[_poolId].addressItem = _addressItem;
-        pools[_poolId].startId = _startId;
-        pools[_poolId].endId = _endId;
+        pools[_poolId].totalItems = _totalItems;
         pools[_poolId].startTime = _startTime;
         pools[_poolId].endTime = _endTime;
         pools[_poolId].startPrice = _startPrice;
@@ -447,6 +478,14 @@ contract RadaAuctionContract is
         onlyAdmin
     {
         pools[_poolId].isPublic = _isPublic;
+    }
+
+    function setPause(bool _allow) external onlyOwner {
+        if (_allow) {
+            _pause();
+        } else {
+            _unpause();
+        }
     }
 
     /* GETTER */

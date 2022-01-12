@@ -7,12 +7,11 @@
 ....##.. ##::: #########: ##:::: ##: #########:
 ....##::. ##:: ##.... ##: ##:::: ##: ##.... ##:
 ....##:::. ##: ##:::: ##: ########:: ##:::: ##:
-...:::::..::..:::::..::........:::..:::::..::
+....:::::...::..:::::..::........:::..:::::..::
 ***********************************************/
 
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -20,16 +19,14 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-
-interface IMintableERC721 is IERC721Upgradeable {
-    function safeMint(address to, uint256 tokenId) external;
-}
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 contract RadaFixedSwapContract is
     Initializable,
     UUPSUpgradeable,
     OwnableUpgradeable,
-    ReentrancyGuardUpgradeable
+    ReentrancyGuardUpgradeable,
+    PausableUpgradeable
 {
     using SafeMathUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -42,12 +39,10 @@ contract RadaFixedSwapContract is
      */
     struct POOL_INFO {
         address addressItem;
-        bool isSaleToken; // Sale Token or NFT
-        uint256 startId; // Start tokenID
-        uint256 endId; // End tokenID
+        uint256 totalItems; // Total tickets/boxes
         uint256 startTime;
         uint256 endTime;
-        uint256 startPrice; // Start price for bidding
+        uint256 startPrice; // initialPrice
         bool isPublic; // if isPublic, cannot update pool
         bool ended; // Ended to picker winners
         bool requireWhitelist;
@@ -122,7 +117,11 @@ contract RadaFixedSwapContract is
     /**
      * @dev function to place order
      */
-    function placeOrder(uint16 _poolId, uint32 _quantity) external nonReentrant {
+    function placeOrder(uint16 _poolId, uint32 _quantity)
+        external
+        nonReentrant
+        whenNotPaused
+    {
         POOL_INFO memory pool = pools[_poolId];
 
         // require pool is open
@@ -133,9 +132,8 @@ contract RadaFixedSwapContract is
             "Not Started / Expired / is not public"
         ); // The pool have not started / Expired / isPublic
 
-        uint256 totalItems = pool.endId - pool.startId + 1;
         require(
-            totalItems >= (poolStats[_poolId].totalBidItem + _quantity),
+            pool.totalItems >= (poolStats[_poolId].totalBidItem + _quantity),
             "Invalid quantity / sold out"
         );
 
@@ -181,22 +179,10 @@ contract RadaFixedSwapContract is
         poolStats[_poolId].totalBidItem += _quantity;
         poolStats[_poolId].totalBid++;
 
-        // Send Token or NFT to user
-        if (pool.isSaleToken) {
-            IERC20Upgradeable itemToken = IERC20Upgradeable(pool.addressItem);
-            poolStats[_poolId].totalSold += bidding.winQuantity;
-            itemToken.safeTransfer(_msgSender(), bidding.winQuantity);
-        } else {
-            uint256 tokenId;
-            IMintableERC721 saleItemNft = IMintableERC721(pool.addressItem);
-
-            for (uint8 i = 0; i < bidding.winQuantity; i++) {
-                tokenId = pool.startId + poolStats[_poolId].totalSold;
-
-                poolStats[_poolId].totalSold++;
-                saleItemNft.safeMint(_msgSender(), tokenId);
-            }
-        }
+        // Send Ticket Token to user
+        IERC20Upgradeable itemToken = IERC20Upgradeable(pool.addressItem);
+        poolStats[_poolId].totalSold += bidding.winQuantity;
+        itemToken.safeTransfer(_msgSender(), bidding.winQuantity);
 
         emit PlaceOrder(_msgSender(), _poolId, _quantity, pool.startPrice);
     }
@@ -252,15 +238,13 @@ contract RadaFixedSwapContract is
     function addPool(
         uint16 _poolId,
         uint256 _startPrice,
-        address _addressItem,
-        bool _isSaleToken
+        address _addressItem
     ) external onlyAdmin {
         require(pools[_poolId].startPrice == 0 && _startPrice > 0, "Invalid");
 
         POOL_INFO memory pool;
         pool.startPrice = _startPrice;
         pool.addressItem = _addressItem;
-        pool.isSaleToken = _isSaleToken;
         pool.isPublic = false;
         pools[_poolId] = pool;
 
@@ -270,28 +254,21 @@ contract RadaFixedSwapContract is
     function updatePool(
         uint16 _poolId,
         address _addressItem,
-        bool _isSaleToken,
-        uint32 _startId,
-        uint32 _endId,
+        uint32 _totalItems,
         uint256 _startTime,
         uint256 _endTime,
         uint256 _startPrice,
         bool _requireWhitelist,
         uint256 _maxBuyPerAddress
     ) external onlyAdmin {
-        require(
-            pools[_poolId].startPrice > 0 && _startId > 0 && _endId > _startId,
-            "Invalid"
-        );
+        require(pools[_poolId].startPrice > 0 && _totalItems > 0, "Invalid");
 
         POOL_INFO memory pool = pools[_poolId]; // pool info
         require(!pool.isPublic, "Pool is public");
 
         // do update
-        pools[_poolId].isSaleToken = _isSaleToken;
         pools[_poolId].addressItem = _addressItem;
-        pools[_poolId].startId = _startId;
-        pools[_poolId].endId = _endId;
+        pools[_poolId].totalItems = _totalItems;
         pools[_poolId].startTime = _startTime;
         pools[_poolId].endTime = _endTime;
         pools[_poolId].startPrice = _startPrice;
@@ -304,6 +281,14 @@ contract RadaFixedSwapContract is
         onlyAdmin
     {
         pools[_poolId].isPublic = _isPublic;
+    }
+
+    function setPause(bool _allow) external onlyOwner {
+        if (_allow) {
+            _pause();
+        } else {
+            _unpause();
+        }
     }
 
     /* GETTER */
