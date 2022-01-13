@@ -34,6 +34,7 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
         uint256 total;
         uint256 count;
         uint256[] rarity;
+        uint256[] rarityIds;
     }
     mapping(uint256 => POOL_INFO) public pools;
     uint256[] public poolIds;
@@ -112,15 +113,16 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
     function addPool(
         uint256 _poolId,
         string memory _title,
-        uint256[] memory _rarity
+        uint256[] memory _rarity,
+        uint256[] memory _rarityIds
     ) external onlyAdmin {
         require(pools[_poolId].rarity.length == 0, "Pool existing");
-        require(_rarity.length > 0, "Invalid Rarity");
+        require(_rarity.length > 0 && _rarity.length == _rarityIds.length, "Invalid Rarity");
 
         uint256 _total;
         for (uint256 i; i < _rarity.length; i++) _total += _rarity[i];
         // new pool
-        pools[_poolId] = POOL_INFO(_title, _total, 0, _rarity);
+        pools[_poolId] = POOL_INFO(_title, _total, 0, _rarity, _rarityIds);
         poolIds.push(_poolId);
 
         emit AddPool(_poolId);
@@ -129,9 +131,12 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
     function updatePool(
         uint256 _poolId,
         string memory _title,
-        uint256[] memory _rarity
+        uint256[] memory _rarity,
+        uint256[] memory _rarityIds
     ) external onlyAdmin {
         require(pools[_poolId].rarity.length > 0, "Invalid");
+        // check input
+        require(_rarity.length > 0 && _rarity.length == _rarityIds.length, "Invalid Rarity");
 
         uint256 _total;
         for (uint256 i; i < _rarity.length; i++) _total += _rarity[i];
@@ -140,6 +145,7 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
         pool.title = _title;
         pool.total = _total;
         pool.rarity = _rarity;
+        pool.rarityIds = _rarityIds;
 
         emit UpdatePool(_poolId);
     }
@@ -174,10 +180,6 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
         emit DiceRolled(requestId, _poolId, _id);
     }
 
-    // function fulfillRandomnessTest(uint256 randomness) external {
-    //     fulfillRandomness (lastRequestId, randomness);
-    // }
-
     /**
      * Callback function used by VRF Coordinator
      */
@@ -200,17 +202,18 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
         uint256 _total;
         bool isDone = false;
         while (!isDone && _rarity < _pool.rarity.length) {
-            _rarity++;
-            _total += _pool.rarity[_rarity - 1];
+            _total += _pool.rarity[_rarity];
             if (_total >= _rand) isDone = true;
+            else _rarity++;
         }
 
         //update pool
-        pools[_poolId].rarity[_rarity - 1] -= 1;
-        results[_poolId][_id] = _rarity;
+        pools[_poolId].rarity[_rarity] -= 1;
+        //results[_poolId][_id] = _rarity;
+        results[_poolId][_id] = pools[_poolId].rarityIds[_rarity];
         pools[_poolId].count++;
 
-        emit DiceLanded(_poolId, _id, _rarity);
+        emit DiceLanded(_poolId, _id, results[_poolId][_id]);
     }
 
     function getResult(uint256 _poolId, uint256 _id)

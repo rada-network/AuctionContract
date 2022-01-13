@@ -251,10 +251,10 @@ contract IDOClaimContract is
         POOL_INFO memory pool = pools[_poolId];
         uint256 _totalClaimable;
 
-        IERC20Upgradeable tokenBox = IERC20Upgradeable(
+        IERC20Upgradeable tokenContract = IERC20Upgradeable(
             pools[_poolId].tokenAddress
         );
-        uint256 _tokenBalance = tokenBox.balanceOf(address(this));
+        uint256 _tokenBalance = tokenContract.balanceOf(address(this));
         uint256 _totalDeposited =  totalClaimedTokens.add(_tokenBalance);
 
         uint256 _ratioDeposited = _totalDeposited.mul(pool.tokenPrice).div(
