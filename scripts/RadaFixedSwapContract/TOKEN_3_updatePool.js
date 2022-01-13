@@ -21,16 +21,7 @@ async function main() {
   const poolId = 4;
   const startPrice = pe("150");
   const addressItem = tokenAddress; // Address of NFT or Token
-  const isSaleToken = true; // Sale NFT or Token
-  var startId;
-  var endId;
-  if (isSaleToken) { // Sale Token, total 1000 token
-    startId = 1; // Alway start with 1
-    endId = 1000;
-  } else { // Sale NFT, range of tokenId, total 1000 NFT
-    startId = 0;
-    endId = 0;
-  }
+  const totalItems = 1000;
 
   const startTime = 1640451600; // Sunday, December 26, 2021 12:00:00 AM GMT+07:00
   const endTime = 1672379856; // Friday, December 30, 2022 12:57:36 PM GMT+07:00
@@ -40,7 +31,7 @@ async function main() {
   await RadaFixedSwapContract.handlePublicPool(poolId, false);
   console.log("Pool changed status: false");
   await sleep(5000);
-  await RadaFixedSwapContract.updatePool(poolId, addressItem, isSaleToken, startId, endId, startTime, endTime, startPrice, requireWhitelist, maxBuyPerAddress);
+  await RadaFixedSwapContract.updatePool(poolId, addressItem, totalItems, startTime, endTime, startPrice, requireWhitelist, maxBuyPerAddress);
   console.log("updatePool "+poolId+" success");
   await RadaFixedSwapContract.handlePublicPool(poolId, true);
   console.log("Pool changed status: true");

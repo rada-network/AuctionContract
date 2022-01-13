@@ -23,8 +23,7 @@ async function main() {
   const poolId = 2; // 2
   const startPrice = pe("150");
   const addressItem = tokenAddress; // Address of NFT or Token
-  const isSaleToken = true; // Sale NFT or Token
-  await RadaAuctionContract.addPool(poolId, startPrice, addressItem, isSaleToken);
+  await RadaAuctionContract.addPool(poolId, startPrice, addressItem);
 
   console.log("addPool # "+poolId+" success");
 

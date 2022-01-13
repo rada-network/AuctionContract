@@ -1,24 +1,19 @@
 // SPDX-License-Identifier: MIT
 /***********************************************
-'...########:::::'###::::'########:::::'###::::
-....##.... ##:::'## ##::: ##.... ##:::'## ##:::
-....##:::: ##::'##:. ##:: ##:::: ##::'##:. ##::
-....########::'##:::. ##: ##:::: ##:'##:::. ##:
-....##.. ##::: #########: ##:::: ##: #########:
-....##::. ##:: ##.... ##: ##:::: ##: ##.... ##:
-....##:::. ##: ##:::: ##: ########:: ##:::: ##:
-....:::::...::..:::::..::........:::..:::::..::
+'...########:::::'###::::'########:::::'###:::::
+....##.... ##:::'## ##::: ##.... ##:::'## ##::::
+....##:::: ##::'##:. ##:: ##:::: ##::'##:. ##:::
+....########::'##:::. ##: ##:::: ##:'##:::. ##::
+....##.. ##::: #########: ##:::: ##: #########::
+....##::. ##:: ##.... ##: ##:::: ##: ##.... ##::
+....##:::. ##: ##:::: ##: ########:: ##:::: ##::
+....:::::...::..:::::..::........:::..:::::..:::
 ***********************************************/
 
 pragma solidity ^0.8.9;
 
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-
-/**
- * THIS IS AN EXAMPLE CONTRACT WHICH USES HARDCODED VALUES FOR CLARITY.
- * PLEASE DO NOT USE THIS CODE IN PRODUCTION.
- */
 
 /**
  * Request testnet LINK and ETH here: https://faucets.chain.link/
@@ -117,7 +112,10 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
         uint256[] memory _rarityIds
     ) external onlyAdmin {
         require(pools[_poolId].rarity.length == 0, "Pool existing");
-        require(_rarity.length > 0 && _rarity.length == _rarityIds.length, "Invalid Rarity");
+        require(
+            _rarity.length > 0 && _rarity.length == _rarityIds.length,
+            "Invalid Rarity"
+        );
 
         uint256 _total;
         for (uint256 i; i < _rarity.length; i++) _total += _rarity[i];
@@ -136,7 +134,10 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
     ) external onlyAdmin {
         require(pools[_poolId].rarity.length > 0, "Invalid");
         // check input
-        require(_rarity.length > 0 && _rarity.length == _rarityIds.length, "Invalid Rarity");
+        require(
+            _rarity.length > 0 && _rarity.length == _rarityIds.length,
+            "Invalid Rarity"
+        );
 
         uint256 _total;
         for (uint256 i; i < _rarity.length; i++) _total += _rarity[i];

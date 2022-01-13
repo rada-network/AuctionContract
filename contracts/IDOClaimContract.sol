@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 /***********************************************
-'...########:::::'###::::'########:::::'###::::
-....##.... ##:::'## ##::: ##.... ##:::'## ##:::
-....##:::: ##::'##:. ##:: ##:::: ##::'##:. ##::
-....########::'##:::. ##: ##:::: ##:'##:::. ##:
-....##.. ##::: #########: ##:::: ##: #########:
-....##::. ##:: ##.... ##: ##:::: ##: ##.... ##:
-....##:::. ##: ##:::: ##: ########:: ##:::: ##:
-...:::::..::..:::::..::........:::..:::::..::
+'...########:::::'###::::'########:::::'###:::::
+....##.... ##:::'## ##::: ##.... ##:::'## ##::::
+....##:::: ##::'##:. ##:: ##:::: ##::'##:. ##:::
+....########::'##:::. ##: ##:::: ##:'##:::. ##::
+....##.. ##::: #########: ##:::: ##: #########::
+....##::. ##:: ##.... ##: ##:::: ##: ##.... ##::
+....##:::. ##: ##:::: ##: ########:: ##:::: ##::
+....:::::...::..:::::..::........:::..:::::..:::
 ***********************************************/
 
 pragma solidity ^0.8.9;
@@ -245,7 +245,11 @@ contract IDOClaimContract is
         return _busdToToken(_poolId, getNftAllocationBusd(_poolId, _nftId));
     }
 
-    function getClaimable(uint16 _poolId, uint256[] memory _nftIds) public view returns(uint256[] memory claimables) {
+    function getClaimable(uint16 _poolId, uint256[] memory _nftIds)
+        public
+        view
+        returns (uint256[] memory claimables)
+    {
         claimables = new uint256[](_nftIds.length + 1);
 
         POOL_INFO memory pool = pools[_poolId];
@@ -255,7 +259,7 @@ contract IDOClaimContract is
             pools[_poolId].tokenAddress
         );
         uint256 _tokenBalance = tokenContract.balanceOf(address(this));
-        uint256 _totalDeposited =  totalClaimedTokens.add(_tokenBalance);
+        uint256 _totalDeposited = totalClaimedTokens.add(_tokenBalance);
 
         uint256 _ratioDeposited = _totalDeposited.mul(pool.tokenPrice).div(
             pool.tokenAllocationBusd
@@ -269,7 +273,9 @@ contract IDOClaimContract is
             uint256 _allocation = getNftAllocation(_poolId, _nftId);
             uint256 _claimable = _allocation.mul(_ratioDeposited).div(1e18);
             // current claimable for nftId
-            claimables[i] = _claimable > claimedTokens[_nftId] ? _claimable.sub(claimedTokens[_nftId]) : 0;
+            claimables[i] = _claimable > claimedTokens[_nftId]
+                ? _claimable.sub(claimedTokens[_nftId])
+                : 0;
             // check available token
             if (_totalClaimable + claimables[i] > _tokenBalance) {
                 claimables[i] = _tokenBalance.sub(_totalClaimable);
@@ -286,7 +292,7 @@ contract IDOClaimContract is
         require(pool.tokenAddress != address(0), "Token not available");
 
         uint256[] memory _claimables = getClaimable(_poolId, _nftIds);
-        uint256 _totalClaimable = _claimables[_claimables.length-1];
+        uint256 _totalClaimable = _claimables[_claimables.length - 1];
         require(_totalClaimable > 0, "No claimable tokens");
 
         // ready to transfer, update claimedTokens

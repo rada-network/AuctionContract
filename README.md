@@ -22,29 +22,23 @@ npx hardhat test
 Step by step Deploy to testnet / mainnet
 
 ```shell
-npx hardhat run scripts/OpenBoxContract/1_deploy.js --network testnet
+npx hardhat run scripts/NFTManContract/1_deploy.js --network testnet
 # Copy Contract address to proxyAddresses.js
 npx hardhat run scripts/RadaAuctionContract/1_deploy.js --network testnet
 # Copy Contract address to proxyAddresses.js
 npx hardhat run scripts/RadaFixedSwapContract/1_deploy.js --network testnet
 # Copy Contract address to proxyAddresses.js
 
-# TODO: Require setMinterFactories for 3 contract RADA above and OpenBox Contract
+# TODO: Require setMinterFactories for NFTMan at NFT Contract
 
 npx hardhat run scripts/RadaFixedSwapContract/setAdmin.js --network testnet
 npx hardhat run scripts/RadaAuctionContract/setAdmin.js --network testnet
-npx hardhat run scripts/OpenBoxContract/setAdmin.js --network testnet
+npx hardhat run scripts/NFTManContract/setAdmin.js --network testnet
 
-# NFT - Auction
-npx hardhat run scripts/RadaAuctionContract/NFT_2_addPool.js --network testnet
-npx hardhat run scripts/RadaAuctionContract/NFT_3_updatePool.js --network testnet
 # TOKEN - Auction
 npx hardhat run scripts/RadaAuctionContract/TOKEN_2_addPool.js --network testnet
 npx hardhat run scripts/RadaAuctionContract/TOKEN_3_updatePool.js --network testnet
 
-# NFT - Fixed Swap
-npx hardhat run scripts/RadaFixedSwapContract/NFT_2_addPool.js --network testnet
-npx hardhat run scripts/RadaFixedSwapContract/NFT_3_updatePool.js --network testnet
 # TOKEN - Fixed Swap
 npx hardhat run scripts/RadaFixedSwapContract/TOKEN_2_addPool.js --network testnet
 npx hardhat run scripts/RadaFixedSwapContract/TOKEN_3_updatePool.js --network testnet
@@ -53,24 +47,19 @@ npx hardhat run scripts/RadaFixedSwapContract/TOKEN_3_updatePool.js --network te
 
 ```
 
-Step by step Deploy OpenBox to testnet / mainnet
+Step by step Deploy NFTMan to testnet / mainnet
 
 ```shell
-npx hardhat run scripts/OpenBoxContract/1_deploy.js --network testnet
+npx hardhat run scripts/NFTManContract/1_deploy.js --network testnet
 # Copy Contract address to proxyAddresses.js
 # Token Box
-npx hardhat run scripts/OpenBoxContract/TOKEN_2_addPool.js --network testnet
-npx hardhat run scripts/OpenBoxContract/TOKEN_3_updatePool.js --network testnet
+npx hardhat run scripts/NFTManContract/TOKEN_2_addPool.js --network testnet
+npx hardhat run scripts/NFTManContract/TOKEN_3_updatePool.js --network testnet
 
-# NFT Box
-npx hardhat run scripts/OpenBoxContract/NFT_2_addPool.js --network testnet
-npx hardhat run scripts/OpenBoxContract/NFT_3_updatePool.js --network testnet
+npx hardhat run scripts/NFTManContract/setAdmin.js --network testnet
+npx hardhat run scripts/NFTManContract/upgradeContract_v2.js --network testnet
 
-npx hardhat run scripts/OpenBoxContract/setAdmin.js --network testnet
-
-npx hardhat run scripts/OpenBoxContract/upgradeContract_v2.js --network testnet
-
-npx hardhat run scripts/OpenBoxContract/getImplementationAddress.js --network testnet
+npx hardhat run scripts/NFTManContract/getImplementationAddress.js --network testnet
 npx hardhat verify --network testnet DDDDDDDDD
 ```
 
@@ -79,6 +68,8 @@ Step by step Deploy RandomizeByRarity to polygonMumbai / polygon
 ```shell
 npx hardhat run scripts/RandomizeByRarity/1_deploy.js --network polygonMumbai
 # Copy Contract address to proxyAddresses.js
+# TODO: Remember send LINK token to Contract 
+
 npx hardhat run scripts/RandomizeByRarity/2_addPool.js --network polygonMumbai
 
 # npx hardhat run scripts/RandomizeByRarity/updatePool.js --network polygonMumbai

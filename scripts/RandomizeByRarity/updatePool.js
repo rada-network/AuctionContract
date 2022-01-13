@@ -18,9 +18,10 @@ async function main() {
   // TODO: Fill your poolId
   const poolId = 2; // 2 Auction Token
   const title = "Token Box - Auction";
-  const rarity = [];
+  const rarity = [1000,10,10,3,3,3,2,2,2,1,1,1];
+  const rarityIds = [1,2,3,4,5,6,7,8,9,10,11,12];
 
-  await RandomizeByRarity.updatePool(poolId, title, rarity);
+  await RandomizeByRarity.updatePool(poolId, title, rarity, rarityIds);
   console.log("updatePool "+poolId+" success");
 
   const afterDeploy = fe(await deployer.getBalance());
