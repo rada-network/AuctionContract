@@ -13,9 +13,9 @@ const {
   expectRevert
 } = require('@openzeppelin/test-helpers');
 
-describe("OpenBox Contract", function () {
+describe("NFTMan Contract", function () {
 
-  let contractOpenBox;
+  let contractNFTMan;
   let contractNFT;
   let contractTokenBox;
   let poolId;
@@ -36,8 +36,8 @@ describe("OpenBox Contract", function () {
     contractNFT = await RadaNftContract.deploy();
 
     // Get the ContractFactory
-    const OpenBoxContract = await ethers.getContractFactory("OpenBoxContract");
-    contractOpenBox = await upgrades.deployProxy(OpenBoxContract, { kind: 'uups' });
+    const NFTManContract = await ethers.getContractFactory("NFTManContract");
+    contractNFTMan = await upgrades.deployProxy(NFTManContract, { kind: 'uups' });
 
     const ERC20Token = await ethers.getContractFactory("BoxToken");
     contractTokenBox = await ERC20Token.deploy();
@@ -45,16 +45,16 @@ describe("OpenBox Contract", function () {
     /* NFT */
     // Set updateBaseURI
     await contractNFT.updateBaseURI(URL_BASE);
-    // Set approval for OpenBox Contract
+    // Set approval for NFTMan Contract
     await contractNFT.addApprovalWhitelist(minterFactoryUser.address);
-    await contractNFT.addApprovalWhitelist(contractOpenBox.address);
+    await contractNFT.addApprovalWhitelist(contractNFTMan.address);
 
     // Set minterFactory for NFT
     await contractNFT.setMintFactory(minterFactoryUser.address);
-    await contractNFT.setMintFactory(contractOpenBox.address);
+    await contractNFT.setMintFactory(contractNFTMan.address);
 
-    // Set admin for OpenBoxContract
-    await contractOpenBox.setAdmin(adminUser.address, true);
+    // Set admin for NFTManContract
+    await contractNFTMan.setAdmin(adminUser.address, true);
 
 
 
@@ -63,10 +63,10 @@ describe("OpenBox Contract", function () {
 
   it('Deploy v1 and should set right minterFactory address, right approval address', async function () {
     expect(await contractNFT.hasRole(MINTER_ROLE, minterFactoryUser.address)).to.equal(true);
-    expect(await contractNFT.approvalWhitelists(contractOpenBox.address)).to.equal(true);
+    expect(await contractNFT.approvalWhitelists(contractNFTMan.address)).to.equal(true);
   });
 
-  describe("OpenBox - TokenBox", function () {
+  describe("NFTMan - TokenBox", function () {
     beforeEach(async function () {
       const buyBoxes = 10;
       poolId = 10;
@@ -79,20 +79,20 @@ describe("OpenBox Contract", function () {
       const tokenAddress = contractTokenBox.address;
 
       // Add pool
-      await contractOpenBox.addPool(poolId, nftAddress, tokenAddress);
-      await contractOpenBox.updatePool(poolId, nftAddress, startId, endId, tokenAddress);
+      await contractNFTMan.addPool(poolId, nftAddress, tokenAddress);
+      await contractNFTMan.updatePool(poolId, nftAddress, startId, endId, tokenAddress);
 
     });
     it('Should open the box', async function () {
       var openBoxes = 100;
 
       // Should reverted
-      await expect(contractOpenBox.connect(otherUser).openBox(poolId, openBoxes)).to.be.revertedWith("Not enough Token");
+      await expect(contractNFTMan.connect(otherUser).openBox(poolId, openBoxes)).to.be.revertedWith("Not enough Token");
 
       openBoxes = 5;
-      await contractTokenBox.connect(buyerUser).approve(contractOpenBox.address, openBoxes);
+      await contractTokenBox.connect(buyerUser).approve(contractNFTMan.address, openBoxes);
       // Should open box
-      await contractOpenBox.connect(buyerUser).openBox(poolId, openBoxes);
+      await contractNFTMan.connect(buyerUser).openBox(poolId, openBoxes);
       expect(await contractNFT.tokenOfOwnerByIndex(buyerUser.address, 0)).to.equal(pu("20001"));
 
     });
@@ -103,25 +103,25 @@ describe("OpenBox Contract", function () {
       typeRarity = pu("9");
       openBoxes = 100;
       // Should reverted
-      await expect(contractOpenBox.connect(otherUser).updateNFT(poolId, openBoxes, typeRarity)).to.be.revertedWith("Caller is not an admin");
+      await expect(contractNFTMan.connect(otherUser).updateNFT(poolId, openBoxes, typeRarity)).to.be.revertedWith("Caller is not an admin");
 
       // Should open box
       openBoxes = 5;
-      await contractTokenBox.connect(buyerUser).approve(contractOpenBox.address, openBoxes);
-      await contractOpenBox.connect(buyerUser).openBox(poolId, openBoxes);
+      await contractTokenBox.connect(buyerUser).approve(contractNFTMan.address, openBoxes);
+      await contractNFTMan.connect(buyerUser).openBox(poolId, openBoxes);
 
       const tokenIdNft_1 = pu("20001");
       const tokenIdNft_5 = pu("20005");
       // Should update type NFT 1
       typeRarity = pu("9");
-      await contractOpenBox.connect(adminUser).updateNFT(poolId, tokenIdNft_1, typeRarity);
+      await contractNFTMan.connect(adminUser).updateNFT(poolId, tokenIdNft_1, typeRarity);
       expect(await contractNFT.tokenOfOwnerByIndex(buyerUser.address, 0)).to.equal(tokenIdNft_1);
       item = await contractNFT.items(tokenIdNft_1);
       expect(fu(item.typeNft)).to.equal(typeRarity);
 
       // Should update type NFT 5
       typeRarity = pu("4");
-      await contractOpenBox.connect(adminUser).updateNFT(poolId, tokenIdNft_5, typeRarity);
+      await contractNFTMan.connect(adminUser).updateNFT(poolId, tokenIdNft_5, typeRarity);
       expect(await contractNFT.tokenOfOwnerByIndex(buyerUser.address, 4)).to.equal(tokenIdNft_5);
       item = await contractNFT.items(tokenIdNft_5);
       expect(fu(item.typeNft)).to.equal(typeRarity);

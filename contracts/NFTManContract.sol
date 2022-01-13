@@ -40,7 +40,7 @@ interface IUpdateERC721 is IERC721Upgradeable {
     function items(uint256 tokenId) external view returns (NFT_INFO memory);
 }
 
-contract OpenBoxContract is
+contract NFTManContract is
     Initializable,
     UUPSUpgradeable,
     OwnableUpgradeable,

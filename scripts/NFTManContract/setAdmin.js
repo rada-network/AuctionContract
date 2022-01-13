@@ -9,10 +9,10 @@ async function main() {
   const contractAddress = contractAddresses[network];
 
   console.log("With the account:", deployer.address);
-  console.log("With OpenBoxContract address:", contractAddress);
+  console.log("With NFTManContract address:", contractAddress);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const OpenBoxContract = await ethers.getContractAt("OpenBoxContract",contractAddress);
+  const NFTManContract = await ethers.getContractAt("NFTManContract",contractAddress);
 
   // TODO: add real whitelist
   const admins = [
@@ -23,7 +23,7 @@ async function main() {
 
   for (var i=0;i<admins.length;i++) {
     console.log("setAdmin " + admins[i]);
-    await OpenBoxContract.setAdmin(admins[i],true);
+    await NFTManContract.setAdmin(admins[i],true);
   }
 
   const afterDeploy = fe(await deployer.getBalance());

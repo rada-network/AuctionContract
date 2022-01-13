@@ -12,21 +12,19 @@ async function main() {
   const contractAddress = contractAddresses[network];
 
   console.log("With the account:", deployer.address);
-  console.log("With OpenBoxContract address:", contractAddress);
+  console.log("With NFTManContract address:", contractAddress);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const OpenBoxContract = await ethers.getContractAt("OpenBoxContract",contractAddress);
+  const NFTManContract = await ethers.getContractAt("NFTManContract",contractAddress);
 
   // TODO: Fill your poolId
   const poolId = 2; // 2 auction, 4 fixed
   var startId = 30101;
   var endId = 31000;
   const nftAddress = nftAddresses[network];
-  var isSaleToken = true;
   const tokenAddress = tokenAddresses[network];
-  const nftBoxAddress = ethers.constants.AddressZero;
 
-  await OpenBoxContract.updatePool(poolId, nftAddress, startId, endId, isSaleToken, tokenAddress, nftBoxAddress);
+  await NFTManContract.updatePool(poolId, nftAddress, startId, endId, tokenAddress);
   console.log("updatePool "+poolId+" success");
 
   const afterDeploy = fe(await deployer.getBalance());

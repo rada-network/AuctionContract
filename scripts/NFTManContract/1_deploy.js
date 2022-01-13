@@ -9,9 +9,9 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const OpenBoxContract = await ethers.getContractFactory("OpenBoxContract");
+  const NFTManContract = await ethers.getContractFactory("NFTManContract");
 
-  const proxyContract = await upgrades.deployProxy(OpenBoxContract, { kind: 'uups' });
+  const proxyContract = await upgrades.deployProxy(NFTManContract, { kind: 'uups' });
   console.log("Contract address:", proxyContract.address);
 
   const afterDeploy = fe(await deployer.getBalance());
