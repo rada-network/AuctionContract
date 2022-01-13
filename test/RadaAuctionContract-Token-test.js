@@ -33,7 +33,7 @@ describe("Auction Contract - Token", function () {
 
   beforeEach(async function () {
 
-    [owner, approvalUser, adminUser, withdrawUser, buyerUser, buyerUser2, ...addrs] = await ethers.getSigners();
+    [owner, approvalUser, adminUser, withdrawUser, buyerUser, buyerUser2, buyerUser3, ...addrs] = await ethers.getSigners();
 
 
     const BUSDToken = await ethers.getContractFactory("BUSDToken");
@@ -189,21 +189,18 @@ describe("Auction Contract - Token", function () {
     console.log(await contractRadaAuction.bids(poolId, 2)); */
 
     // Try claim illegal
-    await expect(contractRadaAuction.connect(buyerUser2).claim(poolId, 0)).to.be.revertedWith("Invalid claim");
+    await expect(contractRadaAuction.connect(buyerUser3).claimAll(poolId)).to.be.revertedWith("Invalid pool");
 
     // User 1 claim
-    await contractRadaAuction.connect(buyerUser).claim(poolId, 0); // Claim bid 0
-    expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("1100"));
-
-    await contractRadaAuction.connect(buyerUser).claim(poolId, 1); // Claim bid 1
+    await contractRadaAuction.connect(buyerUser).claimAll(poolId); // Claim bid
     expect(await contractERC20.balanceOf(buyerUser.address)).to.equal(pu("1"));
     // check Refund remain
     expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("1850"));
 
     // User 2 claim
-    await contractRadaAuction.connect(buyerUser2).claim(poolId, 2); // Claim bid 2
-    // Try claim illegal
-    await expect(contractRadaAuction.connect(buyerUser2).claim(poolId, 2)).to.be.revertedWith("Invalid claim");
+    await contractRadaAuction.connect(buyerUser2).claimAll(poolId); // Claim bid
+    // Try claim again
+    await contractRadaAuction.connect(buyerUser2).claimAll(poolId); // Claim bid again but nothing
 
     expect(await contractERC20.balanceOf(buyerUser2.address)).to.equal(pu("2"));
     // Check remain
@@ -222,20 +219,27 @@ describe("Auction Contract - Token", function () {
     // Admin top up payable token to user
     await bUSDToken.transfer(buyerUser.address, pe("3000"));
     // Place Bid
-    quantity = 10;
+    quantity = 5;
     await contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach);
+    quantity = 4;
+    await expect(contractRadaAuction.connect(buyerUser).increaseBid(poolId, 0, quantity, priceEach)).to.be.revertedWith("Bid not valid");
+    quantity = 10;
+    await contractRadaAuction.connect(buyerUser).increaseBid(poolId, 0, quantity, priceEach);
 
     // Should reverted
     await expect(contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("Got limited");
 
     // Handle end auction and Claimed
     await contractRadaAuction.connect(adminUser).handleEndAuction(poolId, [0], [5]);
-    await contractRadaAuction.connect(buyerUser).claim(poolId, 0);
+    await contractRadaAuction.connect(buyerUser).claimAll(poolId);
 
     // Try claim again
-    await expect(contractRadaAuction.connect(buyerUser).claim(poolId, 0)).to.be.revertedWith("Invalid claim");
+    await contractRadaAuction.connect(buyerUser).claimAll(poolId);
+    await contractRadaAuction.connect(buyerUser).claimAll(poolId);
 
     expect(await contractERC20.balanceOf(buyerUser.address)).to.equal(pu("5"));
+    expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("2250"));
+
   });
 
 
@@ -249,23 +253,26 @@ describe("Auction Contract - Token", function () {
 
 
     // Approve allowance
-    await bUSDToken.connect(buyerUser).approve(contractRadaAuction.address, pe("300"));
+    await bUSDToken.connect(buyerUser).approve(contractRadaAuction.address, pe("450"));
 
     // Admin top up payable token to user
-    await bUSDToken.transfer(buyerUser.address, pe("300"));
+    await bUSDToken.transfer(buyerUser.address, pe("450"));
 
     // Place Bid with Flat price
+    quantity = 3;
     await contractRadaAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach);
 
-    expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("150"));
+    expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("0"));
 
-    // Handle End Bid
-    await contractRadaAuction.connect(adminUser).handleEndAuction(poolId, [0], [1]);
+    // Handle End Bid, just Win 2 box
+    await contractRadaAuction.connect(adminUser).handleEndAuction(poolId, [0], [2]);
 
     // Claim Token of Bid 0
-    await contractRadaAuction.connect(buyerUser).claim(poolId, 0);
+    await contractRadaAuction.connect(buyerUser).claimAll(poolId);
 
-    expect(await contractERC20.balanceOf(buyerUser.address)).to.equal(pu("1"));
+    expect(await contractERC20.balanceOf(buyerUser.address)).to.equal(pu("2"));
+    expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("150"));
+
   });
 
 

@@ -90,7 +90,7 @@ contract RadaAuctionContract is
         uint256 quantity,
         uint256 priceEach
     );
-    event Claim(address buyerAddress, uint16 indexed poolId, uint256 bidIdx);
+    event ClaimAll(address buyerAddress, uint16 indexed poolId);
 
     function initialize(address _busdAddress) public initializer {
         __Ownable_init();
@@ -120,6 +120,16 @@ contract RadaAuctionContract is
         return admins[_msgSender()] == true;
     }
 
+    function _checkPoolOpen(uint16 _poolId) private view returns (bool) {
+        POOL_INFO memory pool = pools[_poolId];
+
+        return
+            pool.ended == false &&
+            block.timestamp >= pool.startTime &&
+            block.timestamp <= pool.endTime &&
+            pool.isPublic;
+    }
+
     /**
      * @dev function to place bid, // uint256 _nonce
      */
@@ -132,12 +142,7 @@ contract RadaAuctionContract is
         POOL_INFO memory pool = pools[_poolId];
 
         // require pool is open
-        require(
-            block.timestamp >= pool.startTime &&
-                block.timestamp <= pool.endTime &&
-                pool.isPublic,
-            "Not Started / Expired / isPublic"
-        ); // The pool have not started / Expired / isPublic
+        require(_checkPoolOpen(_poolId), "Not Started / Expired / isPublic"); // The pool have not started / Expired / isPublic
 
         if (pool.requireWhitelist) {
             require(
@@ -163,12 +168,6 @@ contract RadaAuctionContract is
             "Required valid quantity/price/balance"
         ); // Not allow quantity = 0, valid price
 
-        /* uint256 allowToPayAmount = busdToken.allowance(
-            _msgSender(),
-            address(this)
-        );
-        require(allowToPayAmount >= pool.startPrice, "Invalid token allowance"); */
-
         // transfer BUSD
         busdToken.safeTransferFrom(_msgSender(), address(this), totalAmount);
 
@@ -187,9 +186,7 @@ contract RadaAuctionContract is
         }
         // Buyer stats
         buyerBid[_poolId][_msgSender()].push(poolStats[_poolId].totalBid);
-        // buyerItemsTotal[_poolId][_msgSender()] += _quantity;
         // Pool stats
-
         poolStats[_poolId].totalBidAmount += totalAmount;
         poolStats[_poolId].totalBidItem += _quantity;
         poolStats[_poolId].totalBid++;
@@ -200,30 +197,33 @@ contract RadaAuctionContract is
     /**
      * @dev function to place bid
      */
-    // 1074 bytes
     function increaseBid(
         uint16 _poolId,
         uint16 _bidIndex,
         uint32 _quantity,
         uint256 _priceEach
     ) external nonReentrant {
+        // require pool is open
+        require(_checkPoolOpen(_poolId), "Not Started / Expired / isPublic"); // The pool have not started / Expired / isPublic
+
         BID_INFO storage bid = bids[_poolId][_bidIndex];
 
         require(
-            _quantity >= bid.quantity &&
+            bid.claimed == false &&
+                _quantity >= bid.quantity &&
                 _priceEach >= bid.priceEach &&
                 _msgSender() == bid.creator,
             "Bid not valid"
         );
 
-        uint256 amountBusd = _quantity * _priceEach;
-        uint256 newAmountBusd = bid.quantity * bid.priceEach;
+        uint256 newAmountBusd = _quantity * _priceEach;
+        uint256 oldAmountBusd = bid.quantity * bid.priceEach;
 
         // transfer BUSD
         busdToken.safeTransferFrom(
             _msgSender(),
             address(this),
-            amountBusd.sub(newAmountBusd)
+            newAmountBusd.sub(oldAmountBusd)
         );
 
         bid.quantity = _quantity;
@@ -234,12 +234,11 @@ contract RadaAuctionContract is
             poolStats[_poolId].highestPrice = _priceEach;
         }
         poolStats[_poolId].totalBidItem += _quantity - bid.quantity;
-        poolStats[_poolId].totalBidAmount += amountBusd.sub(newAmountBusd);
+        poolStats[_poolId].totalBidAmount += newAmountBusd.sub(oldAmountBusd);
 
         emit IncreaseBid(_msgSender(), _poolId, _quantity, _priceEach);
     }
 
-    // 1605 bytes
     function handleEndAuction(
         uint16 _poolId,
         uint32[] calldata bidsIndex,
@@ -268,86 +267,52 @@ contract RadaAuctionContract is
     /**
      * @dev function to handle claim NFT & refund pause
      */
-    // 2695 bytes
-    function claim(uint16 _poolId, uint256 _bidIdx)
-        public
-        nonReentrant
-        whenNotPaused
-    {
-        BID_INFO memory bid = bids[_poolId][_bidIdx];
+    function claimAll(uint16 _poolId) public nonReentrant whenNotPaused {
         POOL_INFO memory pool = pools[_poolId];
+        IERC20Upgradeable itemToken = IERC20Upgradeable(pool.addressItem);
+
         require(
             pool.ended &&
                 pool.isPublic &&
-                bid.claimed == false &&
-                bid.creator == _msgSender(),
-            "Invalid claim"
+                buyerBid[_poolId][_msgSender()].length > 0,
+            "Invalid pool"
         ); // Pool not end yet / isPublic / Claimed
 
-        uint256 totalAmount = bid.priceEach.mul(bid.quantity);
-        uint256 remainBusd = bid.priceEach.mul(bid.quantity - bid.winQuantity);
-        uint256 soldAmount = totalAmount - remainBusd;
-
-        // Set Claimed
-        bids[_poolId][_bidIdx].claimed = true;
-
-        if (bid.winQuantity > 0) {
-            IERC20Upgradeable itemToken = IERC20Upgradeable(pool.addressItem);
-
-            poolStats[_poolId].totalSold += bid.winQuantity;
-            itemToken.safeTransfer(_msgSender(), bid.winQuantity);
-        }
-        if (remainBusd > 0) {
-            busdToken.safeTransfer(bid.creator, remainBusd);
-        }
-        if (soldAmount > 0) {
-            busdToken.safeTransfer(WITHDRAW_ADDRESS, soldAmount);
-        }
-        poolStats[_poolId].totalSoldAmount = soldAmount;
-
-        emit Claim(_msgSender(), _poolId, _bidIdx);
-    }
-
-    /* function claim(uint16 _poolId, uint256 _bidIdx)
-        public
-        nonReentrant
-        whenNotPaused
-    {
-        POOL_INFO memory pool = pools[_poolId];
-        require(pool.ended && pool.isPublic, "Invalid pool"); // Pool not end yet / isPublic / Claimed
-
-        uint256 remainBusd;
-        uint256 soldAmount;
+        uint256 totalRemainBusd;
+        uint256 totalSoldAmount;
         for (uint256 i = 0; i < buyerBid[_poolId][_msgSender()].length; i++) {
-            (uint256 _remainBusd, uint256 _soldAmount) = getAmount(
-                _poolId,
+            BID_INFO storage bid = bids[_poolId][
                 buyerBid[_poolId][_msgSender()][i]
-            ); // gas savings
+            ];
+            if (bid.claimed == false) {
+                (uint256 _remainBusd, uint256 _soldAmount) = getAmount(
+                    _poolId,
+                    buyerBid[_poolId][_msgSender()][i]
+                ); // gas savings
 
-            bids[_poolId][_bidIdx].claimed = true;
+                // Flag claimed, cannot claim again
+                bid.claimed = true;
 
-            remainBusd += _remainBusd;
-            soldAmount += _soldAmount;
+                totalRemainBusd += _remainBusd;
+                totalSoldAmount += _soldAmount;
+                // Set Claimable
+                if (bid.winQuantity > 0) {
+                    poolStats[_poolId].totalSold += bid.winQuantity;
+                    itemToken.safeTransfer(_msgSender(), bid.winQuantity);
+                }
+            }
         }
 
-        // Set Claimed
-
-        if (bid.winQuantity > 0) {
-            IERC20Upgradeable itemToken = IERC20Upgradeable(pool.addressItem);
-
-            poolStats[_poolId].totalSold += bid.winQuantity;
-            itemToken.safeTransfer(_msgSender(), bid.winQuantity);
+        if (totalRemainBusd > 0) {
+            busdToken.safeTransfer(_msgSender(), totalRemainBusd);
         }
-        if (remainBusd > 0) {
-            busdToken.safeTransfer(bid.creator, remainBusd);
+        if (totalSoldAmount > 0) {
+            busdToken.safeTransfer(WITHDRAW_ADDRESS, totalSoldAmount);
         }
-        if (soldAmount > 0) {
-            busdToken.safeTransfer(WITHDRAW_ADDRESS, soldAmount);
-        }
-        poolStats[_poolId].totalSoldAmount = soldAmount;
+        poolStats[_poolId].totalSoldAmount += totalSoldAmount;
 
-        emit Claim(_msgSender(), _poolId, _bidIdx);
-    } */
+        emit ClaimAll(_msgSender(), _poolId);
+    }
 
     function getAmount(uint16 _poolId, uint256 _bidIdx)
         internal
@@ -355,21 +320,11 @@ contract RadaAuctionContract is
         returns (uint256 _remainBusd, uint256 _soldAmount)
     {
         BID_INFO memory bid = bids[_poolId][_bidIdx];
-        require(
-            bid.claimed == false && bid.creator == _msgSender(),
-            "Invalid claim"
-        ); // Pool not end yet / isPublic / Claimed
 
         uint256 totalAmount = bid.priceEach.mul(bid.quantity);
         _remainBusd = bid.priceEach.mul(bid.quantity - bid.winQuantity);
         _soldAmount = totalAmount - _remainBusd;
     }
-
-    /* function claimAll(uint16 _poolId) public nonReentrant {
-        for (uint256 i = 0; i < buyerBid[_poolId][_msgSender()].length; i++) {
-            claim(_poolId, buyerBid[_poolId][_msgSender()][i]);
-        }
-    } */
 
     /**
      * @dev function to set Admin
@@ -388,7 +343,6 @@ contract RadaAuctionContract is
     /**
      * @dev function to set white list address
      */
-    // 657 bytes
     function setWhitelist(
         uint16 _poolId,
         address[] memory _addresses,
@@ -400,35 +354,21 @@ contract RadaAuctionContract is
     }
 
     /**
-     * @dev function to withdraw all fund
+     * @dev function to withdraw ERC20
      */
-    // 621 bytes
     function withdrawFund(address _tokenAddress, uint256 _amount)
         external
         onlyOwner
     {
         IERC20Upgradeable token = IERC20Upgradeable(_tokenAddress);
-        require(
-            token.balanceOf(address(this)) >= _amount &&
-                WITHDRAW_ADDRESS != address(0),
-            "Invalid"
-        );
 
         token.safeTransfer(WITHDRAW_ADDRESS, _amount);
-    }
-
-    /**
-     * @dev function to set Admin
-     */
-    function setEnd(uint16 _poolId, bool _ended) public onlyOwner {
-        pools[_poolId].ended = _ended;
     }
 
     /**
         SETTER
      */
     // Add/update pool - by Admin
-    // 844 bytes
     function addPool(
         uint16 _poolId,
         uint256 _startPrice,
@@ -439,13 +379,12 @@ contract RadaAuctionContract is
         POOL_INFO memory pool;
         pool.startPrice = _startPrice;
         pool.addressItem = _addressItem;
-        pool.isPublic = false;
+        // pool.isPublic = false;
         pools[_poolId] = pool;
 
         poolIds.push(_poolId);
     }
 
-    // 1219 bytes
     function updatePool(
         uint16 _poolId,
         address _addressItem,
@@ -472,7 +411,6 @@ contract RadaAuctionContract is
         pools[_poolId].maxBuyPerAddress = _maxBuyPerAddress;
     }
 
-    // 1307 bytes
     function handlePublicPool(uint16 _poolId, bool _isPublic)
         external
         onlyAdmin
