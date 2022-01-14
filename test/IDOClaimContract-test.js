@@ -7,7 +7,9 @@ describe('IDOClaimContract', function () {
     let contractBoxToken
     let contractNFTMan
     let contractRadaNFT
+    let contractToken
     let poolId
+    let boxTokenAddress
     let tokenAddress
     let tokenPrice
     let tokenAllocationBusd
@@ -23,6 +25,12 @@ describe('IDOClaimContract', function () {
     beforeEach(async function () {
         ;[owner, adminUser, minterFactoryUser, buyerUser] =
             await ethers.getSigners()
+
+        // Token Address
+        const Token = await ethers.getContractFactory('ERC20Token')
+        contractToken = await Token.deploy('TOKEN', 'TOKEN')
+        contractToken = await contractToken.deployed()
+        tokenAddress = contractToken.address
 
         // BoxToken
         const BoxToken = await ethers.getContractFactory('BoxToken')
@@ -49,7 +57,7 @@ describe('IDOClaimContract', function () {
         await contractBoxToken.transfer(contractIDOClaim.address, pu('1000'))
 
         poolId = 10
-        tokenAddress = contractBoxToken.address
+        boxTokenAddress = contractBoxToken.address
         tokenPrice = pe('1')
         tokenAllocationBusd = pe('1000')
 
@@ -58,13 +66,13 @@ describe('IDOClaimContract', function () {
         const endId = 20003
         nftAddress = contractRadaNFT.address
 
-        await contractNFTMan.addPool(poolId, nftAddress, tokenAddress)
+        await contractNFTMan.addPool(poolId, nftAddress, boxTokenAddress)
         await contractNFTMan.updatePool(
             poolId,
             nftAddress,
             startId,
             endId,
-            tokenAddress
+            boxTokenAddress
         )
 
         // Set approval for NFTMan Contract
@@ -198,6 +206,7 @@ describe('IDOClaimContract', function () {
     })
 
     it('Should be Claimable', async function () {
+        await contractToken.mint(contractIDOClaim.address, pe('10000'))
         await contractIDOClaim.setAdmin(adminUser.address)
 
         await addPool(poolId)
