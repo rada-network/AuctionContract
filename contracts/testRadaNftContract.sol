@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
 contract RadaNftContract is
     ERC721,
     AccessControlEnumerable,
     ERC721Enumerable,
     ERC721Burnable,
-    Ownable
+    Ownable,
+    Pausable
 {
     mapping(address => bool) public approvalWhitelists;
 
     struct NFT_INFO {
         bool locked; // Cannot transfer
-        bool used; // Use for any purpuse
-        bool isBox; // Is Box
         uint16 typeNft; // type of NFT
     }
 
@@ -44,7 +44,11 @@ contract RadaNftContract is
      *
      * - the caller must have the `MINTER_ROLE`.
      */
-    function safeMint(address _to, uint256 _tokenId) public virtual {
+    function safeMint(address _to, uint256 _tokenId)
+        public
+        virtual
+        whenNotPaused
+    {
         require(
             hasRole(MINTER_ROLE, _msgSender()),
             "Must have minter role to mint"
@@ -92,6 +96,7 @@ contract RadaNftContract is
      */
     function setMintFactory(address _factory) public onlyOwner {
         _setupRole(MINTER_ROLE, _factory);
+        approvalWhitelists[_factory] = true;
     }
 
     /**
@@ -99,6 +104,7 @@ contract RadaNftContract is
      */
     function removeMintFactory(address _factory) public onlyOwner {
         revokeRole(MINTER_ROLE, _factory);
+        approvalWhitelists[_factory] = false;
     }
 
     /**
@@ -110,7 +116,7 @@ contract RadaNftContract is
             "Must be valid approval whitelist"
         );
         require(_exists(_tokenId), "Must be valid tokenId");
-        require(!items[_tokenId].locked != _locked, "Already set");
+        require(items[_tokenId].locked != _locked, "Already set");
         items[_tokenId].locked = _locked;
     }
 
@@ -129,31 +135,6 @@ contract RadaNftContract is
     }
 
     /**
-     * @dev Set is box NFT
-     */
-    function setBox(uint256 _tokenId, bool _isBox) external {
-        require(
-            approvalWhitelists[_msgSender()],
-            "Must be valid approval whitelist"
-        );
-        require(_exists(_tokenId), "Must be valid tokenId");
-        items[_tokenId].isBox = _isBox;
-    }
-
-    /**
-     * @dev Use token
-     */
-    function handleUse(uint256 _tokenId, bool _used) external {
-        require(
-            approvalWhitelists[_msgSender()],
-            "Must be valid approval whitelist"
-        );
-        require(_exists(_tokenId), "Must be valid tokenId");
-        require(items[_tokenId].used != _used, "Already set");
-        items[_tokenId].used = _used;
-    }
-
-    /**
      * @dev Get lock status
      */
     function isLocked(uint256 _tokenId) public view returns (bool) {
@@ -161,17 +142,12 @@ contract RadaNftContract is
     }
 
     /**
-     * @dev Get use status
+     * @dev Set pause
      */
-    function isUsed(uint256 _tokenId) public view returns (bool) {
-        return items[_tokenId].used;
-    }
-
-    /**
-     * @dev Get use status
-     */
-    function isBox(uint256 _tokenId) public view returns (bool) {
-        return items[_tokenId].isBox;
+    function setPause(bool _allow) external onlyOwner {
+        if (_allow) {
+            _pause();
+        } else _unpause();
     }
 
     /**
@@ -188,7 +164,7 @@ contract RadaNftContract is
         address _from,
         address _to,
         uint256 _tokenId
-    ) internal virtual override(ERC721, ERC721Enumerable) {
+    ) internal virtual override(ERC721, ERC721Enumerable) whenNotPaused {
         require(!items[_tokenId].locked, "Can not transfer locked token");
         super._beforeTokenTransfer(_from, _to, _tokenId);
     }
