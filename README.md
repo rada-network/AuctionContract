@@ -68,7 +68,7 @@ Step by step Deploy RandomizeByRarity to polygonMumbai / polygon
 ```shell
 npx hardhat run scripts/RandomizeByRarity/1_deploy.js --network polygonMumbai
 # Copy Contract address to proxyAddresses.js
-# TODO: Remember send LINK token to Contract 
+# TODO: Remember send LINK token to Contract
 
 npx hardhat run scripts/RandomizeByRarity/2_addPool.js --network polygonMumbai
 
