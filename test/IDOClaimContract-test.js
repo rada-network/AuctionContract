@@ -55,7 +55,7 @@ describe('IDOClaimContract', function () {
             contractNFTMan.address,
         ])
 
-        await contractBoxToken.transfer(contractIDOClaim.address, 10000)
+        await contractBoxToken.transfer(contractIDOClaim.address, pu('1000'))
 
         poolId = 10
         tokenAddress = contractBoxToken.address
@@ -147,7 +147,7 @@ describe('IDOClaimContract', function () {
         expect(await contractIDOClaim.unpublishPool(poolId))
     })
 
-    it('Update Pool', async function () {
+    it('Should update Pool when Unpublished', async function () {
         expect(
             await contractIDOClaim.updatePool(
                 poolId,
@@ -155,6 +155,27 @@ describe('IDOClaimContract', function () {
                 tokenPrice,
                 tokenAllocationBusd
             )
+        )
+    })
+
+    it('Should not update Pool when Published', async function () {
+        await contractIDOClaim.publishPool(poolId)
+
+        await expect(
+            contractIDOClaim.updatePool(
+                poolId,
+                tokenAddress,
+                tokenPrice,
+                tokenAllocationBusd
+            )
+        ).to.be.reverted
+    })
+
+    it('Should has Deposited Tokens', async function () {
+        await contractIDOClaim.publishPool(poolId)
+
+        expect(await contractIDOClaim.getDepositedTokens(poolId)).to.equal(
+            pu('1000')
         )
     })
 
