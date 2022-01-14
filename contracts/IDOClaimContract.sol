@@ -21,9 +21,13 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
+import "hardhat/console.sol";
+
 interface IUpdateERC721 is IERC721Upgradeable {
     struct NFT_INFO {
         bool locked; // Cannot transfer
+        bool isUsed; // Cannot transfer
+        bool isBoxed; // Cannot transfer
         uint16 typeNft; // type of NFT
     }
 
@@ -65,7 +69,7 @@ contract IDOClaimContract is
         DATA Structure
      */
     struct POOL_INFO {
-        IUpdateERC721 nftContract;
+        // IUpdateERC721 nftContract;
         address tokenAddress;
         uint256 tokenPrice;
         uint256 tokenAllocationBusd;
@@ -75,7 +79,7 @@ contract IDOClaimContract is
 
     struct POOL_RARITY {
         uint16[] ids;
-        mapping(uint16 => uint16) allocationBusd;
+        mapping(uint16 => uint256) allocationBusd;
     }
     mapping(uint16 => POOL_RARITY) rarityAllocations;
 
@@ -163,7 +167,7 @@ contract IDOClaimContract is
     function updateRarityAllocations(
         uint16 _poolId,
         uint16[] memory _rarityIds,
-        uint16[] memory _rarityAllocationsBusd
+        uint256[] memory _rarityAllocationsBusd
     ) external virtual onlyAdmin {
         POOL_INFO memory pool = pools[_poolId]; // pool info
         // require pool existed and not published
@@ -210,9 +214,9 @@ contract IDOClaimContract is
         );
 
         // init nftcontract
-        pools[_poolId].nftContract = IUpdateERC721(
-            nftManContract.pools(_poolId).nftAddress
-        );
+        // pools[_poolId].nftContract = IUpdateERC721(
+        //     nftManContract.pools(_poolId).nftAddress
+        // );
         // public pool
         pools[_poolId].published = true;
     }
@@ -233,7 +237,8 @@ contract IDOClaimContract is
 
         if (_nftId < _startId || _nftId > _endId) return 0;
 
-        uint16 nftType = pools[_poolId].nftContract.items(_nftId).typeNft;
+        IUpdateERC721 nftContract = IUpdateERC721(nftManContract.pools(_poolId).nftAddress);
+        uint16 nftType = nftContract.items(_nftId).typeNft;
         return rarityAllocations[_poolId].allocationBusd[nftType];
     }
 
@@ -264,10 +269,11 @@ contract IDOClaimContract is
         uint256 _ratioDeposited = _totalDeposited.mul(pool.tokenPrice).div(
             pool.tokenAllocationBusd
         );
+        IUpdateERC721 nftContract = IUpdateERC721(nftManContract.pools(_poolId).nftAddress);
         for (uint256 i; i < _nftIds.length; i++) {
             uint256 _nftId = _nftIds[i];
             require(
-                pool.nftContract.ownerOf(_nftId) == _msgSender(),
+                nftContract.ownerOf(_nftId) == _msgSender(),
                 "Invalid NFT"
             );
             uint256 _allocation = getNftAllocation(_poolId, _nftId);
@@ -302,19 +308,19 @@ contract IDOClaimContract is
         }
 
         // transfer
-        IERC20Upgradeable tokenBox = IERC20Upgradeable(
+        IERC20Upgradeable tokenContract = IERC20Upgradeable(
             pools[_poolId].tokenAddress
         );
-        tokenBox.safeTransfer(_msgSender(), _totalClaimable);
+        tokenContract.safeTransfer(_msgSender(), _totalClaimable);
 
         emit TokenClaimed(_msgSender(), _totalClaimable);
     }
 
     function getDepositedTokens(uint16 _poolId) public view returns (uint256) {
-        IERC20Upgradeable tokenBox = IERC20Upgradeable(
+        IERC20Upgradeable tokenContract = IERC20Upgradeable(
             pools[_poolId].tokenAddress
         );
-        return totalClaimedTokens.add(tokenBox.balanceOf(address(this)));
+        return totalClaimedTokens.add(tokenContract.balanceOf(address(this)));
     }
 
     function _busdToToken(uint16 _poolId, uint256 _busd)

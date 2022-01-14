@@ -89,7 +89,7 @@ describe('IDOClaimContract', function () {
         await contractIDOClaim.updateRarityAllocations(
             poolId,
             [1, 2, 3],
-            [500, 300, 200]
+            [pe("500"), pe("300"), pe("200")]
         )
 
         // Rada NFT
@@ -181,7 +181,6 @@ describe('IDOClaimContract', function () {
 
     it('Should be Claimable', async function () {
         await contractIDOClaim.publishPool(poolId)
-
         expect(
             await contractIDOClaim
                 .connect(buyerUser)
