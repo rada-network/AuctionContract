@@ -71,16 +71,16 @@ contract IDOClaimContract is
         uint256 tokenAllocationBusd;
         bool published;
     }
-    mapping(uint16 => POOL_INFO) pools;
+    mapping(uint16 => POOL_INFO) public pools;
 
     struct POOL_RARITY {
         uint16[] ids;
         mapping(uint16 => uint16) allocationBusd;
     }
-    mapping(uint16 => POOL_RARITY) rarityAllocations;
+    mapping(uint16 => POOL_RARITY)  rarityAllocations;
 
     // Operation
-    mapping(address => bool) admins;
+    mapping(address => bool) public admins;
     uint16[] poolIds;
 
     // nftId => claimed token
@@ -323,5 +323,12 @@ contract IDOClaimContract is
         returns (uint256)
     {
         return _busd.mul(1e18).div(pools[_poolId].tokenPrice);
+    }
+
+    /**
+     * @dev function to set Admin
+     */
+    function setAdmin(address _addr) public onlyOwner {
+       admins[_addr] = true;
     }
 }
