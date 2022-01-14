@@ -289,10 +289,8 @@ describe('IDOClaimContract', function () {
             contractIDOClaim.connect(buyerUser1).claim(poolId, [20004])
         ).to.be.reverted
 
-        const ntfIds1 = ntfArray1.map((el) => el[0])
-
         // Wrong user
-        await expect(contractIDOClaim.connect(user).claim(poolId, ntfIds1)).to
+        await expect(contractIDOClaim.connect(user).claim(poolId, [20001])).to
             .be.reverted
 
         // NFT 1
