@@ -140,7 +140,11 @@ describe('IDOClaimContract', function () {
     const updateRarityAllocations = async (poolId) => {
         await contractIDOClaim
             .connect(adminUser)
-            .updateRarityAllocations(poolId, [1, 2, 3], [500, 400, 100])
+            .updateRarityAllocations(
+                poolId,
+                [1, 2, 3],
+                [pe('500'), pe('300'), pe('200')]
+            )
     }
 
     it('Should set admin address', async function () {
