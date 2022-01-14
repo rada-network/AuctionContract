@@ -3,21 +3,18 @@ const { expect } = require('chai')
 const { ethers, upgrades } = require('hardhat')
 
 describe('IDOClaimContract', function () {
-    let bUSDToken
     let contractIDOClaim
     let contractBoxToken
     let contractNFTMan
     let contractRadaNFT
+    let contractToken
     let poolId
+    let boxTokenAddress
     let tokenAddress
     let tokenPrice
     let tokenAllocationBusd
     let nftAddress
     let buyerUser
-
-    const MINTER_ROLE =
-        '0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6'
-    const URL_BASE = 'https://nft.1alo.com/v1/rada/'
 
     // Utils
     const pe = (num) => ethers.utils.parseEther(num) // parseEther
@@ -29,9 +26,11 @@ describe('IDOClaimContract', function () {
         ;[owner, adminUser, minterFactoryUser, buyerUser] =
             await ethers.getSigners()
 
-        // BUSD
-        const BUSDToken = await ethers.getContractFactory('BUSDToken')
-        bUSDToken = await BUSDToken.deploy()
+        // Token Address
+        const Token = await ethers.getContractFactory('ERC20Token')
+        contractToken = await Token.deploy('TOKEN', 'TOKEN')
+        contractToken = await contractToken.deployed()
+        tokenAddress = contractToken.address
 
         // BoxToken
         const BoxToken = await ethers.getContractFactory('BoxToken')
@@ -58,42 +57,24 @@ describe('IDOClaimContract', function () {
         await contractBoxToken.transfer(contractIDOClaim.address, pu('1000'))
 
         poolId = 10
-        tokenAddress = contractBoxToken.address
+        boxTokenAddress = contractBoxToken.address
         tokenPrice = pe('1')
         tokenAllocationBusd = pe('1000')
 
         // NFTMan Add Pool
         const startId = 20001
         const endId = 20003
-        tokenAddress = contractBoxToken.address
         nftAddress = contractRadaNFT.address
 
-        await contractNFTMan.addPool(poolId, nftAddress, tokenAddress)
+        await contractNFTMan.addPool(poolId, nftAddress, boxTokenAddress)
         await contractNFTMan.updatePool(
             poolId,
             nftAddress,
             startId,
             endId,
-            tokenAddress
+            boxTokenAddress
         )
 
-        // IDOClaim Add Pool
-        await contractIDOClaim.addPool(
-            poolId,
-            tokenAddress,
-            tokenPrice,
-            tokenAllocationBusd
-        )
-
-        // updateRarityAllocations
-        await contractIDOClaim.updateRarityAllocations(
-            poolId,
-            [1, 2, 3],
-            [pe("500"), pe("300"), pe("200")]
-        )
-
-        // Rada NFT
-        await contractRadaNFT.updateBaseURI(URL_BASE)
         // Set approval for NFTMan Contract
         await contractRadaNFT.addApprovalWhitelist(contractIDOClaim.address)
         await contractRadaNFT.addApprovalWhitelist(contractNFTMan.address)
@@ -101,9 +82,6 @@ describe('IDOClaimContract', function () {
         // Set minterFactory for NFT
         await contractRadaNFT.setMintFactory(contractIDOClaim.address)
         await contractRadaNFT.setMintFactory(contractNFTMan.address)
-
-        // Mint an NFT
-        await contractRadaNFT.hasRole(MINTER_ROLE, contractIDOClaim.address)
 
         // Set admin for NFTManContract
         await contractNFTMan.setAdmin(adminUser.address, true)
@@ -136,50 +114,104 @@ describe('IDOClaimContract', function () {
         await contractRadaNFT.tokenOfOwnerByIndex(buyerUser.address, 0)
     })
 
-    it('Deploy and set admin address', async function () {})
+    const addPool = async (poolId) => {
+        await contractIDOClaim
+            .connect(adminUser)
+            .addPool(poolId, tokenAddress, tokenPrice, tokenAllocationBusd)
+    }
 
-    it('Publish Pool', async function () {
-        expect(await contractIDOClaim.publishPool(poolId))
-    })
-
-    it('Unpublish Pool', async function () {
-        await contractIDOClaim.publishPool(poolId)
-        expect(await contractIDOClaim.unpublishPool(poolId))
-    })
-
-    it('Should update Pool when Unpublished', async function () {
-        expect(
-            await contractIDOClaim.updatePool(
+    const updatePool = async (poolId) => {
+        await contractIDOClaim
+            .connect(adminUser)
+            .updatePool(
                 poolId,
-                tokenAddress,
-                tokenPrice,
-                tokenAllocationBusd
+                '0x04765e334e19adFDbA244B66C4BB88a324110d57',
+                pe('2'),
+                pe('2000')
             )
-        )
-    })
+    }
 
-    it('Should not update Pool when Published', async function () {
-        await contractIDOClaim.publishPool(poolId)
+    const updateRarityAllocations = async (poolId) => {
+        await contractIDOClaim
+            .connect(adminUser)
+            .updateRarityAllocations(poolId, [1, 2, 3], [pe("500"), pe("300"), pe("200")])
+    }
 
+    it('Should set admin address', async function () {
+        // Not owner
         await expect(
-            contractIDOClaim.updatePool(
-                poolId,
-                tokenAddress,
-                tokenPrice,
-                tokenAllocationBusd
-            )
+            contractIDOClaim
+                .connect(buyerUser.address)
+                .setAdmin(adminUser.address)
         ).to.be.reverted
+
+        expect(contractIDOClaim.setAdmin(adminUser.address))
     })
 
-    it('Should has Deposited Tokens', async function () {
-        await contractIDOClaim.publishPool(poolId)
+    it('Add Pool', async function () {
+        await contractIDOClaim.setAdmin(adminUser.address)
 
-        expect(await contractIDOClaim.getDepositedTokens(poolId)).to.equal(
-            pu('1000')
+        // Not admin
+        expect(await contractIDOClaim.admins(buyerUser.address)).to.equal(false)
+
+        // Pool Existed
+        await addPool(poolId)
+        await expect(addPool(poolId)).to.be.reverted
+
+        const pool = await contractIDOClaim.pools(poolId)
+
+        expect(pool.tokenPrice).to.equal(tokenPrice)
+        expect(pool.tokenAllocationBusd).to.equal(tokenAllocationBusd)
+        expect(pool.tokenAddress).to.equal(tokenAddress)
+    })
+
+    it('Update Pool', async function () {
+        await contractIDOClaim.setAdmin(adminUser.address)
+
+        // Not admin
+        expect(await contractIDOClaim.admins(buyerUser.address)).to.equal(false)
+
+        // Not existed
+        await expect(updatePool(poolId)).to.be.reverted
+
+        //  Update Rarity Allocations not existed Pool
+        await expect(updateRarityAllocations(poolId)).to.be.reverted
+
+        await addPool(poolId)
+
+        // Published  Missing Rarity Allocations
+        await expect(contractIDOClaim.connect(adminUser).publishPool(poolId)).to
+            .be.reverted
+
+        await updateRarityAllocations(poolId)
+        await contractIDOClaim.connect(adminUser).publishPool(poolId)
+
+        // Update with Published
+        await expect(updatePool(poolId)).to.be.reverted
+
+        // Unpublish without owner
+        await expect(contractIDOClaim.connect(adminUser).unpublishPool(poolId))
+            .to.be.reverted
+
+        await contractIDOClaim.unpublishPool(poolId)
+        await updatePool(poolId)
+
+        const pool = await contractIDOClaim.pools(poolId)
+
+        expect(pool.tokenPrice).to.equal(pe('2'))
+        expect(pool.tokenAllocationBusd).to.equal(pe('2000'))
+        expect(pool.tokenAddress).to.equal(
+            '0x04765e334e19adFDbA244B66C4BB88a324110d57'
         )
     })
 
     it('Should be Claimable', async function () {
+        await contractToken.mint(contractIDOClaim.address, pe('10000'))
+        await contractIDOClaim.setAdmin(adminUser.address)
+
+        await addPool(poolId)
+        await updateRarityAllocations(poolId)
+
         await contractIDOClaim.publishPool(poolId)
         expect(
             await contractIDOClaim
