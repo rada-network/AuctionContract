@@ -26,8 +26,6 @@ import "hardhat/console.sol";
 interface IUpdateERC721 is IERC721Upgradeable {
     struct NFT_INFO {
         bool locked; // Cannot transfer
-        bool isUsed; // Cannot transfer
-        bool isBoxed; // Cannot transfer
         uint16 typeNft; // type of NFT
     }
 
@@ -75,16 +73,16 @@ contract IDOClaimContract is
         uint256 tokenAllocationBusd;
         bool published;
     }
-    mapping(uint16 => POOL_INFO) public pools;
+    mapping(uint16 => POOL_INFO) pools;
 
     struct POOL_RARITY {
         uint16[] ids;
         mapping(uint16 => uint256) allocationBusd;
     }
-    mapping(uint16 => POOL_RARITY)  rarityAllocations;
+    mapping(uint16 => POOL_RARITY) rarityAllocations;
 
     // Operation
-    mapping(address => bool) public admins;
+    mapping(address => bool) admins;
     uint16[] poolIds;
 
     // nftId => claimed token
@@ -110,6 +108,24 @@ contract IDOClaimContract is
     modifier onlyAdmin() {
         require(admins[_msgSender()], "Caller is not an admin");
         _;
+    }
+
+    /* Admin role who can handle winner list, deposit token */
+    function setAdmin(address _address) external onlyOwner {
+        require(!admins[_address], "Already Admin"); // Already Admin
+        admins[_address] = true;
+    }
+    function removeAdmin(address _address) external onlyOwner {
+        require(admins[_address], "Not an Admin"); // Not an Admin
+        admins[_address] = false;
+    }
+
+    function isAdmin(address _address) external view onlyAdmin returns(bool) {
+        return admins[_address];
+    }
+
+    function getPool(uint16 _poolId) external view onlyAdmin returns (POOL_INFO memory) {
+        return pools[_poolId];
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
@@ -329,12 +345,5 @@ contract IDOClaimContract is
         returns (uint256)
     {
         return _busd.mul(1e18).div(pools[_poolId].tokenPrice);
-    }
-
-    /**
-     * @dev function to set Admin
-     */
-    function setAdmin(address _addr) public onlyOwner {
-       admins[_addr] = true;
     }
 }

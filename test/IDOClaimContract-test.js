@@ -8,13 +8,33 @@ describe('IDOClaimContract', function () {
     let contractNFTMan
     let contractRadaNFT
     let contractToken
-    let poolId
+    let poolId = 10
     let boxTokenAddress
     let tokenAddress
-    let tokenPrice
-    let tokenAllocationBusd
+    let tokenPrice = '0.05'
+    let tokenAllocationBusd = '2200'
     let nftAddress
-    let buyerUser
+    let buyerUser1
+    let buyerUser2
+    let user
+    let totalClaimedToken = '10000'
+
+    let ntfArray1 = [
+        //20001: nftId, 1: rarityId, 500: rarityAllocationsBusd
+        [20001, '1', '500'],
+        [20002, '2', '300'],
+        [20003, '3', '100'],
+    ]
+
+    let ntfArray2 = [
+        //20004: nftId, 4: rarityId, 1000: rarityAllocationsBusd
+        [20004, '4', '1000'],
+        [20005, '5', '200'],
+        [20006, '6', '100'],
+    ]
+
+    const startId = 20001
+    const endId = 20006
 
     // Utils
     const pe = (num) => ethers.utils.parseEther(num) // parseEther
@@ -23,7 +43,7 @@ describe('IDOClaimContract', function () {
     const fu = (num, decimals = 0) => ethers.utils.formatUnits(num, decimals) // formatEther
 
     beforeEach(async function () {
-        ;[owner, adminUser, minterFactoryUser, buyerUser] =
+        ;[owner, adminUser, minterFactoryUser, buyerUser1, buyerUser2, user] =
             await ethers.getSigners()
 
         // Token Address
@@ -55,15 +75,9 @@ describe('IDOClaimContract', function () {
         ])
 
         await contractBoxToken.transfer(contractIDOClaim.address, pu('1000'))
-
-        poolId = 10
         boxTokenAddress = contractBoxToken.address
-        tokenPrice = pe('1')
-        tokenAllocationBusd = pe('1000')
 
         // NFTMan Add Pool
-        const startId = 20001
-        const endId = 20003
         nftAddress = contractRadaNFT.address
 
         await contractNFTMan.addPool(poolId, nftAddress, boxTokenAddress)
@@ -87,7 +101,12 @@ describe('IDOClaimContract', function () {
         await contractNFTMan.setAdmin(adminUser.address, true)
 
         // Openbox
-        const openBoxes = 5
+        setupBox(buyerUser1, ntfArray1)
+        setupBox(buyerUser2, ntfArray2)
+    })
+
+    const setupBox = async (buyerUser, ntfArray) => {
+        const openBoxes = 3
         await contractBoxToken
             .connect(owner)
             .transfer(buyerUser.address, openBoxes)
@@ -99,25 +118,25 @@ describe('IDOClaimContract', function () {
         // Should open box
         await contractNFTMan.connect(buyerUser).openBox(poolId, openBoxes)
 
-        await contractNFTMan
-            .connect(adminUser)
-            .updateNFT(poolId, 20001, pu('1'))
-
-        await contractNFTMan
-            .connect(adminUser)
-            .updateNFT(poolId, 20002, pu('2'))
-
-        await contractNFTMan
-            .connect(adminUser)
-            .updateNFT(poolId, 20003, pu('3'))
+        // Update NFT
+        ntfArray.forEach(async (ntf) => {
+            await contractNFTMan
+                .connect(adminUser)
+                .updateNFT(poolId, ntf[0], pu(ntf[1]))
+        })
 
         await contractRadaNFT.tokenOfOwnerByIndex(buyerUser.address, 0)
-    })
+    }
 
     const addPool = async (poolId) => {
         await contractIDOClaim
             .connect(adminUser)
-            .addPool(poolId, tokenAddress, tokenPrice, tokenAllocationBusd)
+            .addPool(
+                poolId,
+                tokenAddress,
+                pe(tokenPrice),
+                pe(tokenAllocationBusd)
+            )
     }
 
     const updatePool = async (poolId) => {
@@ -134,14 +153,36 @@ describe('IDOClaimContract', function () {
     const updateRarityAllocations = async (poolId) => {
         await contractIDOClaim
             .connect(adminUser)
-            .updateRarityAllocations(poolId, [1, 2, 3], [pe("500"), pe("300"), pe("200")])
+            .updateRarityAllocations(
+                poolId,
+                [
+                    ...ntfArray1.map((el) => el[1]),
+                    ...ntfArray2.map((el) => el[1]),
+                ],
+                [
+                    ...ntfArray1.map((el) => pe(el[2])),
+                    ...ntfArray2.map((el) => pe(el[2])),
+                ]
+            )
+    }
+
+    const testMint = async (buyerUser, ntfArray) => {
+        const ntfIds = ntfArray.map((el) => el[0])
+
+        await contractIDOClaim.connect(buyerUser).claim(poolId, ntfIds)
+        const balance = await contractToken.balanceOf(buyerUser.address)
+
+        const claimableToken = ntfArray
+            .map((el) => (totalClaimedToken * el[2]) / tokenAllocationBusd)
+            .reduce((sum, curent) => sum + curent, 0)
+        expect(parseFloat(claimableToken)).to.equal(parseFloat(fe(balance)))
     }
 
     it('Should set admin address', async function () {
         // Not owner
         await expect(
             contractIDOClaim
-                .connect(buyerUser.address)
+                .connect(buyerUser1.address)
                 .setAdmin(adminUser.address)
         ).to.be.reverted
 
@@ -152,16 +193,18 @@ describe('IDOClaimContract', function () {
         await contractIDOClaim.setAdmin(adminUser.address)
 
         // Not admin
-        expect(await contractIDOClaim.admins(buyerUser.address)).to.equal(false)
+        expect(await contractIDOClaim.isAdmin(buyerUser1.address)).to.equal(
+            false
+        )
 
         // Pool Existed
         await addPool(poolId)
         await expect(addPool(poolId)).to.be.reverted
 
-        const pool = await contractIDOClaim.pools(poolId)
+        const pool = await contractIDOClaim.getPool(poolId)
 
-        expect(pool.tokenPrice).to.equal(tokenPrice)
-        expect(pool.tokenAllocationBusd).to.equal(tokenAllocationBusd)
+        expect(pool.tokenPrice).to.equal(pe(tokenPrice))
+        expect(pool.tokenAllocationBusd).to.equal(pe(tokenAllocationBusd))
         expect(pool.tokenAddress).to.equal(tokenAddress)
     })
 
@@ -169,7 +212,9 @@ describe('IDOClaimContract', function () {
         await contractIDOClaim.setAdmin(adminUser.address)
 
         // Not admin
-        expect(await contractIDOClaim.admins(buyerUser.address)).to.equal(false)
+        expect(await contractIDOClaim.isAdmin(buyerUser1.address)).to.equal(
+            false
+        )
 
         // Not existed
         await expect(updatePool(poolId)).to.be.reverted
@@ -196,7 +241,7 @@ describe('IDOClaimContract', function () {
         await contractIDOClaim.unpublishPool(poolId)
         await updatePool(poolId)
 
-        const pool = await contractIDOClaim.pools(poolId)
+        const pool = await contractIDOClaim.getPool(poolId)
 
         expect(pool.tokenPrice).to.equal(pe('2'))
         expect(pool.tokenAllocationBusd).to.equal(pe('2000'))
@@ -206,17 +251,52 @@ describe('IDOClaimContract', function () {
     })
 
     it('Should be Claimable', async function () {
-        await contractToken.mint(contractIDOClaim.address, pe('10000'))
-        await contractIDOClaim.setAdmin(adminUser.address)
+        // Pool is not available
+        await expect(
+            contractIDOClaim
+                .connect(buyerUser1)
+                .claim(poolId, [ntfArray1[0][0]])
+        ).to.be.reverted
 
+        await contractIDOClaim.setAdmin(adminUser.address)
         await addPool(poolId)
         await updateRarityAllocations(poolId)
 
+        // Pool is not publish
+        await expect(
+            contractIDOClaim
+                .connect(buyerUser1)
+                .claim(poolId, [ntfArray1[0][0]])
+        ).to.be.reverted
+
         await contractIDOClaim.publishPool(poolId)
-        expect(
-            await contractIDOClaim
-                .connect(buyerUser)
-                .claim(poolId, [20001, 20002, 20003])
+
+        // No Token Amount
+        await expect(
+            contractIDOClaim
+                .connect(buyerUser1)
+                .claim(poolId, [ntfArray1[0][0]])
+        ).to.be.reverted
+
+        // mint token
+        await contractToken.mint(
+            contractIDOClaim.address,
+            pe(totalClaimedToken)
         )
+
+        // Wrong nftId
+        await expect(
+            contractIDOClaim.connect(buyerUser1).claim(poolId, [20004])
+        ).to.be.reverted
+
+        // Wrong user
+        await expect(contractIDOClaim.connect(user).claim(poolId, [20001])).to
+            .be.reverted
+
+        // NFT 1
+        await testMint(buyerUser1, ntfArray1)
+
+        // NFT 2
+        await testMint(buyerUser2, ntfArray2)
     })
 })
