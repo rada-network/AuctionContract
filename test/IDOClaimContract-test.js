@@ -193,7 +193,7 @@ describe('IDOClaimContract', function () {
         await contractIDOClaim.setAdmin(adminUser.address)
 
         // Not admin
-        expect(await contractIDOClaim.admins(buyerUser1.address)).to.equal(
+        expect(await contractIDOClaim.isAdmin(buyerUser1.address)).to.equal(
             false
         )
 
@@ -201,7 +201,7 @@ describe('IDOClaimContract', function () {
         await addPool(poolId)
         await expect(addPool(poolId)).to.be.reverted
 
-        const pool = await contractIDOClaim.pools(poolId)
+        const pool = await contractIDOClaim.getPool(poolId)
 
         expect(pool.tokenPrice).to.equal(pe(tokenPrice))
         expect(pool.tokenAllocationBusd).to.equal(pe(tokenAllocationBusd))
@@ -212,7 +212,7 @@ describe('IDOClaimContract', function () {
         await contractIDOClaim.setAdmin(adminUser.address)
 
         // Not admin
-        expect(await contractIDOClaim.admins(buyerUser1.address)).to.equal(
+        expect(await contractIDOClaim.isAdmin(buyerUser1.address)).to.equal(
             false
         )
 
@@ -241,7 +241,7 @@ describe('IDOClaimContract', function () {
         await contractIDOClaim.unpublishPool(poolId)
         await updatePool(poolId)
 
-        const pool = await contractIDOClaim.pools(poolId)
+        const pool = await contractIDOClaim.getPool(poolId)
 
         expect(pool.tokenPrice).to.equal(pe('2'))
         expect(pool.tokenAllocationBusd).to.equal(pe('2000'))
