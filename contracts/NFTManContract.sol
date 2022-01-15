@@ -65,9 +65,9 @@ contract NFTManContract is
     }
 
     // Operation
-    mapping(address => bool) public admins;
-    mapping(uint16 => POOL_INFO) public pools;
-    uint16[] public poolIds;
+    mapping(address => bool) admins;
+    mapping(uint16 => POOL_INFO) pools;
+    uint16[] poolIds;
 
     event OpenBox(
         address buyerAddress,
@@ -146,6 +146,11 @@ contract NFTManContract is
     ) external onlyAdmin {
         POOL_INFO memory pool = pools[_poolId];
         require(pool.nftAddress != address(0), "Pool not found");
+        // Check valid in pool
+        require(
+            _tokenId >= pool.startId && _tokenId <= pool.endId,
+            "Not valid range"
+        );
 
         itemNft = IUpdateERC721(pool.nftAddress);
 
