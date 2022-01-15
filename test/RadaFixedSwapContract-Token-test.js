@@ -71,7 +71,7 @@ describe("Auction Contract - Token", function () {
   });
 
   it('Deploy v1 and should set admin address', async function () {
-    expect(await contractRadaFixedSwap.admins(adminUser.address)).to.equal(true);
+    expect(await contractRadaFixedSwap.isAdmin(adminUser.address)).to.equal(true);
   });
 
   it('Should the owner set withdraw address and can withdraw all funds', async function () {

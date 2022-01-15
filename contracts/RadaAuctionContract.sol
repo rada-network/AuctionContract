@@ -70,7 +70,7 @@ contract RadaAuctionContract is
     mapping(uint16 => BID_INFO[]) public bids; // poolId => bids
 
     // Operation
-    mapping(address => bool) public admins;
+    mapping(address => bool) admins;
     address public WITHDRAW_ADDRESS;
 
     // Whitelist by pool
@@ -84,12 +84,13 @@ contract RadaAuctionContract is
         uint256 quantity,
         uint256 priceEach
     );
-    event IncreaseBid(
+    /* event IncreaseBid(
         address buyerAddress,
         uint16 indexed poolId,
+        uint16 indexed bidId,
         uint256 quantity,
         uint256 priceEach
-    );
+    ); */
     event ClaimAll(address buyerAddress, uint16 indexed poolId);
 
     function initialize(address _busdAddress) public initializer {
@@ -209,7 +210,8 @@ contract RadaAuctionContract is
         BID_INFO storage bid = bids[_poolId][_bidIndex];
 
         require(
-            bid.claimed == false &&
+            _checkPoolOpen(_poolId) &&
+                bid.claimed == false &&
                 _quantity >= bid.quantity &&
                 _priceEach >= bid.priceEach &&
                 _msgSender() == bid.creator,
@@ -236,7 +238,13 @@ contract RadaAuctionContract is
         poolStats[_poolId].totalBidItem += _quantity - bid.quantity;
         poolStats[_poolId].totalBidAmount += newAmountBusd.sub(oldAmountBusd);
 
-        emit IncreaseBid(_msgSender(), _poolId, _quantity, _priceEach);
+        /* emit IncreaseBid(
+            _msgSender(),
+            _poolId,
+            _bidIndex,
+            _quantity,
+            _priceEach
+        ); */
     }
 
     function handleEndAuction(
@@ -443,7 +451,11 @@ contract RadaAuctionContract is
         return buyerBid[_poolId][_address];
     }
 
-    function getPoolIds() public view returns (uint16[] memory) {
+    function getPoolIds() external view returns (uint16[] memory) {
         return poolIds;
+    }
+
+    function isAdmin(address _address) external view onlyAdmin returns (bool) {
+        return admins[_address];
     }
 }

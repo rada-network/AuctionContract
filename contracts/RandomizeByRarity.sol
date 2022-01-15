@@ -42,7 +42,7 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
     event UpdatePool(uint256 poolId);
 
     mapping(bytes32 => uint256[2]) requests;
-    mapping(address => bool) public admins;
+    mapping(address => bool) admins;
 
     /**
      * Constructor inherits VRFConsumerBase
@@ -235,5 +235,9 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
 
     function getPoolIds() public view returns (uint256[] memory) {
         return poolIds;
+    }
+
+    function isAdmin(address _address) external view onlyAdmin returns (bool) {
+        return admins[_address];
     }
 }

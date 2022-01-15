@@ -62,6 +62,7 @@ contract NFTManContract is
         uint256 endId; // End tokenID
         uint32 totalOpen; // Total opened in pool
         address tokenAddress;
+        uint256 startTime; // Time allow open Box
     }
 
     // Operation
@@ -114,6 +115,7 @@ contract NFTManContract is
     {
         POOL_INFO storage pool = pools[_poolId];
         require(pool.nftAddress != address(0), "Pool not found");
+        require(block.timestamp >= pool.startTime, "Invalid time");
 
         itemNft = IUpdateERC721(pool.nftAddress);
 
@@ -153,7 +155,6 @@ contract NFTManContract is
         );
 
         itemNft = IUpdateERC721(pool.nftAddress);
-
         itemNft.setType(_tokenId, _typeRarity);
 
         emit UpdateNFT(_msgSender(), _poolId, _tokenId, _typeRarity);
@@ -201,7 +202,8 @@ contract NFTManContract is
         address _nftAddress,
         uint32 _startId,
         uint32 _endId,
-        address _tokenAddress
+        address _tokenAddress,
+        uint256 _startTime
     ) external onlyAdmin {
         require(_nftAddress != address(0), "Invalid address");
         require(_tokenAddress != address(0), "Invalid address Token Box");
@@ -214,6 +216,7 @@ contract NFTManContract is
         pool.startId = _startId;
         pool.endId = _endId;
         pool.tokenAddress = _tokenAddress;
+        pool.startTime = _startTime;
     }
 
     /**
@@ -232,7 +235,20 @@ contract NFTManContract is
         token.safeTransfer(owner(), _amount);
     }
 
-    function getPoolIds() public view returns (uint16[] memory) {
+    function getPoolIds() public view onlyAdmin returns (uint16[] memory) {
         return poolIds;
+    }
+
+    function isAdmin(address _address) external view onlyAdmin returns (bool) {
+        return admins[_address];
+    }
+
+    function getPool(uint16 _poolId)
+        external
+        view
+        onlyAdmin
+        returns (POOL_INFO memory)
+    {
+        return pools[_poolId];
     }
 }

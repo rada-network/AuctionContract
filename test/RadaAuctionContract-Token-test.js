@@ -73,7 +73,7 @@ describe("Auction Contract - Token", function () {
   });
 
   it('Deploy v1 and should set admin address', async function () {
-    expect(await contractRadaAuction.admins(adminUser.address)).to.equal(true);
+    expect(await contractRadaAuction.isAdmin(adminUser.address)).to.equal(true);
   });
 
   it('Should the owner set withdraw address and can withdraw all funds', async function () {

@@ -20,12 +20,11 @@ async function main() {
 
   // Create first campaign
   // TODO: Fill your poolId
-  const poolId = 2; // 2 auction, 4 fixed
+  const poolId = 4; // 2 auction, 4 fixed
   const nftAddress = nftAddresses[network];
   const tokenAddress = tokenAddresses[network];
 
   await NFTManContract.addPool(poolId, nftAddress, tokenAddress);
-
 
   console.log("addPool # "+poolId+" success");
 

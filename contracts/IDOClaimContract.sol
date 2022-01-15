@@ -115,16 +115,22 @@ contract IDOClaimContract is
         require(!admins[_address], "Already Admin"); // Already Admin
         admins[_address] = true;
     }
+
     function removeAdmin(address _address) external onlyOwner {
         require(admins[_address], "Not an Admin"); // Not an Admin
         admins[_address] = false;
     }
 
-    function isAdmin(address _address) external view onlyAdmin returns(bool) {
+    function isAdmin(address _address) external view onlyAdmin returns (bool) {
         return admins[_address];
     }
 
-    function getPool(uint16 _poolId) external view onlyAdmin returns (POOL_INFO memory) {
+    function getPool(uint16 _poolId)
+        external
+        view
+        onlyAdmin
+        returns (POOL_INFO memory)
+    {
         return pools[_poolId];
     }
 
@@ -135,7 +141,6 @@ contract IDOClaimContract is
         SETTER
      */
     // Add/update pool - by Admin
-    // 844 bytes
     function addPool(
         uint16 _poolId,
         address _tokenAddress,
@@ -160,7 +165,10 @@ contract IDOClaimContract is
         poolIds.push(_poolId);
     }
 
-    // 1219 bytes
+    function getPoolIds() public view onlyAdmin returns (uint16[] memory) {
+        return poolIds;
+    }
+
     function updatePool(
         uint16 _poolId,
         address _tokenAddress,
@@ -253,7 +261,9 @@ contract IDOClaimContract is
 
         if (_nftId < _startId || _nftId > _endId) return 0;
 
-        IUpdateERC721 nftContract = IUpdateERC721(nftManContract.pools(_poolId).nftAddress);
+        IUpdateERC721 nftContract = IUpdateERC721(
+            nftManContract.pools(_poolId).nftAddress
+        );
         uint16 nftType = nftContract.items(_nftId).typeNft;
         return rarityAllocations[_poolId].allocationBusd[nftType];
     }
@@ -285,13 +295,12 @@ contract IDOClaimContract is
         uint256 _ratioDeposited = _totalDeposited.mul(pool.tokenPrice).div(
             pool.tokenAllocationBusd
         );
-        IUpdateERC721 nftContract = IUpdateERC721(nftManContract.pools(_poolId).nftAddress);
+        IUpdateERC721 nftContract = IUpdateERC721(
+            nftManContract.pools(_poolId).nftAddress
+        );
         for (uint256 i; i < _nftIds.length; i++) {
             uint256 _nftId = _nftIds[i];
-            require(
-                nftContract.ownerOf(_nftId) == _msgSender(),
-                "Invalid NFT"
-            );
+            require(nftContract.ownerOf(_nftId) == _msgSender(), "Invalid NFT");
             uint256 _allocation = getNftAllocation(_poolId, _nftId);
             uint256 _claimable = _allocation.mul(_ratioDeposited).div(1e18);
             // current claimable for nftId

@@ -69,7 +69,7 @@ contract RadaFixedSwapContract is
     mapping(uint16 => BID_INFO[]) public bids; // poolId => bids
 
     // Operation
-    mapping(address => bool) public admins;
+    mapping(address => bool) admins;
     address public WITHDRAW_ADDRESS;
 
     // Whitelist by pool
@@ -310,5 +310,9 @@ contract RadaFixedSwapContract is
 
     function getPoolIds() public view returns (uint16[] memory) {
         return poolIds;
+    }
+
+    function isAdmin(address _address) external view onlyAdmin returns (bool) {
+        return admins[_address];
     }
 }

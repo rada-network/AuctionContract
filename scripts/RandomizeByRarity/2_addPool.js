@@ -18,9 +18,9 @@ async function main() {
 
   // Create first campaign
   // TODO: Fill your poolId
-  const poolId = 4; // 2 Auction Token
+  const poolId = 2; // 2 Auction Token
 
-  const title = "Token Box - Fixed Swap";
+  const title = "Token Box - Auction";
   const rarity = [1000,10,10,3,3,3,2,2,2,1,1,1];
   const rarityIds = [1,2,3,4,5,6,7,8,9,10,11,12];
 
