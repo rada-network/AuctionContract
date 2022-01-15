@@ -3,20 +3,19 @@ const { expect } = require('chai')
 const { ethers, upgrades } = require('hardhat')
 
 describe('IDOClaimContract', function () {
-    let contractIDOClaim
-    let contractBoxToken
-    let contractNFTMan
-    let contractRadaNFT
-    let contractToken
     let poolId = 10
+    let contractIDOClaim,
+        contractBoxToken,
+        contractNFTMan,
+        contractRadaNFT,
+        contractToken
+
     let boxTokenAddress
     let tokenAddress
     let tokenPrice = '0.05'
-    let tokenAllocationBusd = '2200'
+    let tokenAllocationBusd = '3700'
     let nftAddress
-    let buyerUser1
-    let buyerUser2
-    let user
+    let buyerUser1, buyerUser2, buyerUser3, user
     let totalClaimedToken = '10000'
 
     let ntfArray1 = [
@@ -33,8 +32,15 @@ describe('IDOClaimContract', function () {
         [20006, '6', '100'],
     ]
 
+    let ntfArray3 = [
+        //20007: nftId, 7: rarityId, 800: rarityAllocationsBusd
+        [20007, '7', '800'],
+        [20008, '8', '600'],
+        [20009, '9', '100'],
+    ]
+
     const startId = 20001
-    const endId = 20006
+    const endId = 20010
 
     // Utils
     const pe = (num) => ethers.utils.parseEther(num) // parseEther
@@ -43,8 +49,15 @@ describe('IDOClaimContract', function () {
     const fu = (num, decimals = 0) => ethers.utils.formatUnits(num, decimals) // formatEther
 
     beforeEach(async function () {
-        ;[owner, adminUser, minterFactoryUser, buyerUser1, buyerUser2, user] =
-            await ethers.getSigners()
+        ;[
+            owner,
+            adminUser,
+            minterFactoryUser,
+            buyerUser1,
+            buyerUser2,
+            buyerUser3,
+            user,
+        ] = await ethers.getSigners()
 
         // Token Address
         const Token = await ethers.getContractFactory('ERC20Token')
@@ -100,9 +113,10 @@ describe('IDOClaimContract', function () {
         // Set admin for NFTManContract
         await contractNFTMan.setAdmin(adminUser.address, true)
 
-        // Openbox
+        // setupBox
         setupBox(buyerUser1, ntfArray1)
         setupBox(buyerUser2, ntfArray2)
+        setupBox(buyerUser3, ntfArray3)
     })
 
     const setupBox = async (buyerUser, ntfArray) => {
@@ -158,10 +172,12 @@ describe('IDOClaimContract', function () {
                 [
                     ...ntfArray1.map((el) => el[1]),
                     ...ntfArray2.map((el) => el[1]),
+                    ...ntfArray3.map((el) => el[1]),
                 ],
                 [
                     ...ntfArray1.map((el) => pe(el[2])),
                     ...ntfArray2.map((el) => pe(el[2])),
+                    ...ntfArray3.map((el) => pe(el[2])),
                 ]
             )
     }
@@ -257,18 +273,15 @@ describe('IDOClaimContract', function () {
                 .connect(buyerUser1)
                 .claim(poolId, [ntfArray1[0][0]])
         ).to.be.reverted
-
         await contractIDOClaim.setAdmin(adminUser.address)
         await addPool(poolId)
         await updateRarityAllocations(poolId)
-
         // Pool is not publish
         await expect(
             contractIDOClaim
                 .connect(buyerUser1)
                 .claim(poolId, [ntfArray1[0][0]])
         ).to.be.reverted
-
         await contractIDOClaim.publishPool(poolId)
 
         // No Token Amount
@@ -295,8 +308,10 @@ describe('IDOClaimContract', function () {
 
         // NFT 1
         await testMint(buyerUser1, ntfArray1)
-
         // NFT 2
         await testMint(buyerUser2, ntfArray2)
+
+        // NFT 3
+        ntfArray3.forEach(async (el) => await testMint(buyerUser3, [el]))
     })
 })
