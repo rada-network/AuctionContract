@@ -66,9 +66,9 @@ contract NFTManContract is
     }
 
     // Operation
-    mapping(address => bool) admins;
-    mapping(uint16 => POOL_INFO) pools;
-    uint16[] poolIds;
+    mapping(address => bool) public admins;
+    mapping(uint16 => POOL_INFO) public pools;
+    uint16[] public poolIds;
 
     event OpenBox(
         address buyerAddress,
@@ -235,20 +235,15 @@ contract NFTManContract is
         token.safeTransfer(owner(), _amount);
     }
 
-    function getPoolIds() public view onlyAdmin returns (uint16[] memory) {
+    function getPoolIds() public view returns (uint16[] memory) {
         return poolIds;
     }
 
-    function isAdmin(address _address) external view onlyAdmin returns (bool) {
+    function isAdmin(address _address) external view returns (bool) {
         return admins[_address];
     }
 
-    function getPool(uint16 _poolId)
-        external
-        view
-        onlyAdmin
-        returns (POOL_INFO memory)
-    {
+    function getPool(uint16 _poolId) external view returns (POOL_INFO memory) {
         return pools[_poolId];
     }
 }
