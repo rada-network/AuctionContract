@@ -99,7 +99,8 @@ describe('IDOClaimContract', function () {
             nftAddress,
             startId,
             endId,
-            boxTokenAddress
+            boxTokenAddress,
+            Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000)
         )
 
         // Set approval for NFTMan Contract
@@ -264,6 +265,54 @@ describe('IDOClaimContract', function () {
         expect(pool.tokenAddress).to.equal(
             '0x04765e334e19adFDbA244B66C4BB88a324110d57'
         )
+    })
+
+    it('Publish Pool', async function () {
+        await contractIDOClaim.setAdmin(adminUser.address)
+        await addPool(poolId)
+
+        expect(await updateRarityAllocations(poolId))
+
+        expect(await contractIDOClaim.connect(adminUser).publishPool(poolId))
+    })
+
+    it('Update Rarity Allocations ', async function () {
+        //  Update Rarity Allocations not existed Pool
+        await expect(updateRarityAllocations(poolId)).to.be.reverted
+
+        await contractIDOClaim.setAdmin(adminUser.address)
+        await addPool(poolId)
+
+        await updateRarityAllocations(poolId)
+        await contractIDOClaim.connect(adminUser).publishPool(poolId)
+
+        // Published
+        await expect(updateRarityAllocations(poolId)).to.be.reverted
+
+        await contractIDOClaim.unpublishPool(poolId)
+
+        expect(await updateRarityAllocations(poolId))
+    })
+
+    it('Unpublish Pool', async function () {
+        await contractIDOClaim.setAdmin(adminUser.address)
+
+        // Not existed
+        await expect(contractIDOClaim.unpublishPool(poolId)).to.be.reverted
+
+        await addPool(poolId)
+
+        // Not Owner
+        await expect(contractIDOClaim.connect(adminUser).unpublishPool(poolId))
+            .to.be.reverted
+
+        // Not publish yet
+        await expect(contractIDOClaim.unpublishPool(poolId)).to.be.reverted
+
+        await updateRarityAllocations(poolId)
+        await contractIDOClaim.connect(adminUser).publishPool(poolId)
+
+        expect(await contractIDOClaim.unpublishPool(poolId))
     })
 
     it('Should be Claimable', async function () {
