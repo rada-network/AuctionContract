@@ -9,10 +9,10 @@ async function main() {
   const contractAddress = contractAddresses[network];
 
   console.log("With the account:", deployer.address);
-  console.log("With RadaAuctionContract address:", contractAddress);
+  console.log("With NFTAuctionContract address:", contractAddress);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const instanceContract = await ethers.getContractAt("RadaAuctionContract",contractAddress);
+  const instanceContract = await ethers.getContractAt("NFTAuctionContract",contractAddress);
 
   // TODO: add real whitelist
   const whitelist = [

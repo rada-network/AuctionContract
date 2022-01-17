@@ -12,7 +12,7 @@ async function main() {
   console.log("With RadaFixedSwapContract address:", contractAddress);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const RadaFixedSwapContract = await ethers.getContractAt("RadaFixedSwapContract",contractAddress);
+  const instanceContract = await ethers.getContractAt("RadaFixedSwapContract",contractAddress);
 
   // TODO: add real whitelist
   const whitelist = [
@@ -20,9 +20,9 @@ async function main() {
     "0xA8f68bB8d525f5874df9202c63C1f02eeC3dFE1f", // Tan
   ];
 
-  const poolId = fu(await RadaFixedSwapContract.campaignCount()) - 1;
+  const poolId = fu(await instanceContract.campaignCount()) - 1;
 
-  await RadaFixedSwapContract.setWhitelist(poolId, whitelist,true);
+  await instanceContract.setWhitelist(poolId, whitelist,true);
 
   console.log("setWhitelist success");
 

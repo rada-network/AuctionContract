@@ -9,18 +9,18 @@ async function main() {
   const contractAddress = contractAddresses[network];
 
   console.log("With the account:", deployer.address);
-  console.log("With RadaFixedSwapContract address:", contractAddress);
+  console.log("With NFTAuctionContract address:", contractAddress);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const RadaFixedSwapContract = await ethers.getContractAt("RadaFixedSwapContract",contractAddress);
+  const instanceContract = await ethers.getContractAt("NFTAuctionContract",contractAddress);
 
   const poolId = 10;
 
   const quantity = 2;
   const priceEach = pe("200");
-  await RadaFixedSwapContract.placeOrder(poolId, quantity, priceEach);
+  await instanceContract.placeBid(poolId, quantity, priceEach);
 
-  console.log("placeOrder success");
+  console.log("placeBid success");
 
   const afterDeploy = fe(await deployer.getBalance());
   console.log("Cost spent:", (beforeDeploy-afterDeploy));

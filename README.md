@@ -19,7 +19,34 @@ npx hardhat clean
 npx hardhat test
 ```
 
-Step by step Deploy to testnet / mainnet
+Step by step Deploy NFT SALE to testnet / mainnet
+
+```shell
+npx hardhat run scripts/NFTAuctionContract/1_deploy.js --network testnet
+# Copy Contract address to proxyAddresses.js
+npx hardhat run scripts/NFTFixedSwapContract/1_deploy.js --network testnet
+# Copy Contract address to proxyAddresses.js
+
+npx hardhat run scripts/NFTFixedSwapContract/setAdmin.js --network testnet
+npx hardhat run scripts/NFTAuctionContract/setAdmin.js --network testnet
+
+# Auction
+npx hardhat run scripts/NFTAuctionContract/2_addOrUpdatePool.js --network testnet
+# Got NFT first and update range tokenId
+npx hardhat run scripts/NFTAuctionContract/3_updateSalePool.js --network testnet
+
+# Fixed Swap
+npx hardhat run scripts/NFTFixedSwapContract/2_addOrUpdatePool.js --network testnet
+# Got NFT first and update range tokenId
+npx hardhat run scripts/NFTFixedSwapContract/3_updateSalePool.js --network testnet
+
+# npx hardhat run scripts/NFTAuctionContract/getImplementationAddress.js --network testnet
+# npx hardhat run scripts/NFTFixedSwapContract/getImplementationAddress.js --network testnet
+# npx hardhat verify --network testnet DDDDDDDDD
+
+```
+
+Step by step Deploy Token SALE to testnet / mainnet
 
 ```shell
 npx hardhat run scripts/NFTManContract/1_deploy.js --network testnet
@@ -36,15 +63,12 @@ npx hardhat run scripts/RadaAuctionContract/setAdmin.js --network testnet
 npx hardhat run scripts/NFTManContract/setAdmin.js --network testnet
 
 # TOKEN - Auction
-npx hardhat run scripts/RadaAuctionContract/TOKEN_2_addPool.js --network testnet
-npx hardhat run scripts/RadaAuctionContract/TOKEN_3_updatePool.js --network testnet
+npx hardhat run scripts/RadaAuctionContract/TOKEN_2_addOrUpdatePool.js --network testnet
 
 # TOKEN - Fixed Swap
-npx hardhat run scripts/RadaFixedSwapContract/TOKEN_2_addPool.js --network testnet
-npx hardhat run scripts/RadaFixedSwapContract/TOKEN_3_updatePool.js --network testnet
+npx hardhat run scripts/RadaFixedSwapContract/TOKEN_2_addOrUpdatePool.js --network testnet
 
 # npx hardhat run scripts/RadaAuctionContract/4_handleEndAuction.js --network testnet
-
 ```
 
 Step by step Deploy NFTMan to testnet / mainnet
@@ -53,8 +77,7 @@ Step by step Deploy NFTMan to testnet / mainnet
 npx hardhat run scripts/NFTManContract/1_deploy.js --network testnet
 # Copy Contract address to proxyAddresses.js
 # Token Box
-npx hardhat run scripts/NFTManContract/TOKEN_2_addPool.js --network testnet
-npx hardhat run scripts/NFTManContract/TOKEN_3_updatePool.js --network testnet
+npx hardhat run scripts/NFTManContract/TOKEN_2_addOrUpdatePool.js --network testnet
 
 npx hardhat run scripts/NFTManContract/setAdmin.js --network testnet
 npx hardhat run scripts/NFTManContract/upgradeContract_v2.js --network testnet
@@ -123,4 +146,6 @@ npx hardhat run scripts/BoxToken/sendTokentest.js --network testnet
 
 ```shell
 remixd -s ./ --remix-ide https://remix.ethereum.org
+
+grep \"bytecode\" artifacts/contracts/NFTAuctionContract.sol/* | awk '{print $1 " " length($3)/2}'
 ```

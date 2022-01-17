@@ -9,22 +9,25 @@ async function main() {
   const contractAddress = contractAddresses[network];
 
   console.log("With the account:", deployer.address);
-  console.log("With RadaAuctionContract address:", contractAddress);
+  console.log("With NFTAuctionContract address:", contractAddress);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const instanceContract = await ethers.getContractAt("RadaAuctionContract",contractAddress);
+  const NFTAuctionContract = await ethers.getContractAt("NFTAuctionContract",contractAddress);
 
-  // TODO: add real whitelist
-  const whitelist = [
-    "0xAE51701F3eB7b897eB6EE5ecdf35c4fEE29BFAe6", // Quang
-    "0xA8f68bB8d525f5874df9202c63C1f02eeC3dFE1f", // Tan
-  ];
+  // TODO: Fill your poolId
+  const poolId = 10;
 
-  const poolId = fu(await instanceContract.campaignCount()) - 1;
+  // Get total bids
+  const totalBid = fe(await NFTAuctionContract.totalBid(poolId));
+  // Get All Bids of campaign
+  console.log("Total Bid: "+totalBid);
 
-  await instanceContract.setWhitelist(poolId, whitelist,true);
+  // Todo Import Winners
+  const bidsIndex = [0];
+  const quantityWin = [1];
+  await NFTAuctionContract.handleEndAuction(poolId, bidsIndex, quantityWin);
 
-  console.log("setWhitelist success");
+  console.log("handleEndAuction "+poolId+" success");
 
   const afterDeploy = fe(await deployer.getBalance());
   console.log("Cost spent:", (beforeDeploy-afterDeploy));

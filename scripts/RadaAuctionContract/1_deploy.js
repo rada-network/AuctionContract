@@ -11,8 +11,8 @@ async function main() {
 
   const RadaAuctionContract = await ethers.getContractFactory("RadaAuctionContract");
 
-  const proxyContract = await upgrades.deployProxy(RadaAuctionContract, [busdAddresses[network]], { kind: 'uups' });
-  console.log("Contract address:", proxyContract.address);
+  const instanceContract = await upgrades.deployProxy(RadaAuctionContract, [busdAddresses[network]], { kind: 'uups' });
+  console.log("Contract address:", instanceContract.address);
 
   const afterDeploy = fe(await deployer.getBalance());
   console.log("Cost deploy:", (beforeDeploy-afterDeploy));

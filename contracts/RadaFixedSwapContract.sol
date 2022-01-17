@@ -235,7 +235,7 @@ contract RadaFixedSwapContract is
         SETTER
      */
     // Add/update pool - by Admin
-    function addPool(
+    /* function addPool(
         uint16 _poolId,
         uint256 _startPrice,
         address _addressItem
@@ -274,6 +274,41 @@ contract RadaFixedSwapContract is
         pools[_poolId].startPrice = _startPrice;
         pools[_poolId].requireWhitelist = _requireWhitelist;
         pools[_poolId].maxBuyPerAddress = _maxBuyPerAddress;
+    } */
+
+    function addOrUpdatePool(
+        uint16 _poolId,
+        address _addressItem,
+        uint256 _totalItems,
+        uint256 _startTime,
+        uint256 _endTime,
+        uint256 _startPrice,
+        bool _requireWhitelist,
+        uint256 _maxBuyPerAddress
+    ) external onlyAdmin {
+        require(
+            _startPrice > 0,
+            "Invalid"
+        );
+
+        POOL_INFO storage pool = pools[_poolId]; // pool info
+        require(!pool.isPublic, "Pool is public");
+        // Not exist then add pool
+        if (pool.startPrice == 0) {
+            poolIds.push(_poolId);
+        }
+
+        // do update
+        pool.addressItem = _addressItem;
+        pool.totalItems = _totalItems;
+        pool.startTime = _startTime;
+        pool.endTime = _endTime;
+        pool.startPrice = _startPrice;
+        pool.requireWhitelist = _requireWhitelist;
+        pool.maxBuyPerAddress = _maxBuyPerAddress;
+
+
+        pools[_poolId] = pool;
     }
 
     function handlePublicPool(uint16 _poolId, bool _isPublic)

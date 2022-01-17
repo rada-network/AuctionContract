@@ -12,13 +12,13 @@ async function main() {
   const tokenAddress = tokenAddresses[network];
 
   console.log("With the account:", deployer.address);
-  console.log("With RadaFixedSwapContract address:", contractAddress);
+  console.log("With RadaAuctionContract address:", contractAddress);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const RadaFixedSwapContract = await ethers.getContractAt("RadaFixedSwapContract",contractAddress);
+  const instanceContract = await ethers.getContractAt("RadaAuctionContract",contractAddress);
 
   // TODO: Fill your poolId
-  const poolId = 4;
+  const poolId = 2; // 2
   const startPrice = pe("150");
   const addressItem = tokenAddress; // Address of NFT or Token
   const totalItems = 1000;
@@ -28,15 +28,15 @@ async function main() {
   const maxBuyPerAddress = 10;
   const requireWhitelist = false;
 
-  await RadaFixedSwapContract.handlePublicPool(poolId, false);
+  await instanceContract.handlePublicPool(poolId, false);
   console.log("Pool changed status: false");
   await sleep(5000);
-  await RadaFixedSwapContract.updatePool(poolId, addressItem, totalItems, startTime, endTime, startPrice, requireWhitelist, maxBuyPerAddress);
-  console.log("updatePool "+poolId+" success");
-  await RadaFixedSwapContract.handlePublicPool(poolId, true);
+  await instanceContract.addOrUpdatePool(poolId, addressItem, totalItems, startTime, endTime, startPrice, requireWhitelist, maxBuyPerAddress);
+  console.log("addOrUpdatePool "+poolId+" success");
+  await instanceContract.handlePublicPool(poolId, true);
   console.log("Pool changed status: true");
   await sleep(5000);
-  const pool = await RadaFixedSwapContract.pools(poolId);
+  const pool = await instanceContract.pools(poolId);
   console.log("Pool status: "+pool.isPublic);
 
   const afterDeploy = fe(await deployer.getBalance());

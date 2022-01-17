@@ -12,7 +12,7 @@ async function main() {
   console.log("With RadaFixedSwapContract address:", contractAddress);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const RadaFixedSwapContract = await ethers.getContractAt("RadaFixedSwapContract",contractAddress);
+  const instanceContract = await ethers.getContractAt("RadaFixedSwapContract",contractAddress);
 
   // TODO: add real whitelist
   const admins = [
@@ -23,7 +23,7 @@ async function main() {
   ];
 
   for (var i=0;i<admins.length;i++) {
-    await RadaFixedSwapContract.setAdmin(admins[i],true);
+    await instanceContract.setAdmin(admins[i],true);
     console.log("setAdmin " + admins[i]);
   }
 

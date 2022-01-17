@@ -106,6 +106,6 @@ module.exports = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
-    only: ['RadaAuctionContract','RadaFixedSwapContract', 'NFTManContract', 'RandomizeByRarity', 'IDOClaimContract', 'NFTFixedSwapContract'],
+    only: ['RadaAuctionContract','RadaFixedSwapContract', 'NFTManContract', 'RandomizeByRarity', 'IDOClaimContract', 'NFTFixedSwapContract', 'NFTAuctionContract'],
   }
 };

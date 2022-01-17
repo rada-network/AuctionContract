@@ -1,30 +1,31 @@
-const { ethers, upgrades, hardhatArguments } = require('hardhat');
+const { ethers, hardhatArguments } = require('hardhat');
 const { addresses: contractAddresses } = require('./proxyAddresses');
+const { addresses: tokenAddresses } = require('../BoxTokenAddresses');
+
 const { pe,fe,fu,pu } = require('../../utils');
 
 async function main() {
+
   const [deployer] = await ethers.getSigners();
 
   const network = hardhatArguments.network;
   const contractAddress = contractAddresses[network];
+  const tokenAddress = tokenAddresses[network];
 
   console.log("With the account:", deployer.address);
-  console.log("With RadaAuctionContract address:", contractAddress);
+  console.log("With NFTFixedSwapContract address:", contractAddress);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const instanceContract = await ethers.getContractAt("RadaAuctionContract",contractAddress);
+  const instanceContract = await ethers.getContractAt("NFTFixedSwapContract",contractAddress);
 
-  // TODO: add real whitelist
-  const whitelist = [
-    "0xAE51701F3eB7b897eB6EE5ecdf35c4fEE29BFAe6", // Quang
-    "0xA8f68bB8d525f5874df9202c63C1f02eeC3dFE1f", // Tan
-  ];
+  // Create first campaign
+  // TODO: Fill your poolId
+  const poolId = 4;
+  const startPrice = pe("150");
+  const addressItem = tokenAddress; // Address of Token
+  await instanceContract.addPool(poolId, startPrice, addressItem);
 
-  const poolId = fu(await instanceContract.campaignCount()) - 1;
-
-  await instanceContract.setWhitelist(poolId, whitelist,true);
-
-  console.log("setWhitelist success");
+  console.log("addPool # "+poolId+" success");
 
   const afterDeploy = fe(await deployer.getBalance());
   console.log("Cost spent:", (beforeDeploy-afterDeploy));

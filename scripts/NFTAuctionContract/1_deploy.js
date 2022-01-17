@@ -9,9 +9,9 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const RadaFixedSwapContract = await ethers.getContractFactory("RadaFixedSwapContract");
+  const NFTAuctionContract = await ethers.getContractFactory("NFTAuctionContract");
 
-  const instanceContract = await upgrades.deployProxy(RadaFixedSwapContract, [busdAddresses[network]], { kind: 'uups' });
+  const instanceContract = await upgrades.deployProxy(NFTAuctionContract, [busdAddresses[network]], { kind: 'uups' });
   console.log("Contract address:", instanceContract.address);
 
   const afterDeploy = fe(await deployer.getBalance());

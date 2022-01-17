@@ -42,7 +42,6 @@ contract NFTFixedSwapContract is
      */
     struct POOL_INFO {
         address addressItem;
-        uint256[] saleTokenIds; // tokenId array for sale
         uint256 startTime;
         uint256 endTime;
         uint256 startPrice; // initialPrice
@@ -65,10 +64,12 @@ contract NFTFixedSwapContract is
         uint256[] tokenIds;
     }
     mapping(uint16 => POOL_INFO) public pools;
+    mapping(uint16 => uint256[]) public poolSaleTokenIds; // poolId => List tokenId for sale
     uint16[] public poolIds;
 
     mapping(uint16 => POOL_STATS) public poolStats; // poolId => pool stats
     mapping(uint16 => BID_INFO[]) public bids; // poolId => bids
+
 
     // Operation
     mapping(address => bool) admins;
@@ -84,8 +85,8 @@ contract NFTFixedSwapContract is
     event PlaceOrder(
         address buyerAddress,
         uint16 indexed poolId,
-        uint256 _quantity,
-        uint256 priceEach
+        uint256 quantity,
+        uint256 totalAmount
     );
 
     function initialize(address _busdAddress) public initializer {
@@ -135,7 +136,7 @@ contract NFTFixedSwapContract is
         ); // The pool have not started / Expired / isPublic
 
         require(
-            pool.saleTokenIds.length >=
+            poolSaleTokenIds[_poolId].length >=
                 (poolStats[_poolId].totalBidItem + _quantity) &&
                 _quantity > 0,
             "Invalid quantity / sold out"
@@ -157,7 +158,7 @@ contract NFTFixedSwapContract is
 
         uint256[] memory _tokenIds = new uint256[](_quantity);
         for (uint256 i; i < _quantity; i++) {
-            _tokenIds[i] = pool.saleTokenIds[poolStats[_poolId].totalSold];
+            _tokenIds[i] = poolSaleTokenIds[_poolId][poolStats[_poolId].totalSold];
             poolStats[_poolId].totalSold++;
         }
         BID_INFO memory bidding = BID_INFO({
@@ -182,7 +183,7 @@ contract NFTFixedSwapContract is
             nft.safeTransferFrom(address(this), _msgSender(), _tokenIds[i]);
         }
 
-        emit PlaceOrder(_msgSender(), _poolId, _quantity, pool.startPrice);
+        emit PlaceOrder(_msgSender(), _poolId, _quantity, totalAmount);
     }
 
     /**
@@ -232,32 +233,42 @@ contract NFTFixedSwapContract is
     /**
         SETTER
      */
-    // Add/update pool - by Admin
-    function addPool(
-        uint16 _poolId,
-        uint256 _startPrice,
-        address _addressItem
-    ) external onlyAdmin {
-        require(pools[_poolId].startPrice == 0 && _startPrice > 0, "Invalid");
-
-        POOL_INFO memory pool;
-        pool.startPrice = _startPrice;
-        pool.addressItem = _addressItem;
-        pool.isPublic = false;
-        pools[_poolId] = pool;
-
-        poolIds.push(_poolId);
-    }
-
-    function updatePool(
+    function addOrUpdatePool(
         uint16 _poolId,
         address _addressItem,
-        uint256[] memory _saleTokenIds,
         uint256 _startTime,
         uint256 _endTime,
         uint256 _startPrice,
         bool _requireWhitelist,
         uint256 _maxBuyPerAddress
+    ) external onlyAdmin {
+        require(
+            _startPrice > 0,
+            "Invalid"
+        );
+
+        POOL_INFO storage pool = pools[_poolId]; // pool info
+        require(!pool.isPublic, "Pool is public");
+        // Not exist then add pool
+        if (pool.startPrice == 0) {
+            poolIds.push(_poolId);
+        }
+
+        // do update
+        pool.addressItem = _addressItem;
+        pool.startTime = _startTime;
+        pool.endTime = _endTime;
+        pool.startPrice = _startPrice;
+        pool.requireWhitelist = _requireWhitelist;
+        pool.maxBuyPerAddress = _maxBuyPerAddress;
+
+
+        pools[_poolId] = pool;
+    }
+
+    function updateSalePool(
+        uint16 _poolId,
+        uint256[] memory _saleTokenIds
     ) external onlyAdmin {
         require(
             pools[_poolId].startPrice > 0 && _saleTokenIds.length > 0,
@@ -267,15 +278,9 @@ contract NFTFixedSwapContract is
         POOL_INFO memory pool = pools[_poolId]; // pool info
         require(!pool.isPublic, "Pool is public");
 
-        // do update
-        pools[_poolId].addressItem = _addressItem;
-        pools[_poolId].saleTokenIds = _saleTokenIds;
-        pools[_poolId].startTime = _startTime;
-        pools[_poolId].endTime = _endTime;
-        pools[_poolId].startPrice = _startPrice;
-        pools[_poolId].requireWhitelist = _requireWhitelist;
-        pools[_poolId].maxBuyPerAddress = _maxBuyPerAddress;
+        poolSaleTokenIds[_poolId] = _saleTokenIds;
     }
+
 
     function handlePublicPool(uint16 _poolId, bool _isPublic)
         external
