@@ -69,6 +69,10 @@ npx hardhat run scripts/RadaAuctionContract/TOKEN_2_addOrUpdatePool.js --network
 npx hardhat run scripts/RadaFixedSwapContract/TOKEN_2_addOrUpdatePool.js --network testnet
 
 # npx hardhat run scripts/RadaAuctionContract/4_handleEndAuction.js --network testnet
+
+# npx hardhat run scripts/RadaFixedSwapContract/getImplementationAddress.js --network testnet
+# npx hardhat run scripts/RadaAuctionContract/getImplementationAddress.js --network testnet
+# npx hardhat verify --network testnet ADDRESS_IMPLEMENT
 ```
 
 Step by step Deploy NFTMan to testnet / mainnet

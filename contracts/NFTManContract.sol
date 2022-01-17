@@ -179,7 +179,7 @@ contract NFTManContract is
         SETTER
      */
     // Add/update pool - by Admin
-    function addPool(
+    /* function addPool(
         uint16 _poolId,
         address _nftAddress,
         address _tokenAddress
@@ -217,6 +217,32 @@ contract NFTManContract is
         pool.endId = _endId;
         pool.tokenAddress = _tokenAddress;
         pool.startTime = _startTime;
+    } */
+
+    function addOrUpdatePool(
+        uint16 _poolId,
+        address _nftAddress,
+        uint32 _startId,
+        uint32 _endId,
+        address _tokenAddress,
+        uint256 _startTime
+    ) external onlyAdmin {
+        require(_nftAddress != address(0), "Invalid address");
+
+        POOL_INFO storage pool = pools[_poolId]; // pool info
+        // Not exist then add pool
+        if (pool.nftAddress == address(0)) {
+            poolIds.push(_poolId);
+        }
+
+        // do update
+        pool.nftAddress = _nftAddress;
+        pool.startId = _startId;
+        pool.endId = _endId;
+        pool.tokenAddress = _tokenAddress;
+        pool.startTime = _startTime;
+
+        pools[_poolId] = pool;
     }
 
     /**

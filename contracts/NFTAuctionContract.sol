@@ -497,11 +497,11 @@ contract NFTAuctionContract is
         return buyerBid[_poolId][_address];
     }
 
-    function getPoolIds() external view returns (uint16[] memory) {
-        return poolIds;
-    }
-
     function isAdmin(address _address) external view onlyAdmin returns (bool) {
         return admins[_address];
     }
+    function getSaleTokenIds(uint16 _poolId) external view returns (uint256[] memory) {
+        return poolSaleTokenIds[_poolId];
+    }
+
 }

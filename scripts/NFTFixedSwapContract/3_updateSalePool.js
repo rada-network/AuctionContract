@@ -19,8 +19,8 @@ async function main() {
 
   // TODO: Fill your poolId
   const poolId = 11;
-  const tokenIdStart = 60000;
-  const tokenIdEnd = 60299;
+  const tokenIdStart = 90000;
+  const tokenIdEnd = 90049;
   let saleTokenIds = [];
   for (let i=tokenIdStart;i<=tokenIdEnd;i++) {
     saleTokenIds.push(i);

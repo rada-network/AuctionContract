@@ -78,10 +78,9 @@ describe("NFTMan Contract", function () {
       const startId = 20001;
       const endId = 20100;
       const tokenAddress = contractTokenBox.address;
-
+      const startTime = Math.floor(Date.now() / 1000) - 86400*1; // Now - 1 day
       // Add pool
-      await contractNFTMan.addPool(poolId, nftAddress, tokenAddress);
-      await contractNFTMan.updatePool(poolId, nftAddress, startId, endId, tokenAddress);
+      await contractNFTMan.addOrUpdatePool(poolId, nftAddress, startId, endId, tokenAddress, startTime);
 
     });
     it('Should open the box', async function () {

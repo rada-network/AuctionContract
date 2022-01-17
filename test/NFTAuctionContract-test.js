@@ -106,8 +106,8 @@ describe("Auction Contract - NFT", function () {
     await contractAuction.updateSalePool(poolId_2, saleTokenIds);
     await contractAuction.handlePublicPool(poolId_2, true);
 
-    const totalPool = await contractAuction.getPoolIds();
-    expect(totalPool.length).to.equal(2);
+    expect(await contractAuction.poolIds(0)).to.equal(10);
+    expect(await contractAuction.poolIds(1)).to.equal(20);
 
   });
 
