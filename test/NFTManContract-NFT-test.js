@@ -74,13 +74,18 @@ describe("NFTMan Contract", function () {
       // Transfer token Box to buyer
       await contractTokenBox.connect(owner).transfer(buyerUser.address, buyBoxes);
 
+
+
       nftAddress = contractNFT.address;
       const startId = 20001;
       const endId = 20100;
       const tokenAddress = contractTokenBox.address;
       const startTime = Math.floor(Date.now() / 1000) - 86400*1; // Now - 1 day
+
+      await contractNFTMan.handlePublicPool(poolId, false);
       // Add pool
       await contractNFTMan.addOrUpdatePool(poolId, nftAddress, startId, endId, tokenAddress, startTime);
+      await contractNFTMan.handlePublicPool(poolId, true);
 
     });
     it('Should open the box', async function () {
@@ -91,9 +96,19 @@ describe("NFTMan Contract", function () {
 
       openBoxes = 5;
       await contractTokenBox.connect(buyerUser).approve(contractNFTMan.address, openBoxes);
+
+      // Lock pool
+      await contractNFTMan.handlePublicPool(poolId, false);
+      await expect(contractNFTMan.connect(buyerUser).openBox(poolId, openBoxes)).to.be.reverted;
+
+
+      // Unlock pool
+      await contractNFTMan.handlePublicPool(poolId, true);
       // Should open box
       await contractNFTMan.connect(buyerUser).openBox(poolId, openBoxes);
       expect(await contractNFT.tokenOfOwnerByIndex(buyerUser.address, 0)).to.equal(pu("20001"));
+
+
 
     });
 

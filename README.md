@@ -10,16 +10,11 @@ BSC_API_KEY=
 MNEMONIC=
 ```
 
-The following tasks:
+## Scripts
 
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-```
+Use for deploy and update
 
-Step by step Deploy NFT SALE to testnet / mainnet
+## Step by step Deploy NFT SALE to testnet / mainnet
 
 ```shell
 npx hardhat run scripts/NFTAuctionContract/1_deploy.js --network testnet
@@ -29,6 +24,8 @@ npx hardhat run scripts/NFTFixedSwapContract/1_deploy.js --network testnet
 
 npx hardhat run scripts/NFTFixedSwapContract/setAdmin.js --network testnet
 npx hardhat run scripts/NFTAuctionContract/setAdmin.js --network testnet
+
+# REMEMBER: owner need update WITHDRAW_ADDRESS at 2 contracts
 
 # Auction, Got NFT first and update range tokenId
 npx hardhat run scripts/NFTAuctionContract/2_addOrUpdatePool.js --network testnet
@@ -44,7 +41,7 @@ npx hardhat run scripts/NFTFixedSwapContract/3_updateSalePool.js --network testn
 
 ```
 
-Step by step Deploy Token SALE to testnet / mainnet
+## Step by step Deploy Token SALE to testnet / mainnet
 
 ```shell
 npx hardhat run scripts/NFTManContract/1_deploy.js --network testnet
@@ -73,7 +70,7 @@ npx hardhat run scripts/RadaFixedSwapContract/TOKEN_2_addOrUpdatePool.js --netwo
 # npx hardhat verify --network testnet ADDRESS_IMPLEMENT
 ```
 
-Step by step Deploy NFTMan to testnet / mainnet
+## Step by step Deploy NFTMan to testnet / mainnet
 
 ```shell
 npx hardhat run scripts/NFTManContract/1_deploy.js --network testnet
@@ -88,7 +85,7 @@ npx hardhat run scripts/NFTManContract/getImplementationAddress.js --network tes
 npx hardhat verify --network testnet DDDDDDDDD
 ```
 
-Step by step Deploy RandomizeByRarity to polygonMumbai / polygon
+## Step by step Deploy RandomizeByRarity to polygonMumbai / polygon
 
 ```shell
 npx hardhat run scripts/RandomizeByRarity/1_deploy.js --network polygonMumbai
@@ -104,7 +101,7 @@ npx hardhat run scripts/RandomizeByRarity/setAdmin.js --network polygonMumbai
 npx hardhat verify --network polygonMumbai 0x7a789f5620408a44219e63a5b037f12a5f36196b "0x326C977E6efc84E512bB9C30f76E30c160eD06FB" "0x8C7382F9D8f56b33781fE506E897a4F1e2d17255" "0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4" 100000000000
 ```
 
-Build & run script
+## Build & run script
 
 ```shell
 
@@ -118,7 +115,7 @@ npx hardhat run scripts/RadaFixedSwapContract/getImplementationAddress.js --netw
 npx hardhat verify --network testnet ADDRESS_ABOVE
 ```
 
-Build & Deploy BSC testnet | BUSDToken
+## Build & Deploy BSC testnet | BUSDToken
 
 ```shell
 
@@ -130,7 +127,7 @@ npx hardhat run scripts/BUSDToken/deploy.js --network testnet
 
 ```
 
-Build & Deploy BSC testnet | BoxToken
+## Build & Deploy BSC testnet | BoxToken
 
 ```shell
 

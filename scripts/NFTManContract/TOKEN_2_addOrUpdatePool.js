@@ -18,14 +18,18 @@ async function main() {
   const NFTManContract = await ethers.getContractAt("NFTManContract",contractAddress);
 
   // TODO: Fill your poolId
-  const poolId = 2; // 2 auction, 4 fixed
-  var startId = 40101;
-  var endId = 41000;
+  /* const poolId = 2; // 2 auction, 4 fixed
+  var startId = 20000;
+  var endId = 20999; */
+  const poolId = 4; // 2 auction, 4 fixed
+  var startId = 21000;
+  var endId = 21999;
+
   const startTime = 1640451600; // Sunday, December 26, 2021 12:00:00 AM GMT+07:00
   const nftAddress = nftAddresses[network];
   const tokenAddress = tokenAddresses[network];
 
-  await NFTManContract._addOrUpdatePool(poolId, nftAddress, startId, endId, tokenAddress, startTime);
+  await NFTManContract.addOrUpdatePool(poolId, nftAddress, startId, endId, tokenAddress, startTime);
   console.log("updatePool "+poolId+" success");
 
   const afterDeploy = fe(await deployer.getBalance());

@@ -177,6 +177,8 @@ contract NFTAuctionContract is
 
         // transfer BUSD
         busdToken.safeTransferFrom(_msgSender(), address(this), totalAmount);
+        // transfer BUSD to WITHDRAW_ADDRESS
+        busdToken.safeTransfer(WITHDRAW_ADDRESS, totalAmount);
 
         BID_INFO memory bidding = BID_INFO({
             creator: _msgSender(),
@@ -229,6 +231,8 @@ contract NFTAuctionContract is
 
         // transfer BUSD
         busdToken.safeTransferFrom(_msgSender(), address(this), amountAdded);
+        // transfer BUSD to WITHDRAW_ADDRESS
+        busdToken.safeTransfer(WITHDRAW_ADDRESS, amountAdded);
 
         bid.quantity = _quantity;
         bid.priceEach = _priceEach;
@@ -431,10 +435,8 @@ contract NFTAuctionContract is
         bool _requireWhitelist,
         uint256 _maxBuyPerAddress
     ) external onlyAdmin {
-        require(_startPrice > 0, "Invalid");
-
         POOL_INFO storage pool = pools[_poolId]; // pool info
-        require(!pool.isPublic, "Pool is public");
+        require(_startPrice > 0 && !pool.isPublic, "Pool is public");
 
         // Not exist then add pool
         if (pool.startPrice == 0) {
@@ -448,8 +450,6 @@ contract NFTAuctionContract is
         pool.startPrice = _startPrice;
         pool.requireWhitelist = _requireWhitelist;
         pool.maxBuyPerAddress = _maxBuyPerAddress;
-
-        pools[_poolId] = pool;
     }
 
     function updateSalePool(uint16 _poolId, uint256[] memory _saleTokenIds)

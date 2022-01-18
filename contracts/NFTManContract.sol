@@ -63,6 +63,7 @@ contract NFTManContract is
         uint32 totalOpen; // Total opened in pool
         address tokenAddress;
         uint256 startTime; // Time allow open Box
+        bool isPublic; // if isPublic, cannot update pool
     }
 
     // Operation
@@ -116,6 +117,7 @@ contract NFTManContract is
         POOL_INFO storage pool = pools[_poolId];
         require(pool.nftAddress != address(0), "Pool not found");
         require(block.timestamp >= pool.startTime, "Invalid time");
+        require(pool.isPublic, "Pool locked");
 
         itemNft = IUpdateERC721(pool.nftAddress);
 
@@ -230,6 +232,8 @@ contract NFTManContract is
         require(_nftAddress != address(0), "Invalid address");
 
         POOL_INFO storage pool = pools[_poolId]; // pool info
+        require(!pool.isPublic, "Pool is public");
+
         // Not exist then add pool
         if (pool.nftAddress == address(0)) {
             poolIds.push(_poolId);
@@ -243,6 +247,13 @@ contract NFTManContract is
         pool.startTime = _startTime;
 
         pools[_poolId] = pool;
+    }
+
+    function handlePublicPool(uint16 _poolId, bool _isPublic)
+        external
+        onlyAdmin
+    {
+        pools[_poolId].isPublic = _isPublic;
     }
 
     /**
