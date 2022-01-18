@@ -291,7 +291,6 @@ contract IDOClaimContract is
         );
         uint256 _tokenBalance = tokenContract.balanceOf(address(this));
         uint256 _totalDeposited = totalClaimedTokens.add(_tokenBalance);
-
         uint256 _ratioDeposited = _totalDeposited.mul(pool.tokenPrice).div(
             pool.tokenAllocationBusd
         );
@@ -331,6 +330,9 @@ contract IDOClaimContract is
             uint256 _nftId = _nftIds[i];
             claimedTokens[_nftId] += _claimables[i];
         }
+
+        // update total Claimed
+        totalClaimedTokens += _totalClaimable;
 
         // transfer
         IERC20Upgradeable tokenContract = IERC20Upgradeable(

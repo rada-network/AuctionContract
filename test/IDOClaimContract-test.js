@@ -93,8 +93,8 @@ describe('IDOClaimContract', function () {
         // NFTMan Add Pool
         nftAddress = contractRadaNFT.address
 
-        await contractNFTMan.addPool(poolId, nftAddress, boxTokenAddress)
-        await contractNFTMan.updatePool(
+        // await contractNFTMan.addOrUpdatePool(poolId, nftAddress, boxTokenAddress)
+        await contractNFTMan.addOrUpdatePool(
             poolId,
             nftAddress,
             startId,
@@ -102,6 +102,8 @@ describe('IDOClaimContract', function () {
             boxTokenAddress,
             Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000)
         )
+
+        await contractNFTMan.handlePublicPool(poolId, true);
 
         // Set approval for NFTMan Contract
         await contractRadaNFT.addApprovalWhitelist(contractIDOClaim.address)
