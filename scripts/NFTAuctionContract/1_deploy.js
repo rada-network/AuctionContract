@@ -11,6 +11,7 @@ async function main() {
 
   const NFTAuctionContract = await ethers.getContractFactory("NFTAuctionContract");
 
+  // Deploy
   const instanceContract = await upgrades.deployProxy(NFTAuctionContract, [busdAddresses[network]], { kind: 'uups' });
   console.log("Contract address:", instanceContract.address);
 

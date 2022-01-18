@@ -171,6 +171,8 @@ contract RadaAuctionContract is
 
         // transfer BUSD
         busdToken.safeTransferFrom(_msgSender(), address(this), totalAmount);
+        // transfer BUSD to WITHDRAW_ADDRESS
+        busdToken.safeTransfer(WITHDRAW_ADDRESS, totalAmount);
 
         BID_INFO memory bidding = BID_INFO({
             creator: _msgSender(),
@@ -220,13 +222,12 @@ contract RadaAuctionContract is
 
         uint256 newAmountBusd = _quantity * _priceEach;
         uint256 oldAmountBusd = bid.quantity * bid.priceEach;
+        uint256 amountAdded = newAmountBusd.sub(oldAmountBusd);
 
         // transfer BUSD
-        busdToken.safeTransferFrom(
-            _msgSender(),
-            address(this),
-            newAmountBusd.sub(oldAmountBusd)
-        );
+        busdToken.safeTransferFrom(_msgSender(), address(this), amountAdded);
+        // transfer BUSD to WITHDRAW_ADDRESS
+        busdToken.safeTransfer(WITHDRAW_ADDRESS, amountAdded);
 
         bid.quantity = _quantity;
         bid.priceEach = _priceEach;
@@ -236,7 +237,7 @@ contract RadaAuctionContract is
             poolStats[_poolId].highestPrice = _priceEach;
         }
         poolStats[_poolId].totalBidItem += _quantity - bid.quantity;
-        poolStats[_poolId].totalBidAmount += newAmountBusd.sub(oldAmountBusd);
+        poolStats[_poolId].totalBidAmount += amountAdded;
 
         /* emit IncreaseBid(
             _msgSender(),
@@ -428,10 +429,7 @@ contract RadaAuctionContract is
         bool _requireWhitelist,
         uint256 _maxBuyPerAddress
     ) external onlyAdmin {
-        require(
-            _startPrice > 0,
-            "Invalid"
-        );
+        require(_startPrice > 0, "Invalid");
 
         POOL_INFO storage pool = pools[_poolId]; // pool info
         require(!pool.isPublic, "Pool is public");
@@ -449,10 +447,8 @@ contract RadaAuctionContract is
         pool.requireWhitelist = _requireWhitelist;
         pool.maxBuyPerAddress = _maxBuyPerAddress;
 
-
         pools[_poolId] = pool;
     }
-
 
     function handlePublicPool(uint16 _poolId, bool _isPublic)
         external

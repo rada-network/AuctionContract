@@ -218,6 +218,8 @@ describe("Auction Contract - NFT", function () {
 
     // Bid 0 only win 1 nft
     await contractAuction.connect(adminUser).handleEndAuction(poolId, [0,2], [1,2]);
+    // Transfer money back to contract
+    await bUSDToken.transfer(contractAuction.address, pe("2000"));
 
     // Try claim illegal
     await expect(contractAuction.connect(buyerUser3).claimAll(poolId)).to.be.revertedWith("Invalid pool");
@@ -262,6 +264,9 @@ describe("Auction Contract - NFT", function () {
 
     // Handle end auction and Claimed
     await contractAuction.connect(adminUser).handleEndAuction(poolId, [0], [5]);
+    // Transfer money back to contract
+    await bUSDToken.transfer(contractAuction.address, pe("2000"));
+
     await contractAuction.connect(buyerUser).claimAll(poolId);
 
     // Try claim again
@@ -297,6 +302,8 @@ describe("Auction Contract - NFT", function () {
 
     // Handle End Bid, just Win 2 box
     await contractAuction.connect(adminUser).handleEndAuction(poolId, [0], [2]);
+    // Transfer money back to contract
+    await bUSDToken.transfer(contractAuction.address, pe("2000"));
 
     // Claim Token of Bid 0
     await contractAuction.connect(buyerUser).claimAll(poolId);
