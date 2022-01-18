@@ -103,6 +103,8 @@ describe('IDOClaimContract', function () {
             Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000)
         )
 
+        await contractNFTMan.handlePublicPool(poolId, true);
+
         // Set approval for NFTMan Contract
         await contractRadaNFT.addApprovalWhitelist(contractIDOClaim.address)
         await contractRadaNFT.addApprovalWhitelist(contractNFTMan.address)
