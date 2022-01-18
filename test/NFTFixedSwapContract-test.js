@@ -103,7 +103,7 @@ describe("Fixed Swap Contract - NFT", function () {
 
   it('Should place order successfully - whitelist', async function () {
     // Set white list
-    await contractFixedSwap.setWhitelist(poolId, [buyerUser.address], true);
+    await contractFixedSwap.setWhitelist(poolId, [buyerUser.address, buyerUser2.address], true);
     // Set maxBuyBoxPerAddress
     const pool = await contractFixedSwap.pools(poolId);
     const maxBuyPerAddress = 2;
@@ -113,9 +113,11 @@ describe("Fixed Swap Contract - NFT", function () {
 
     // Approve allowance
     await bUSDToken.connect(buyerUser).approve(contractFixedSwap.address, pe("500"));
+    await bUSDToken.connect(buyerUser2).approve(contractFixedSwap.address, pe("5000"));
 
     // Admin top up payable token to user
     await bUSDToken.transfer(buyerUser.address, pe("50")); // 50
+    await bUSDToken.transfer(buyerUser2.address, pe("5000")); // 50
 
     // Should reverted because quantity = 0
     quantity = 0;
@@ -128,13 +130,20 @@ describe("Fixed Swap Contract - NFT", function () {
     // Admin top up payable token to user
     await bUSDToken.transfer(buyerUser.address, pe("350")); // = 300
 
-    // Place Order
+    // Place Order Buyer 1
     await contractFixedSwap.connect(buyerUser).placeOrder(poolId, quantity);
     expect(await bUSDToken.balanceOf(buyerUser.address)).to.equal(pe("100"));
-    expect(await contractNFT.balanceOf(buyerUser.address)).to.equal(2);
+    expect(await contractNFT.balanceOf(buyerUser.address)).to.equal(quantity);
     expect(await contractNFT.ownerOf(500)).to.equal(buyerUser.address);
     expect(await contractNFT.ownerOf(501)).to.equal(buyerUser.address);
     expect(await contractNFT.ownerOf(502)).to.not.equal(buyerUser.address);
+
+    quantity = 1;
+    // Place Order Buyer 2
+    await contractFixedSwap.connect(buyerUser2).placeOrder(poolId, quantity);
+    expect(await contractNFT.balanceOf(buyerUser2.address)).to.equal(quantity);
+    expect(await contractNFT.ownerOf(502)).to.equal(buyerUser2.address);
+
   });
 
   it('Should revert place order if not in white list - whitelist', async function () {

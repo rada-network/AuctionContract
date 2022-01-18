@@ -61,7 +61,8 @@ contract NFTFixedSwapContract is
         uint16 poolId;
         address creator; // Owner of bidding
         uint256 priceEach; // Price bidding for each NFT
-        uint256[] tokenIds;
+        uint256 quantity; // quantity
+        // uint256[] tokenIds;
     }
     mapping(uint16 => POOL_INFO) public pools;
     mapping(uint16 => uint256[]) public poolSaleTokenIds; // poolId => List tokenId for sale
@@ -69,7 +70,7 @@ contract NFTFixedSwapContract is
 
     mapping(uint16 => POOL_STATS) public poolStats; // poolId => pool stats
     mapping(uint16 => BID_INFO[]) public bids; // poolId => bids
-
+    // mapping(uint256 => uint256[]) public bidTokenIds; // bidIndex => List tokenId for bought
 
     // Operation
     mapping(address => bool) admins;
@@ -156,16 +157,11 @@ contract NFTFixedSwapContract is
         uint256 totalAmount = pool.startPrice.mul(_quantity);
         busdToken.safeTransferFrom(_msgSender(), address(this), totalAmount);
 
-        uint256[] memory _tokenIds = new uint256[](_quantity);
-        for (uint256 i; i < _quantity; i++) {
-            _tokenIds[i] = poolSaleTokenIds[_poolId][poolStats[_poolId].totalSold];
-            poolStats[_poolId].totalSold++;
-        }
         BID_INFO memory bidding = BID_INFO({
             poolId: _poolId,
             creator: _msgSender(),
             priceEach: pool.startPrice,
-            tokenIds: _tokenIds
+            quantity: _quantity
         });
         bids[_poolId].push(bidding);
 
@@ -179,9 +175,17 @@ contract NFTFixedSwapContract is
 
         // Transfer NFT to user
         for (uint256 i; i < _quantity; i++) {
+            uint256 idx = poolStats[_poolId].totalSold + i;
+            // bidTokenIds[idx].push(poolSaleTokenIds[_poolId][idx]);
+
             IERC721Upgradeable nft = IERC721Upgradeable(pool.addressItem);
-            nft.safeTransferFrom(address(this), _msgSender(), _tokenIds[i]);
+            nft.safeTransferFrom(
+                address(this),
+                _msgSender(),
+                poolSaleTokenIds[_poolId][idx]
+            );
         }
+        poolStats[_poolId].totalSold += _quantity;
 
         emit PlaceOrder(_msgSender(), _poolId, _quantity, totalAmount);
     }
@@ -242,10 +246,7 @@ contract NFTFixedSwapContract is
         bool _requireWhitelist,
         uint256 _maxBuyPerAddress
     ) external onlyAdmin {
-        require(
-            _startPrice > 0,
-            "Invalid"
-        );
+        require(_startPrice > 0, "Invalid");
 
         POOL_INFO storage pool = pools[_poolId]; // pool info
         require(!pool.isPublic, "Pool is public");
@@ -262,14 +263,13 @@ contract NFTFixedSwapContract is
         pool.requireWhitelist = _requireWhitelist;
         pool.maxBuyPerAddress = _maxBuyPerAddress;
 
-
         pools[_poolId] = pool;
     }
 
-    function updateSalePool(
-        uint16 _poolId,
-        uint256[] memory _saleTokenIds
-    ) external onlyAdmin {
+    function updateSalePool(uint16 _poolId, uint256[] memory _saleTokenIds)
+        external
+        onlyAdmin
+    {
         require(
             pools[_poolId].startPrice > 0 && _saleTokenIds.length > 0,
             "Invalid"
@@ -280,7 +280,6 @@ contract NFTFixedSwapContract is
 
         poolSaleTokenIds[_poolId] = _saleTokenIds;
     }
-
 
     function handlePublicPool(uint16 _poolId, bool _isPublic)
         external
@@ -317,7 +316,12 @@ contract NFTFixedSwapContract is
     function isAdmin(address _address) external view onlyAdmin returns (bool) {
         return admins[_address];
     }
-    function getSaleTokenIds(uint16 _poolId) external view returns (uint256[] memory) {
+
+    function getSaleTokenIds(uint16 _poolId)
+        external
+        view
+        returns (uint256[] memory)
+    {
         return poolSaleTokenIds[_poolId];
     }
 }

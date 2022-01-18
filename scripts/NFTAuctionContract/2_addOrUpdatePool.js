@@ -1,6 +1,6 @@
 const { ethers, upgrades, hardhatArguments } = require('hardhat');
 const { addresses: contractAddresses } = require('./proxyAddresses');
-const { addresses: tokenAddresses } = require('../BoxTokenAddresses');
+const { addresses: nftAddresses } = require('../RadaNftAddresses');
 
 const { pe,fe,fu,pu, sleep } = require('../../utils');
 
@@ -9,7 +9,7 @@ async function main() {
 
   const network = hardhatArguments.network;
   const contractAddress = contractAddresses[network];
-  const tokenAddress = tokenAddresses[network];
+  const nftAddress = nftAddresses[network];
 
   console.log("With the account:", deployer.address);
   console.log("With NFTAuctionContract address:", contractAddress);
@@ -20,7 +20,7 @@ async function main() {
   // TODO: Fill your poolId
   const poolId = 10; // 2
   const startPrice = pe("150");
-  const addressItem = tokenAddress; // Address of NFT or Token
+  const addressItem = nftAddress; // Address of NFT or Token
 
   const startTime = 1640451600; // Sunday, December 26, 2021 12:00:00 AM GMT+07:00
   const endTime = 1672379856; // Friday, December 30, 2022 12:57:36 PM GMT+07:00

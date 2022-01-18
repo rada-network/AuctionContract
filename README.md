@@ -30,14 +30,12 @@ npx hardhat run scripts/NFTFixedSwapContract/1_deploy.js --network testnet
 npx hardhat run scripts/NFTFixedSwapContract/setAdmin.js --network testnet
 npx hardhat run scripts/NFTAuctionContract/setAdmin.js --network testnet
 
-# Auction
+# Auction, Got NFT first and update range tokenId
 npx hardhat run scripts/NFTAuctionContract/2_addOrUpdatePool.js --network testnet
-# Got NFT first and update range tokenId
 npx hardhat run scripts/NFTAuctionContract/3_updateSalePool.js --network testnet
 
-# Fixed Swap
+# Fixed Swap, Got NFT first and update range tokenId
 npx hardhat run scripts/NFTFixedSwapContract/2_addOrUpdatePool.js --network testnet
-# Got NFT first and update range tokenId
 npx hardhat run scripts/NFTFixedSwapContract/3_updateSalePool.js --network testnet
 
 # npx hardhat run scripts/NFTAuctionContract/getImplementationAddress.js --network testnet

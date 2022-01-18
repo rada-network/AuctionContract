@@ -127,10 +127,13 @@ contract NFTAuctionContract is
 
     function _checkPoolOpen(uint16 _poolId) private view {
         POOL_INFO memory pool = pools[_poolId];
-        require(pool.ended == false &&
-            block.timestamp >= pool.startTime &&
-            block.timestamp <= pool.endTime &&
-            pool.isPublic, "Not Started / Expired / isPublic"); // The pool have not started / Expired / isPublic
+        require(
+            pool.ended == false &&
+                block.timestamp >= pool.startTime &&
+                block.timestamp <= pool.endTime &&
+                pool.isPublic,
+            "Not Started / Expired / isPublic"
+        ); // The pool have not started / Expired / isPublic
     }
 
     /**
@@ -166,7 +169,9 @@ contract NFTAuctionContract is
 
         uint256 totalAmount = _priceEach.mul(_quantity);
         require(
-            pool.maxBuyPerAddress >= (totalItemBought + _quantity) && _quantity > 0 && _priceEach >= pool.startPrice,
+            pool.maxBuyPerAddress >= (totalItemBought + _quantity) &&
+                _quantity > 0 &&
+                _priceEach >= pool.startPrice,
             "Required valid limit/quantity/price/balance"
         ); // Not allow quantity = 0, valid price
 
@@ -211,7 +216,7 @@ contract NFTAuctionContract is
         BID_INFO storage bid = bids[_poolId][_bidIndex];
 
         require(
-                bid.claimed == false &&
+            bid.claimed == false &&
                 _quantity >= bid.quantity &&
                 _priceEach >= bid.priceEach &&
                 _msgSender() == bid.creator,
@@ -223,11 +228,7 @@ contract NFTAuctionContract is
         uint256 amountAdded = newAmountBusd.sub(oldAmountBusd);
 
         // transfer BUSD
-        busdToken.safeTransferFrom(
-            _msgSender(),
-            address(this),
-            amountAdded
-        );
+        busdToken.safeTransferFrom(_msgSender(), address(this), amountAdded);
 
         bid.quantity = _quantity;
         bid.priceEach = _priceEach;
@@ -305,10 +306,15 @@ contract NFTAuctionContract is
                 if (bid.winQuantity > 0) {
                     // Transfer NFT to user
                     for (uint256 j; j < bid.winQuantity; j++) {
+                        uint256 tokenId = poolSaleTokenIds[_poolId][
+                            poolStats[_poolId].totalSold + j
+                        ];
 
-                        uint256 tokenId = poolSaleTokenIds[_poolId][poolStats[_poolId].totalSold+j];
-
-                        nft.safeTransferFrom(address(this), _msgSender(), tokenId);
+                        nft.safeTransferFrom(
+                            address(this),
+                            _msgSender(),
+                            tokenId
+                        );
                     }
                     poolStats[_poolId].totalSold += bid.winQuantity;
                 }
@@ -425,10 +431,7 @@ contract NFTAuctionContract is
         bool _requireWhitelist,
         uint256 _maxBuyPerAddress
     ) external onlyAdmin {
-        require(
-            _startPrice > 0,
-            "Invalid"
-        );
+        require(_startPrice > 0, "Invalid");
 
         POOL_INFO storage pool = pools[_poolId]; // pool info
         require(!pool.isPublic, "Pool is public");
@@ -446,15 +449,13 @@ contract NFTAuctionContract is
         pool.requireWhitelist = _requireWhitelist;
         pool.maxBuyPerAddress = _maxBuyPerAddress;
 
-
         pools[_poolId] = pool;
     }
 
-    function updateSalePool(
-        uint16 _poolId,
-        uint256[] memory _saleTokenIds
-    ) external onlyAdmin {
-
+    function updateSalePool(uint16 _poolId, uint256[] memory _saleTokenIds)
+        external
+        onlyAdmin
+    {
         POOL_INFO memory pool = pools[_poolId]; // pool info
         require(
             !pool.isPublic && pool.startPrice > 0 && _saleTokenIds.length > 0,
@@ -463,7 +464,6 @@ contract NFTAuctionContract is
 
         poolSaleTokenIds[_poolId] = _saleTokenIds;
     }
-
 
     function handlePublicPool(uint16 _poolId, bool _isPublic)
         external
@@ -500,8 +500,12 @@ contract NFTAuctionContract is
     function isAdmin(address _address) external view onlyAdmin returns (bool) {
         return admins[_address];
     }
-    function getSaleTokenIds(uint16 _poolId) external view returns (uint256[] memory) {
+
+    function getSaleTokenIds(uint16 _poolId)
+        external
+        view
+        returns (uint256[] memory)
+    {
         return poolSaleTokenIds[_poolId];
     }
-
 }
