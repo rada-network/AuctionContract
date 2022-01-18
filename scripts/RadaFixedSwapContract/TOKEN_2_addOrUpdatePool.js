@@ -26,12 +26,13 @@ async function main() {
   const startTime = 1640451600; // Sunday, December 26, 2021 12:00:00 AM GMT+07:00
   const endTime = 1672379856; // Friday, December 30, 2022 12:57:36 PM GMT+07:00
   const maxBuyPerAddress = 10;
+  const maxBuyPerOrder = 2;
   const requireWhitelist = false;
 
   await instanceContract.handlePublicPool(poolId, false);
   console.log("Pool changed status: false");
   await sleep(5000);
-  await instanceContract.addOrUpdatePool(poolId, addressItem, totalItems, startTime, endTime, startPrice, requireWhitelist, maxBuyPerAddress);
+  await instanceContract.addOrUpdatePool(poolId, addressItem, totalItems, startTime, endTime, startPrice, requireWhitelist, maxBuyPerAddress, maxBuyPerOrder);
   console.log("addOrUpdatePool "+poolId+" success");
   await instanceContract.handlePublicPool(poolId, true);
   console.log("Pool changed status: true");

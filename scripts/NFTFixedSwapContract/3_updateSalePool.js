@@ -1,6 +1,5 @@
 const { ethers, upgrades, hardhatArguments } = require('hardhat');
 const { addresses: contractAddresses } = require('./proxyAddresses');
-const { addresses: tokenAddresses } = require('../BoxTokenAddresses');
 
 const { pe,fe,fu,pu, sleep } = require('../../utils');
 
@@ -9,7 +8,6 @@ async function main() {
 
   const network = hardhatArguments.network;
   const contractAddress = contractAddresses[network];
-  const tokenAddress = tokenAddresses[network];
 
   console.log("With the account:", deployer.address);
   console.log("With NFTFixedSwapContract address:", contractAddress);
@@ -19,8 +17,8 @@ async function main() {
 
   // TODO: Fill your poolId
   const poolId = 11;
-  const tokenIdStart = 90050;
-  const tokenIdEnd = 90099;
+  const tokenIdStart = 190050;
+  const tokenIdEnd = 190099;
   let saleTokenIds = [];
   for (let i=tokenIdStart;i<=tokenIdEnd;i++) {
     saleTokenIds.push(i);

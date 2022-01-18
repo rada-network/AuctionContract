@@ -49,6 +49,7 @@ contract NFTFixedSwapContract is
         bool ended; // Ended to picker winners
         bool requireWhitelist;
         uint256 maxBuyPerAddress;
+        uint256 maxBuyPerOrder;
     }
 
     struct POOL_STATS {
@@ -147,6 +148,9 @@ contract NFTFixedSwapContract is
             !pool.requireWhitelist || whitelistAddresses[_poolId][_msgSender()],
             "Caller is not in whitelist"
         );
+
+        require(pool.maxBuyPerOrder >= _quantity, "Got limited per order");
+
         require(
             pool.maxBuyPerAddress >=
                 (buyerItemsTotal[_poolId][_msgSender()] + _quantity),
@@ -244,7 +248,8 @@ contract NFTFixedSwapContract is
         uint256 _endTime,
         uint256 _startPrice,
         bool _requireWhitelist,
-        uint256 _maxBuyPerAddress
+        uint256 _maxBuyPerAddress,
+        uint256 _maxBuyPerOrder
     ) external onlyAdmin {
         require(_startPrice > 0, "Invalid");
 
@@ -262,6 +267,7 @@ contract NFTFixedSwapContract is
         pool.startPrice = _startPrice;
         pool.requireWhitelist = _requireWhitelist;
         pool.maxBuyPerAddress = _maxBuyPerAddress;
+        pool.maxBuyPerOrder = _maxBuyPerOrder;
 
         pools[_poolId] = pool;
     }
@@ -323,5 +329,9 @@ contract NFTFixedSwapContract is
         returns (uint256[] memory)
     {
         return poolSaleTokenIds[_poolId];
+    }
+
+    function getPoolIds() external view returns (uint16[] memory) {
+        return poolIds;
     }
 }

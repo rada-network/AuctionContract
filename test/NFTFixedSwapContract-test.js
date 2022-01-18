@@ -70,6 +70,7 @@ describe("Fixed Swap Contract - NFT", function () {
     priceEach = pe("150");
     addressItem = contractNFT.address;
     const maxBuyPerAddress = 10;
+    const maxBuyPerOrder = 2;
     const requireWhitelist = true;
     const isPublic = true;
     const startTime = Math.floor(Date.now() / 1000) - 86400*1; // Now - 1 day
@@ -77,7 +78,7 @@ describe("Fixed Swap Contract - NFT", function () {
 
     // Add/update pool
     await contractFixedSwap.handlePublicPool(poolId, false);
-    await contractFixedSwap.addOrUpdatePool(poolId, addressItem, startTime, endTime, priceEach, requireWhitelist, maxBuyPerAddress);
+    await contractFixedSwap.addOrUpdatePool(poolId, addressItem, startTime, endTime, priceEach, requireWhitelist, maxBuyPerAddress, maxBuyPerOrder);
     await contractFixedSwap.updateSalePool(poolId, saleTokenIds);
     await contractFixedSwap.handlePublicPool(poolId, true);
   });
@@ -106,9 +107,9 @@ describe("Fixed Swap Contract - NFT", function () {
     await contractFixedSwap.setWhitelist(poolId, [buyerUser.address, buyerUser2.address], true);
     // Set maxBuyBoxPerAddress
     const pool = await contractFixedSwap.pools(poolId);
-    const maxBuyPerAddress = 2;
+    const maxBuyPerOrder = 2;
     await contractFixedSwap.handlePublicPool(poolId, false);
-    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem,  pool.startTime, pool.endTime, pool.startPrice, pool.requireWhitelist, maxBuyPerAddress);
+    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem,  pool.startTime, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress, maxBuyPerOrder);
     await contractFixedSwap.handlePublicPool(poolId, true);
 
     // Approve allowance
@@ -166,7 +167,8 @@ describe("Fixed Swap Contract - NFT", function () {
     await contractFixedSwap.handlePublicPool(poolId, false);
     const requireWhitelist = false;
     const maxBuyPerAddress = 10;
-    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, maxBuyPerAddress);
+    const maxBuyPerOrder = 5;
+    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, maxBuyPerAddress, maxBuyPerOrder);
     await contractFixedSwap.handlePublicPool(poolId, true);
 
     // Approve allowance
@@ -193,6 +195,28 @@ describe("Fixed Swap Contract - NFT", function () {
 
   });
 
+  it('Should revert with over maxPerOrder - public', async function () {
+    // Set white list
+    const pool = await contractFixedSwap.pools(poolId)
+    await contractFixedSwap.handlePublicPool(poolId, false);
+    const requireWhitelist = false;
+    const maxBuyPerOrder = 2;
+    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress, maxBuyPerOrder);
+    await contractFixedSwap.handlePublicPool(poolId, true);
+
+    // Approve allowance
+    await bUSDToken.connect(buyerUser).approve(contractFixedSwap.address, pe("2000"));
+
+    // Admin top up payable token to user
+    await bUSDToken.transfer(buyerUser.address, pe("2000"));
+
+    // Place Order
+    quantity = 2;
+    await contractFixedSwap.connect(buyerUser).placeOrder(poolId, quantity); // Order 0
+    quantity = 3;
+    await expect(contractFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Got limited per order");
+  });
+
   it('Should place order successfully and reverted over max buy allow - whitelist', async function () {
     // Set white list
     await contractFixedSwap.setWhitelist(poolId, [buyerUser.address], true);
@@ -204,13 +228,17 @@ describe("Fixed Swap Contract - NFT", function () {
     // Admin top up payable token to user
     await bUSDToken.transfer(buyerUser.address, pe("3000"));
     // Place Order
-    quantity = 10;
+    quantity = 2;
+    await contractFixedSwap.connect(buyerUser).placeOrder(poolId, quantity);
+    await contractFixedSwap.connect(buyerUser).placeOrder(poolId, quantity);
+    await contractFixedSwap.connect(buyerUser).placeOrder(poolId, quantity);
+    await contractFixedSwap.connect(buyerUser).placeOrder(poolId, quantity);
     await contractFixedSwap.connect(buyerUser).placeOrder(poolId, quantity);
 
     // Should reverted
     await expect(contractFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Got limited");
 
-    expect(await contractNFT.balanceOf(buyerUser.address)).to.equal(pu(quantity.toString()));
+    expect(await contractNFT.balanceOf(buyerUser.address)).to.equal(pu((quantity*5).toString()));
   });
 
 
@@ -219,7 +247,7 @@ describe("Fixed Swap Contract - NFT", function () {
     const pool = await contractFixedSwap.pools(poolId)
     const requireWhitelist = false;
     await contractFixedSwap.handlePublicPool(poolId, false);
-    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress);
+    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress, pool.maxBuyPerOrder);
     await contractFixedSwap.handlePublicPool(poolId, true);
 
     // Approve allowance
@@ -247,14 +275,14 @@ describe("Fixed Swap Contract - NFT", function () {
     const pool = await contractFixedSwap.pools(poolId)
     const timeNotStart = Math.round(new Date().getTime()/1000) + 86400*2; // Today plus 2 days
     await contractFixedSwap.handlePublicPool(poolId, false);
-    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress);
+    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress, pool.maxBuyPerOrder);
     await contractFixedSwap.handlePublicPool(poolId, true);
     // Should reverted
     await expect(contractFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Not Started");
 
     const timeStart = Math.round(new Date().getTime()/1000) - 86400*2; // Today plus 2 days
     await contractFixedSwap.handlePublicPool(poolId, false);
-    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress);
+    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress, pool.maxBuyPerOrder);
     await contractFixedSwap.handlePublicPool(poolId, true);
     // Now
     // Bought success

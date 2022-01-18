@@ -139,7 +139,6 @@ contract NFTAuctionContract is
     /**
      * @dev function to place bid, // uint256 _nonce
      */
-    // 3305 bytes
     function placeBid(
         uint16 _poolId,
         uint256 _quantity,
@@ -162,11 +161,6 @@ contract NFTAuctionContract is
             totalItemBought += bids[_poolId][buyerBid[_poolId][_msgSender()][i]]
                 .quantity;
         }
-        /* require(
-            pool.maxBuyPerAddress >= (totalItemBought + _quantity),
-            "Got limited"
-        ); */
-
         uint256 totalAmount = _priceEach.mul(_quantity);
         require(
             pool.maxBuyPerAddress >= (totalItemBought + _quantity) &&
@@ -187,6 +181,7 @@ contract NFTAuctionContract is
             winQuantity: 0,
             claimed: false
         });
+
         bids[_poolId].push(bidding);
 
         // Update Stats
@@ -213,7 +208,6 @@ contract NFTAuctionContract is
         uint256 _priceEach
     ) external nonReentrant {
         // require pool is open
-        // require(_checkPoolOpen(_poolId), "Not Started / Expired / isPublic"); // The pool have not started / Expired / isPublic
         _checkPoolOpen(_poolId);
         BID_INFO storage bid = bids[_poolId][_bidIndex];
 
@@ -389,43 +383,6 @@ contract NFTAuctionContract is
         SETTER
      */
     // Add/update pool - by Admin
-    /* function addPool(
-        uint16 _poolId,
-        uint256 _startPrice
-    ) external onlyAdmin {
-        require(pools[_poolId].startPrice == 0 && _startPrice > 0, "Invalid");
-
-        POOL_INFO memory pool;
-        pool.startPrice = _startPrice;
-        pools[_poolId] = pool;
-
-        poolIds.push(_poolId);
-    }
-
-    function updatePool(
-        uint16 _poolId,
-        address _addressItem,
-        uint256 _startTime,
-        uint256 _endTime,
-        uint256 _startPrice,
-        bool _requireWhitelist,
-        uint256 _maxBuyPerAddress
-    ) external onlyAdmin {
-        POOL_INFO memory pool = pools[_poolId]; // pool info
-        require(
-            pool.startPrice > 0 && !pool.isPublic,
-            "Invalid"
-        );
-
-        // do update
-        pools[_poolId].addressItem = _addressItem;
-        pools[_poolId].startTime = _startTime;
-        pools[_poolId].endTime = _endTime;
-        pools[_poolId].startPrice = _startPrice;
-        pools[_poolId].requireWhitelist = _requireWhitelist;
-        pools[_poolId].maxBuyPerAddress = _maxBuyPerAddress;
-    } */
-
     function addOrUpdatePool(
         uint16 _poolId,
         address _addressItem,
@@ -457,12 +414,10 @@ contract NFTAuctionContract is
         onlyAdmin
     {
         POOL_INFO memory pool = pools[_poolId]; // pool info
-        require(
-            !pool.isPublic && pool.startPrice > 0 && _saleTokenIds.length > 0,
-            "Invalid"
-        );
-
-        poolSaleTokenIds[_poolId] = _saleTokenIds;
+        // require(!pool.isPublic && _saleTokenIds.length > 0, "Invalid");
+        if (!pool.isPublic) {
+            poolSaleTokenIds[_poolId] = _saleTokenIds;
+        }
     }
 
     function handlePublicPool(uint16 _poolId, bool _isPublic)
@@ -507,5 +462,9 @@ contract NFTAuctionContract is
         returns (uint256[] memory)
     {
         return poolSaleTokenIds[_poolId];
+    }
+
+    function getPoolIds() external view returns (uint16[] memory) {
+        return poolIds;
     }
 }

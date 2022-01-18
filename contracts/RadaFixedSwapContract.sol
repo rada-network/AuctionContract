@@ -47,6 +47,7 @@ contract RadaFixedSwapContract is
         bool ended; // Ended to picker winners
         bool requireWhitelist;
         uint256 maxBuyPerAddress;
+        uint256 maxBuyPerOrder;
     }
 
     struct POOL_STATS {
@@ -141,6 +142,8 @@ contract RadaFixedSwapContract is
             !pool.requireWhitelist || whitelistAddresses[_poolId][_msgSender()],
             "Caller is not in whitelist"
         );
+        require(pool.maxBuyPerOrder >= _quantity, "Got limited per order");
+
         require(
             pool.maxBuyPerAddress >=
                 (buyerItemsTotal[_poolId][_msgSender()] + _quantity),
@@ -284,12 +287,10 @@ contract RadaFixedSwapContract is
         uint256 _endTime,
         uint256 _startPrice,
         bool _requireWhitelist,
-        uint256 _maxBuyPerAddress
+        uint256 _maxBuyPerAddress,
+        uint256 _maxBuyPerOrder
     ) external onlyAdmin {
-        require(
-            _startPrice > 0,
-            "Invalid"
-        );
+        require(_startPrice > 0, "Invalid");
 
         POOL_INFO storage pool = pools[_poolId]; // pool info
         require(!pool.isPublic, "Pool is public");
@@ -306,9 +307,7 @@ contract RadaFixedSwapContract is
         pool.startPrice = _startPrice;
         pool.requireWhitelist = _requireWhitelist;
         pool.maxBuyPerAddress = _maxBuyPerAddress;
-
-
-        pools[_poolId] = pool;
+        pool.maxBuyPerOrder = _maxBuyPerOrder;
     }
 
     function handlePublicPool(uint16 _poolId, bool _isPublic)
