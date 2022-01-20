@@ -20,6 +20,11 @@ async function main() {
 
   const contractDeploy = await RandomizeByRarity.deploy(linkToken, vrfCoordinator, keyHash, pe(fee));
 
+  await contractDeploy.deployed();
+  const txHash = contractDeploy.deployTransaction.hash;
+  console.log(`Tx hash: ${txHash}\nWaiting for transaction to be mined...`);
+  const txReceipt = await ethers.provider.waitForTransaction(txHash);
+
   console.log("RandomizeByRarity address: find at website");
 }
 

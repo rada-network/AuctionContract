@@ -7,9 +7,15 @@ async function main() {
 
   const BoxToken = await ethers.getContractFactory("BoxToken");
   // Deploy 100k token
-  const token = await BoxToken.deploy();
+  const contractDeploy = await BoxToken.deploy();
 
-  console.log("BoxToken address:", token.address);
+
+  await contractDeploy.deployed();
+  const txHash = contractDeploy.deployTransaction.hash;
+  console.log(`Tx hash: ${txHash}\nWaiting for transaction to be mined...`);
+  const txReceipt = await ethers.provider.waitForTransaction(txHash);
+
+  console.log("Contract address:", txReceipt.contractAddress);
 }
 
 main()

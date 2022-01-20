@@ -97,7 +97,7 @@ describe("Fixed Swap Contract - NFT", function () {
     await contractFixedSwap.setWithdrawAddress(withdrawUser.address);
 
     // Withdraw
-    await contractFixedSwap.withdrawFund(bUSDToken.address, pe("2000"));
+    await contractFixedSwap.withdrawFund(bUSDToken.address, pe("2000"), []);
     expect(await bUSDToken.balanceOf(withdrawUser.address)).to.equal(balanceFund.toString());
 
   });

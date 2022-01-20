@@ -12,8 +12,16 @@ async function main() {
   const NFTAuctionContract = await ethers.getContractFactory("NFTAuctionContract");
 
   // Deploy
-  const instanceContract = await upgrades.deployProxy(NFTAuctionContract, [busdAddresses[network]], { kind: 'uups' });
-  console.log("Contract address:", instanceContract.address);
+  const contractDeploy = await upgrades.deployProxy(NFTAuctionContract, [busdAddresses[network]], { kind: 'uups' });
+
+  await contractDeploy.deployed();
+  const txHash = contractDeploy.deployTransaction.hash;
+  console.log(`Tx hash: ${txHash}\nWaiting for transaction to be mined...`);
+  const txReceipt = await ethers.provider.waitForTransaction(txHash);
+
+  console.log("Contract address:", txReceipt.contractAddress);
+
+  // console.log("Contract address:", contractDeploy.address);
 
   const afterDeploy = fe(await deployer.getBalance());
   console.log("Cost deploy:", (beforeDeploy-afterDeploy));

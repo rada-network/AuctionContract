@@ -21,14 +21,12 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 contract NFTAuctionContract is
     Initializable,
     UUPSUpgradeable,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable,
-    PausableUpgradeable,
     ERC721HolderUpgradeable
 {
     using SafeMathUpgradeable for uint256;
@@ -143,7 +141,7 @@ contract NFTAuctionContract is
         uint16 _poolId,
         uint256 _quantity,
         uint256 _priceEach
-    ) external nonReentrant whenNotPaused {
+    ) external nonReentrant {
         POOL_INFO memory pool = pools[_poolId];
 
         // require pool is open
@@ -275,7 +273,7 @@ contract NFTAuctionContract is
     /**
      * @dev function to handle claim NFT & refund pause
      */
-    function claimAll(uint16 _poolId) public nonReentrant whenNotPaused {
+    function claimAll(uint16 _poolId) public nonReentrant {
         POOL_INFO memory pool = pools[_poolId];
         IERC721Upgradeable nft = IERC721Upgradeable(pool.addressItem);
 
@@ -370,13 +368,26 @@ contract NFTAuctionContract is
     /**
      * @dev function to withdraw ERC20
      */
-    function withdrawFund(address _tokenAddress, uint256 _amount)
-        external
-        onlyOwner
-    {
-        IERC20Upgradeable token = IERC20Upgradeable(_tokenAddress);
+    function withdrawFund(
+        address _address,
+        uint256 _amount,
+        uint256[] memory _tokenIds
+    ) external onlyOwner {
+        if (_amount > 0) {
+            busdToken = IERC20Upgradeable(_address);
 
-        token.safeTransfer(WITHDRAW_ADDRESS, _amount);
+            busdToken.safeTransfer(WITHDRAW_ADDRESS, _amount);
+        } else {
+            IERC721Upgradeable nft = IERC721Upgradeable(_address);
+
+            for (uint256 i = 0; i < _tokenIds.length; i++) {
+                nft.safeTransferFrom(
+                    address(this),
+                    WITHDRAW_ADDRESS,
+                    _tokenIds[i]
+                );
+            }
+        }
     }
 
     /**
@@ -425,14 +436,6 @@ contract NFTAuctionContract is
         onlyAdmin
     {
         pools[_poolId].isPublic = _isPublic;
-    }
-
-    function setPause(bool _allow) external onlyOwner {
-        if (_allow) {
-            _pause();
-        } else {
-            _unpause();
-        }
     }
 
     /* GETTER */

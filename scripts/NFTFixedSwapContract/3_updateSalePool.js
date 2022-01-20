@@ -16,9 +16,9 @@ async function main() {
   const instanceContract = await ethers.getContractAt("NFTFixedSwapContract",contractAddress);
 
   // TODO: Fill your poolId
-  const poolId = 11;
-  const tokenIdStart = 190050;
-  const tokenIdEnd = 190099;
+  const poolId = 12; // Defihorse Heroic
+  const tokenIdStart = 4;
+  const tokenIdEnd = 303;
   let saleTokenIds = [];
   for (let i=tokenIdStart;i<=tokenIdEnd;i++) {
     saleTokenIds.push(i);

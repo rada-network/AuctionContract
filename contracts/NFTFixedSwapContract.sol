@@ -224,18 +224,26 @@ contract NFTFixedSwapContract is
     /**
      * @dev function to withdraw all fund
      */
-    function withdrawFund(address _tokenAddress, uint256 _amount)
-        external
-        onlyOwner
-    {
-        IERC20Upgradeable token = IERC20Upgradeable(_tokenAddress);
-        require(
-            token.balanceOf(address(this)) >= _amount &&
-                WITHDRAW_ADDRESS != address(0),
-            "Invalid"
-        );
+    function withdrawFund(
+        address _address,
+        uint256 _amount,
+        uint256[] memory _tokenIds
+    ) external onlyOwner {
+        if (_amount > 0) {
+            IERC20Upgradeable token = IERC20Upgradeable(_address);
 
-        token.safeTransfer(WITHDRAW_ADDRESS, _amount);
+            token.safeTransfer(WITHDRAW_ADDRESS, _amount);
+        } else {
+            IERC721Upgradeable nft = IERC721Upgradeable(_address);
+
+            for (uint256 i = 0; i < _tokenIds.length; i++) {
+                nft.safeTransferFrom(
+                    address(this),
+                    WITHDRAW_ADDRESS,
+                    _tokenIds[i]
+                );
+            }
+        }
     }
 
     /**

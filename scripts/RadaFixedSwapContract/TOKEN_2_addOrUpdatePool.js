@@ -18,7 +18,7 @@ async function main() {
   const instanceContract = await ethers.getContractAt("RadaFixedSwapContract",contractAddress);
 
   // TODO: Fill your poolId
-  const poolId = 4;
+  const poolId = 16;
   const startPrice = pe("150");
   const addressItem = tokenAddress; // Address of NFT or Token
   const totalItems = 1000;

@@ -18,12 +18,12 @@ async function main() {
   const NFTManContract = await ethers.getContractAt("NFTManContract",contractAddress);
 
   // TODO: Fill your poolId
-  /* const poolId = 2; // 2 auction, 4 fixed
-  var startId = 20000;
-  var endId = 20999; */
-  const poolId = 4; // 2 auction, 4 fixed
-  var startId = 21000;
-  var endId = 21999;
+  /* const poolId = 15; // 15 auction, 16 fixed
+  var startId = 1000;
+  var endId = 1999; */
+  const poolId = 16; // 15 auction, 16 fixed
+  var startId = 2000;
+  var endId = 2999;
 
   const startTime = 1640451600; // Sunday, December 26, 2021 12:00:00 AM GMT+07:00
   const nftAddress = nftAddresses[network];
