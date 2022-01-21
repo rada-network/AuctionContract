@@ -7,9 +7,16 @@ async function main() {
 
   const BUSDToken = await ethers.getContractFactory("BUSDToken");
   // Deploy 100M token
-  const token = await BUSDToken.deploy();
+  const contractDeploy = await BUSDToken.deploy();
 
-  console.log("BUSD Token address:", token.address);
+  await contractDeploy.deployed();
+  const txHash = contractDeploy.deployTransaction.hash;
+  console.log(`Tx hash: ${txHash}\nWaiting for transaction to be mined...`);
+  const txReceipt = await ethers.provider.waitForTransaction(txHash);
+
+  console.log("Contract address:", txReceipt.contractAddress);
+
+  // console.log("BUSD Token address:", contractDeploy.address);
 }
 
 main()

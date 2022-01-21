@@ -21,7 +21,7 @@ contract BUSDToken is ERC20, Ownable, ERC20Burnable {
     uint256 public totalTokens;
 
     // wei
-    constructor() ERC20("BUSD test", "BUSD") {
+    constructor() ERC20("BUSD test", "BUSDtest") {
         totalTokens = 100 * 10**6 * 10**uint256(decimals()); // 100M
         _mint(owner(), totalTokens);
         admin = owner(); // Sets admin address in blockchain

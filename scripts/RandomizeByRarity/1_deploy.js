@@ -24,8 +24,9 @@ async function main() {
   const txHash = contractDeploy.deployTransaction.hash;
   console.log(`Tx hash: ${txHash}\nWaiting for transaction to be mined...`);
   const txReceipt = await ethers.provider.waitForTransaction(txHash);
+  console.log("Contract address:", txReceipt.contractAddress);
 
-  console.log("RandomizeByRarity address: find at website");
+  // console.log("RandomizeByRarity address: find at website");
 }
 
 main()

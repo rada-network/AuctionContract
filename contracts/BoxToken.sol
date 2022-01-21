@@ -20,7 +20,7 @@ contract BoxToken is ERC20, Ownable, ERC20Burnable {
     uint256 public totalTokens;
 
     // wei
-    constructor() ERC20("BoxToken test", "BoxToken") {
+    constructor() ERC20("Box RADA", "BoxRADA") {
         totalTokens = 100_000; // 100.000 Box
         _mint(owner(), totalTokens);
         admin = owner(); // Sets admin address in blockchain
