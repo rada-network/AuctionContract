@@ -85,8 +85,8 @@ module.exports = {
     }
   },
   etherscan: {
-    apiKey: BSC_API_KEY
-    // apiKey: PLO_API_KEY
+    // apiKey: BSC_API_KEY
+    apiKey: PLO_API_KEY
   },
   /* etherscan: {
     apiKey: {

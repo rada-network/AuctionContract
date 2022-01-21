@@ -14,75 +14,75 @@ MNEMONIC=
 
 Use for deploy and update
 
-## Step by step Deploy NFT SALE to testnet / mainnet
+## Step by step Deploy NFT SALE to polygonMumbai / mainnet
 
 ```shell
-npx hardhat run scripts/NFTAuctionContract/1_deploy.js --network testnet
+npx hardhat run scripts/NFTAuctionContract/1_deploy.js --network polygonMumbai
 # Copy Contract address to proxyAddresses.js
-npx hardhat run scripts/NFTFixedSwapContract/1_deploy.js --network testnet
+npx hardhat run scripts/NFTFixedSwapContract/1_deploy.js --network polygonMumbai
 # Copy Contract address to proxyAddresses.js
 
-npx hardhat run scripts/NFTFixedSwapContract/setAdmin.js --network testnet
-npx hardhat run scripts/NFTAuctionContract/setAdmin.js --network testnet
+npx hardhat run scripts/NFTFixedSwapContract/setAdmin.js --network polygonMumbai
+npx hardhat run scripts/NFTAuctionContract/setAdmin.js --network polygonMumbai
 
 # REMEMBER: owner need update WITHDRAW_ADDRESS at 2 contracts
 
 # Auction, Got NFT first and update range tokenId
-npx hardhat run scripts/NFTAuctionContract/2_addOrUpdatePool.js --network testnet
-npx hardhat run scripts/NFTAuctionContract/3_updateSalePool.js --network testnet
+npx hardhat run scripts/NFTAuctionContract/2_addOrUpdatePool.js --network polygonMumbai
+npx hardhat run scripts/NFTAuctionContract/3_updateSalePool.js --network polygonMumbai
 
 # Fixed Swap, Got NFT first and update range tokenId
-npx hardhat run scripts/NFTFixedSwapContract/2_addOrUpdatePool.js --network testnet
-npx hardhat run scripts/NFTFixedSwapContract/3_updateSalePool.js --network testnet
+npx hardhat run scripts/NFTFixedSwapContract/2_addOrUpdatePool.js --network polygonMumbai
+npx hardhat run scripts/NFTFixedSwapContract/3_updateSalePool.js --network polygonMumbai
 
-# npx hardhat run scripts/NFTAuctionContract/getImplementationAddress.js --network testnet
-# npx hardhat run scripts/NFTFixedSwapContract/getImplementationAddress.js --network testnet
-# npx hardhat verify --network testnet DDDDDDDDD
+# npx hardhat run scripts/NFTAuctionContract/getImplementationAddress.js --network polygonMumbai
+# npx hardhat run scripts/NFTFixedSwapContract/getImplementationAddress.js --network polygonMumbai
+# npx hardhat verify --network polygonMumbai DDDDDDDDD
 
 ```
 
-## Step by step Deploy Token SALE to testnet / mainnet
+## Step by step Deploy Token SALE to polygonMumbai / mainnet
 
 ```shell
-npx hardhat run scripts/NFTManContract/1_deploy.js --network testnet
+npx hardhat run scripts/NFTManContract/1_deploy.js --network polygonMumbai
 # Copy Contract address to proxyAddresses.js
-npx hardhat run scripts/RadaAuctionContract/1_deploy.js --network testnet
+npx hardhat run scripts/RadaAuctionContract/1_deploy.js --network polygonMumbai
 # Copy Contract address to proxyAddresses.js
-npx hardhat run scripts/RadaFixedSwapContract/1_deploy.js --network testnet
+npx hardhat run scripts/RadaFixedSwapContract/1_deploy.js --network polygonMumbai
 # Copy Contract address to proxyAddresses.js
 
 # TODO: Require setMinterFactories for NFTMan at NFT Contract
 
-npx hardhat run scripts/RadaFixedSwapContract/setAdmin.js --network testnet
-npx hardhat run scripts/RadaAuctionContract/setAdmin.js --network testnet
-npx hardhat run scripts/NFTManContract/setAdmin.js --network testnet
+npx hardhat run scripts/RadaFixedSwapContract/setAdmin.js --network polygonMumbai
+npx hardhat run scripts/RadaAuctionContract/setAdmin.js --network polygonMumbai
+npx hardhat run scripts/NFTManContract/setAdmin.js --network polygonMumbai
 
 # TOKEN - Auction
-npx hardhat run scripts/RadaAuctionContract/TOKEN_2_addOrUpdatePool.js --network testnet
+npx hardhat run scripts/RadaAuctionContract/TOKEN_2_addOrUpdatePool.js --network polygonMumbai
 
 # TOKEN - Fixed Swap
-npx hardhat run scripts/RadaFixedSwapContract/TOKEN_2_addOrUpdatePool.js --network testnet
+npx hardhat run scripts/RadaFixedSwapContract/TOKEN_2_addOrUpdatePool.js --network polygonMumbai
 
-# npx hardhat run scripts/RadaAuctionContract/4_handleEndAuction.js --network testnet
+# npx hardhat run scripts/RadaAuctionContract/4_handleEndAuction.js --network polygonMumbai
 
-# npx hardhat run scripts/RadaFixedSwapContract/getImplementationAddress.js --network testnet
-# npx hardhat run scripts/RadaAuctionContract/getImplementationAddress.js --network testnet
-# npx hardhat verify --network testnet ADDRESS_IMPLEMENT
+# npx hardhat run scripts/RadaFixedSwapContract/getImplementationAddress.js --network polygonMumbai
+# npx hardhat run scripts/RadaAuctionContract/getImplementationAddress.js --network polygonMumbai
+# npx hardhat verify --network polygonMumbai ADDRESS_IMPLEMENT
 ```
 
-## Step by step Deploy NFTMan to testnet / mainnet
+## Step by step Deploy NFTMan to polygonMumbai / mainnet
 
 ```shell
-npx hardhat run scripts/NFTManContract/1_deploy.js --network testnet
+npx hardhat run scripts/NFTManContract/1_deploy.js --network polygonMumbai
 # Copy Contract address to proxyAddresses.js
 # Token Box
-npx hardhat run scripts/NFTManContract/TOKEN_2_addOrUpdatePool.js --network testnet
+npx hardhat run scripts/NFTManContract/TOKEN_2_addOrUpdatePool.js --network polygonMumbai
 
-npx hardhat run scripts/NFTManContract/setAdmin.js --network testnet
-npx hardhat run scripts/NFTManContract/upgradeContract_v2.js --network testnet
+npx hardhat run scripts/NFTManContract/setAdmin.js --network polygonMumbai
+npx hardhat run scripts/NFTManContract/upgradeContract_v2.js --network polygonMumbai
 
-npx hardhat run scripts/NFTManContract/getImplementationAddress.js --network testnet
-npx hardhat verify --network testnet DDDDDDDDD
+npx hardhat run scripts/NFTManContract/getImplementationAddress.js --network polygonMumbai
+npx hardhat verify --network polygonMumbai DDDDDDDDD
 ```
 
 ## Step by step Deploy RandomizeByRarity to polygonMumbai / polygon
@@ -105,41 +105,41 @@ npx hardhat verify --network polygonMumbai 0x7a789f5620408a44219e63a5b037f12a5f3
 
 ```shell
 
-npx hardhat run scripts/RadaAuctionContract/upgradeContract_v2.js --network testnet
+npx hardhat run scripts/RadaAuctionContract/upgradeContract_v2.js --network polygonMumbai
 
-npx hardhat run scripts/RadaAuctionContract/getImplementationAddress.js --network testnet
-npx hardhat verify --network testnet ADDRESS_ABOVE
+npx hardhat run scripts/RadaAuctionContract/getImplementationAddress.js --network polygonMumbai
+npx hardhat verify --network polygonMumbai ADDRESS_ABOVE
 
 
-npx hardhat run scripts/RadaFixedSwapContract/getImplementationAddress.js --network testnet
-npx hardhat verify --network testnet ADDRESS_ABOVE
+npx hardhat run scripts/RadaFixedSwapContract/getImplementationAddress.js --network polygonMumbai
+npx hardhat verify --network polygonMumbai ADDRESS_ABOVE
 ```
 
-## Build & Deploy BSC testnet | BUSDToken
+## Build & Deploy BSC polygonMumbai | BUSDToken
 
 ```shell
 
-npx hardhat run scripts/BUSDToken/deploy.js --network testnet
+npx hardhat run scripts/BUSDToken/deploy.js --network polygonMumbai
 // Copy Token address to tokenAddresses.js
 
-// npx hardhat verify --network testnet TODO_token_address
-// npx hardhat verify --network testnet --contract contracts/BUSDToken.sol:BUSDToken TODO_token_address
+// npx hardhat verify --network polygonMumbai TODO_token_address
+// npx hardhat verify --network polygonMumbai --contract contracts/BUSDToken.sol:BUSDToken TODO_token_address
 
 ```
 
-## Build & Deploy BSC testnet | BoxToken
+## Build & Deploy BSC polygonMumbai | BoxToken
 
 ```shell
 
-npx hardhat run scripts/BoxToken/deploy.js --network testnet
+npx hardhat run scripts/BoxToken/deploy.js --network polygonMumbai
 // Copy Token address to tokenAddresses.js
 
 // Test
-npx hardhat run scripts/BoxToken/sendTokentest.js --network testnet
+npx hardhat run scripts/BoxToken/sendTokentest.js --network polygonMumbai
 
 
-// npx hardhat verify --network testnet TODO_token_address
-// npx hardhat verify --network testnet --contract contracts/BoxToken.sol:BoxToken TODO_token_address
+// npx hardhat verify --network polygonMumbai TODO_token_address
+// npx hardhat verify --network polygonMumbai --contract contracts/BoxToken.sol:BoxToken TODO_token_address
 
 ```
 
