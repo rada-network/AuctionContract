@@ -77,9 +77,11 @@ module.exports = {
       chainId: 137
     },
     polygonMumbai: {
-      url: "https://rpc-mumbai.maticvigil.com",
+      // url: "https://rpc-mumbai.maticvigil.com",
+      url: "https://matic-mumbai.chainstacklabs.com",
       accounts: [`0x${PRIVATE_KEY}`],
-      chainId: 80001
+      chainId: 80001,
+      timeout: 60000,
     }
   },
   etherscan: {

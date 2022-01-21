@@ -11,8 +11,11 @@ async function main() {
 
   const NFTManContract = await ethers.getContractFactory("NFTManContract");
 
-  const contractDeploy = await upgrades.deployProxy(NFTManContract, { kind: 'uups' });
-  console.log("Contract address:", contractDeploy.address);
+  // const contractDeploy = await upgrades.deployProxy(NFTManContract, { kind: 'uups' });
+  const contractDeploy = await upgrades.deployProxy(NFTManContract, [], { initializer: 'initialize' });
+
+  await contractDeploy.deployed();
+  console.log('Contract deployed to:', box.address);
 
   /* await contractDeploy.deployed();
   const txHash = contractDeploy.deployTransaction.hash;
