@@ -14,6 +14,16 @@ MNEMONIC=
 
 Use for deploy and update
 
+## Valid check Pool polygonMumbai / mainnet
+
+```shell
+npx hardhat run scripts/CheckValidPool/TOKEN_FixedSwap.js --network polygonMumbai
+npx hardhat run scripts/CheckValidPool/TOKEN_Auction.js --network polygonMumbai
+npx hardhat run scripts/CheckValidPool/NFT_Auction.js --network polygonMumbai
+npx hardhat run scripts/CheckValidPool/NFT_FixedSwap.js --network polygonMumbai
+
+```
+
 ## Step by step Deploy NFT SALE to polygonMumbai / mainnet
 
 ```shell
@@ -52,6 +62,7 @@ npx hardhat run scripts/RadaFixedSwapContract/1_deploy.js --network polygonMumba
 # Copy Contract address to proxyAddresses.js
 
 # TODO: Require setMinterFactories for NFTMan at NFT Contract
+# REMEMBER: owner need update WITHDRAW_ADDRESS at 2 contracts
 
 npx hardhat run scripts/RadaFixedSwapContract/setAdmin.js --network polygonMumbai
 npx hardhat run scripts/RadaAuctionContract/setAdmin.js --network polygonMumbai
@@ -70,7 +81,7 @@ npx hardhat run scripts/RadaFixedSwapContract/TOKEN_2_addOrUpdatePool.js --netwo
 # npx hardhat verify --network polygonMumbai ADDRESS_IMPLEMENT
 ```
 
-## Step by step Deploy NFTMan to polygonMumbai / mainnet
+## NFTMan to polygonMumbai / mainnet
 
 ```shell
 npx hardhat run scripts/NFTManContract/1_deploy.js --network polygonMumbai
@@ -85,12 +96,12 @@ npx hardhat run scripts/NFTManContract/getImplementationAddress.js --network pol
 npx hardhat verify --network polygonMumbai DDDDDDDDD
 ```
 
-## Step by step Deploy RandomizeByRarity to polygonMumbai / polygon
+## RandomizeByRarity to polygonMumbai / polygon
 
 ```shell
 npx hardhat run scripts/RandomizeByRarity/1_deploy.js --network polygonMumbai
 # Copy Contract address to proxyAddresses.js
-# TODO: Remember send LINK token to Contract
+# TODO: Remember send LINK+MATIC token to Contract
 
 npx hardhat run scripts/RandomizeByRarity/2_addPool.js --network polygonMumbai
 
@@ -98,21 +109,7 @@ npx hardhat run scripts/RandomizeByRarity/2_addPool.js --network polygonMumbai
 
 npx hardhat run scripts/RandomizeByRarity/setAdmin.js --network polygonMumbai
 
-npx hardhat verify --network polygonMumbai 0x7a789f5620408a44219e63a5b037f12a5f36196b "0x326C977E6efc84E512bB9C30f76E30c160eD06FB" "0x8C7382F9D8f56b33781fE506E897a4F1e2d17255" "0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4" 100000000000
-```
-
-## Build & run script
-
-```shell
-
-npx hardhat run scripts/RadaAuctionContract/upgradeContract_v2.js --network polygonMumbai
-
-npx hardhat run scripts/RadaAuctionContract/getImplementationAddress.js --network polygonMumbai
-npx hardhat verify --network polygonMumbai ADDRESS_ABOVE
-
-
-npx hardhat run scripts/RadaFixedSwapContract/getImplementationAddress.js --network polygonMumbai
-npx hardhat verify --network polygonMumbai ADDRESS_ABOVE
+# npx hardhat verify --network polygonMumbai 0x72Cd36e466918A5f4961d1a7eE6642E9be7Ef9fb "0x326C977E6efc84E512bB9C30f76E30c160eD06FB" "0x8C7382F9D8f56b33781fE506E897a4F1e2d17255" "0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4" "100000000000"
 ```
 
 ## Build & Deploy BSC polygonMumbai | BUSDToken
@@ -120,10 +117,9 @@ npx hardhat verify --network polygonMumbai ADDRESS_ABOVE
 ```shell
 
 npx hardhat run scripts/BUSDToken/deploy.js --network polygonMumbai
-// Copy Token address to tokenAddresses.js
+# Copy Token address to tokenAddresses.js
 
-// npx hardhat verify --network polygonMumbai TODO_token_address
-// npx hardhat verify --network polygonMumbai --contract contracts/BUSDToken.sol:BUSDToken TODO_token_address
+# npx hardhat verify --network polygonMumbai --contract contracts/BUSDToken.sol:BUSDToken TODO_token_address
 
 ```
 
@@ -132,14 +128,13 @@ npx hardhat run scripts/BUSDToken/deploy.js --network polygonMumbai
 ```shell
 
 npx hardhat run scripts/BoxToken/deploy.js --network polygonMumbai
-// Copy Token address to tokenAddresses.js
+# Copy Token address to tokenAddresses.js
 
-// Test
+# Test
 npx hardhat run scripts/BoxToken/sendTokentest.js --network polygonMumbai
 
 
-// npx hardhat verify --network polygonMumbai TODO_token_address
-// npx hardhat verify --network polygonMumbai --contract contracts/BoxToken.sol:BoxToken TODO_token_address
+# npx hardhat verify --network polygonMumbai --contract contracts/BoxToken.sol:BoxToken TODO_token_address
 
 ```
 
