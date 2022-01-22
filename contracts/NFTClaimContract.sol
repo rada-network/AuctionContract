@@ -81,6 +81,12 @@ contract NFTClaimContract is
     }
     mapping(uint16 => POOL_RARITY) rarityAllocations;
 
+    struct POOL_VESTING {
+        uint256[] times;
+        uint256[] volumes;
+    }
+    mapping(uint16 => POOL_VESTING) vestingPlans;
+
     // Operation
     mapping(address => bool) admins;
     uint16[] poolIds;
@@ -222,6 +228,26 @@ contract NFTClaimContract is
         }
     }
 
+    function updateVestingPlan(
+        uint16 _poolId,
+        uint256[] memory _times,
+        uint256[] memory _volumes
+    ) external virtual {
+        // check require
+        require (_times.length == _volumes.length, "Invalid length");
+        for(uint256 i; i<_times.length-1; i++) {
+            require (_times[i] < _times[i+1], "Invalid Times");
+        }
+        uint256 _totalvolumes;
+        for(uint256 i; i<_times.length; i++) {
+            _totalvolumes += _volumes[i];
+        }
+        require (_totalvolumes == 100000, "Invalid vesting volumes");
+
+        vestingPlans[_poolId].times = _times;
+        vestingPlans[_poolId].volumes = _volumes;
+    }
+
     function publishPool(uint16 _poolId) external virtual onlyAdmin {
         POOL_INFO memory pool = pools[_poolId];
         require(!pool.published, "Already published");
@@ -276,6 +302,14 @@ contract NFTClaimContract is
         return _busdToToken(_poolId, getNftAllocationBusd(_poolId, _nftId));
     }
 
+    function _getVestingVolumes(uint16 _poolId) internal view returns (uint256 _volumes) {
+        uint256 i;
+        while (i<vestingPlans[_poolId].times.length && vestingPlans[_poolId].times[i] <= block.timestamp) {
+            _volumes += vestingPlans[_poolId].volumes[i];
+            i++;
+        }
+    }
+
     function getClaimable(uint16 _poolId, uint256[] memory _nftIds)
         public
         view
@@ -283,17 +317,20 @@ contract NFTClaimContract is
     {
         claimables = new uint256[](_nftIds.length + 1);
 
-        POOL_INFO memory pool = pools[_poolId];
+        // POOL_INFO memory pool = pools[_poolId];
         uint256 _totalClaimable;
 
         IERC20Upgradeable tokenContract = IERC20Upgradeable(
             pools[_poolId].tokenAddress
         );
         uint256 _tokenBalance = tokenContract.balanceOf(address(this));
-        uint256 _totalDeposited = totalClaimedTokens.add(_tokenBalance);
-        uint256 _ratioDeposited = _totalDeposited.mul(pool.tokenPrice).div(
-            pool.tokenAllocationBusd
-        );
+        // uint256 _totalDeposited = totalClaimedTokens.add(_tokenBalance);
+        // uint256 _ratioDeposited = _totalDeposited.mul(pool.tokenPrice).div(
+        //     pool.tokenAllocationBusd
+        // );
+        // if (_ratioDeposited > 1) _ratioDeposited = 1; // maximum 
+        uint256 _ratioDeposited = _getVestingVolumes(_poolId);
+
         IUpdateERC721 nftContract = IUpdateERC721(
             nftManContract.pools(_poolId).nftAddress
         );
@@ -301,7 +338,7 @@ contract NFTClaimContract is
             uint256 _nftId = _nftIds[i];
             require(nftContract.ownerOf(_nftId) == _msgSender(), "Invalid NFT");
             uint256 _allocation = getNftAllocation(_poolId, _nftId);
-            uint256 _claimable = _allocation.mul(_ratioDeposited).div(1e18);
+            uint256 _claimable = _allocation.mul(_ratioDeposited).div(1e5); // 1000*100
             // current claimable for nftId
             claimables[i] = _claimable > claimedTokens[_nftId]
                 ? _claimable.sub(claimedTokens[_nftId])
@@ -320,6 +357,8 @@ contract NFTClaimContract is
         POOL_INFO memory pool = pools[_poolId];
         require(pool.published, "Pool not available");
         require(pool.tokenAddress != address(0), "Token not available");
+        // check vesting
+        require(vestingPlans[_poolId].times.length > 0, "No vesting plan");
 
         uint256[] memory _claimables = getClaimable(_poolId, _nftIds);
         uint256 _totalClaimable = _claimables[_claimables.length - 1];
