@@ -52,7 +52,7 @@ interface INFTMan {
     function pools(uint16 _poolId) external view returns (POOL_INFO memory);
 }
 
-contract IDOClaimContract is
+contract NFTClaimContract is
     Initializable,
     UUPSUpgradeable,
     OwnableUpgradeable,

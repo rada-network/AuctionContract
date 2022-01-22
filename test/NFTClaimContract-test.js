@@ -81,7 +81,7 @@ describe('IDOClaimContract', function () {
 
         // IDOClaim
         const IDOClaimContract = await ethers.getContractFactory(
-            'IDOClaimContract'
+            'NFTClaimContract'
         )
         contractIDOClaim = await upgrades.deployProxy(IDOClaimContract, [
             contractNFTMan.address,
