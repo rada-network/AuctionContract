@@ -2,6 +2,8 @@ const hre = require('hardhat');
 const { ethers, upgrades, hardhatArguments } = hre;
 const { pe, fe, fu, pu } = require('../../utils');
 const fs = require('fs');
+const { updateDeployedAddress } = require('./proxyAddress')
+const contractName = "NFTClaimContract";
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -10,7 +12,6 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const contractName = "NFTClaimContract";
   const contractFactory = await ethers.getContractFactory(contractName);
 
   const nftManContractAddress = "0x77f866b1E2528544C8CBfda8D58001dd1abcE70e";
@@ -25,18 +26,7 @@ async function main() {
   console.log("Implemented address: ", implementedAddress);
 
   // store to deployed.json
-  const file_path = `${__dirname}/../../.deployed.json`;
-  let deployedData;
-  try {
-      deployedData = require(file_path);
-  } catch (e) {
-      deployedData = {};
-  }
-  if (!deployedData[network]) deployedData[network] = {};
-  deployedData[network][contractName] = {proxyAddress, implementedAddress};
-
-  fs.writeFileSync(file_path, JSON.stringify(deployedData, null, "  "));
-
+  updateDeployedAddress(contractName, {proxyAddress, implementedAddress});
 
   // verify
   /*

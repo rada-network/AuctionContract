@@ -1,26 +1,12 @@
 const { ethers, upgrades, hardhatArguments } = require('hardhat');
 const { pe,fe,fu,pu } = require('../../utils');
+const { getDeployedAddress } = require('./proxyAddress')
+const contractName = "NFTClaimContract";
 
 async function main() {
   const [deployer] = await ethers.getSigners();
 
-  const network = hardhatArguments.network;
-
-  // store to deployed.json
-  const file_path = `${__dirname}/../../.deployed.json`;
-  let deployedData;
-  try {
-      deployedData = require(file_path);
-  } catch (e) {
-      deployedData = {};
-  }  
-
-  const contractName = "NFTClaimContract";
-  if (!deployedData[network] || !deployedData[network][contractName]?.proxyAddress) {
-    console.log(`Contract ${contractName} has not deployed`);
-    return;
-  }
-  const contractAddress = deployedData[network][contractName]?.proxyAddress;
+  const contractAddress = getDeployedAddress(contractName);
 
   console.log("With the account:", deployer.address);
   console.log("With NFTManContract address:", contractAddress);

@@ -1,19 +1,18 @@
 const { ethers, upgrades, hardhatArguments } = require('hardhat');
-const { addresses } = require('./proxyAddresses');
-
-const contractName = "RadaAuctionContract";
+const { getDeployedAddress } = require('./proxyAddress')
+const contractName = "NFTClaimContract";
 
 async function main() {
   const [deployer] = await ethers.getSigners();
 
-  const network = hardhatArguments.network;
-  const proxyAddress = addresses[network];
+  const proxyAddress = getDeployedAddress(contractName);
+  if (!proxyAddress) return;
 
   console.log("Deploying contracts with the account:", deployer.address);
 
   const contract = await ethers.getContractFactory(contractName);
 
-  console.log('Upgrading contract...');
+  console.log('Upgrading contract...: ', proxyAddress);
   await upgrades.upgradeProxy(proxyAddress, contract);
   console.log('Contract upgraded');
 }
