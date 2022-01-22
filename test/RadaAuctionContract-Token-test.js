@@ -16,14 +16,13 @@ const {
 describe("Auction Contract - Token", function () {
 
   let contractAuction;
+  let contractWhitelist;
   let contractERC20;
   let addressItem;
   let bUSDToken;
   let poolId;
   let quantity;
   let priceEach;
-  const MINTER_ROLE = "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
-  const URL_BASE = "https://nft.1alo.com/v1/rada/";
 
   // Utils
   const pe = (num) => ethers.utils.parseEther(num) // parseEther
@@ -33,7 +32,7 @@ describe("Auction Contract - Token", function () {
 
   beforeEach(async function () {
 
-    [owner, approvalUser, adminUser, withdrawUser, buyerUser, buyerUser2, buyerUser3, ...addrs] = await ethers.getSigners();
+    [owner, approvalUser, adminUser, withdrawUser, buyerUser, buyerUser2, buyerUser3, invalidUser, ...addrs] = await ethers.getSigners();
 
 
     const BUSDToken = await ethers.getContractFactory("BUSDToken");
@@ -42,15 +41,22 @@ describe("Auction Contract - Token", function () {
     const ERC20Token = await ethers.getContractFactory("BoxToken");
     contractERC20 = await ERC20Token.deploy();
 
+    // Deploy Whitelist Contract first
+    const WhitelistContract = await ethers.getContractFactory("WhitelistContract");
+    contractWhitelist = await upgrades.deployProxy(WhitelistContract, [], { kind: 'uups' });
+
     // Get the ContractFactory
     const RadaAuctionContract = await ethers.getContractFactory("RadaAuctionContract");
-    contractAuction = await upgrades.deployProxy(RadaAuctionContract, [bUSDToken.address], {
-      kind: 'uups'
-    });
+    contractAuction = await upgrades.deployProxy(RadaAuctionContract, [], {kind: 'uups'});
 
     /* RadaAuctionContract */
     // Set minter
     await contractAuction.setAdmin(adminUser.address, true);
+    await contractAuction.setWhitelistAddress(contractWhitelist.address);
+
+    /* WhitelistContract */
+    var whitelist = [buyerUser.address,buyerUser2.address,buyerUser3.address];
+    await contractWhitelist.addList("Raders", whitelist, true);
 
     // Add ERC20 token to Contract
     await contractERC20.transfer(contractAuction.address, pu("2000"));
@@ -61,14 +67,15 @@ describe("Auction Contract - Token", function () {
     addressItem = contractERC20.address;
     const maxBuyPerAddress = 10;
     const requireWhitelist = true;
-    const isPublic = true;
     const totalItems = 1000;
     const startTime = Math.floor(Date.now() / 1000) - 86400*1; // Now - 1 day
     const endTime = Math.floor(Date.now() / 1000) + 86400*7; // Now + 7 days
+    const whitelistIds = [0];
+
     // Add pool
     // await contractAuction.addPool(poolId, pe("150"), addressItem);
     await contractAuction.handlePublicPool(poolId, false);
-    await contractAuction.addOrUpdatePool(poolId, addressItem, totalItems,startTime, endTime, priceEach, requireWhitelist, maxBuyPerAddress);
+    await contractAuction.addOrUpdatePool(poolId, addressItem, bUSDToken.address, totalItems,startTime, endTime, priceEach, requireWhitelist, whitelistIds, maxBuyPerAddress);
     await contractAuction.handlePublicPool(poolId, true);
   });
 
@@ -92,14 +99,13 @@ describe("Auction Contract - Token", function () {
   });
 
   it('Should place Bid successfully - whitelist', async function () {
-    // Set white list
-    await contractAuction.setWhitelist(poolId, [buyerUser.address], true);
 
     // Set maxBuyBoxPerAddress
-    const pool = await contractAuction.pools(poolId)
+    const pool = await contractAuction.pools(poolId);
     const maxBuyPerAddress = 2;
     await contractAuction.handlePublicPool(poolId, false);
-    await contractAuction.addOrUpdatePool(poolId, pool.addressItem,pool.totalItems, pool.startTime, pool.endTime, pool.startPrice, pool.requireWhitelist, maxBuyPerAddress);
+    const whitelistIds = await contractAuction.getWhitelistIds(poolId);
+    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.totalItems, pool.startTime, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, maxBuyPerAddress);
     await contractAuction.handlePublicPool(poolId, true);
     await bUSDToken.connect(buyerUser).approve(contractAuction.address, pe("300"));
 
@@ -135,13 +141,10 @@ describe("Auction Contract - Token", function () {
 
   it('Should revert place Bid if not in white list - whitelist', async function () {
 
-    // Approve allowance
-    await bUSDToken.connect(buyerUser).approve(contractAuction.address, pe("300"));
     // Not in white list should revert
-    await bUSDToken.transfer(buyerUser2.address, pe("150"));
-    await bUSDToken.connect(buyerUser2).approve(contractAuction.address, pe("150"));
-    // await expect(contractAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.be.reverted;
-    await expect(contractAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("Caller is not in whitelist");
+    await bUSDToken.transfer(invalidUser.address, pe("150"));
+    await bUSDToken.connect(invalidUser).approve(contractAuction.address, pe("150"));
+    await expect(contractAuction.connect(invalidUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("Caller is not in whitelist");
 
   });
 
@@ -153,7 +156,8 @@ describe("Auction Contract - Token", function () {
     const requireWhitelist = false;
     await contractAuction.handlePublicPool(poolId, false);
     const maxBuyPerAddress = 10;
-    await contractAuction.addOrUpdatePool(poolId, pool.addressItem,pool.totalItems, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, maxBuyPerAddress);
+    const whitelistIds = await contractAuction.getWhitelistIds(poolId);
+    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.totalItems, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, whitelistIds, maxBuyPerAddress);
     await contractAuction.handlePublicPool(poolId, true);
     // Approve allowance
     await bUSDToken.connect(buyerUser).approve(contractAuction.address, pe("2000"));
@@ -211,8 +215,6 @@ describe("Auction Contract - Token", function () {
   });
 
   it('Should place Bid successfully and reverted over max buy allow - whitelist', async function () {
-    // Set white list
-    await contractAuction.setWhitelist(poolId, [buyerUser.address], true);
 
     // Set limit buy
     // Approve allowance
@@ -253,7 +255,8 @@ describe("Auction Contract - Token", function () {
     const pool = await contractAuction.pools(poolId)
     const requireWhitelist = false;
     await contractAuction.handlePublicPool(poolId, false);
-    await contractAuction.addOrUpdatePool(poolId, pool.addressItem,pool.totalItems, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, pool.maxBuyPerAddress);
+    const whitelistIds = await contractAuction.getWhitelistIds(poolId);
+    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.totalItems, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, whitelistIds, pool.maxBuyPerAddress);
     await contractAuction.handlePublicPool(poolId, true);
 
 
@@ -288,19 +291,19 @@ describe("Auction Contract - Token", function () {
     await bUSDToken.connect(buyerUser).approve(contractAuction.address, pe("150"));
     await bUSDToken.transfer(buyerUser.address, pe("150"));
 
-    // Set white list
-    await contractAuction.setWhitelist(poolId, [buyerUser.address], true);
+
     const pool = await contractAuction.pools(poolId)
     const timeNotStart = Math.round(new Date().getTime()/1000) + 86400*2; // Today plus 2 days
     await contractAuction.handlePublicPool(poolId, false);
-    await contractAuction.addOrUpdatePool(poolId, pool.addressItem,pool.totalItems, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress);
+    const whitelistIds = await contractAuction.getWhitelistIds(poolId);
+    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.totalItems, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, pool.maxBuyPerAddress);
     await contractAuction.handlePublicPool(poolId, true);
     // Should reverted
     await expect(contractAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("Not Started");
 
     const timeStart = Math.round(new Date().getTime()/1000) - 86400*2; // Today plus 2 days
     await contractAuction.handlePublicPool(poolId, false);
-    await contractAuction.addOrUpdatePool(poolId, pool.addressItem,pool.totalItems, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist, pool.maxBuyPerAddress);
+    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.totalItems, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, pool.maxBuyPerAddress);
     await contractAuction.handlePublicPool(poolId, true);
     // Now
     // Bought success

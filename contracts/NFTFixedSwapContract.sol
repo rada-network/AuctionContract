@@ -22,6 +22,7 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "./interfaces/IWhitelist.sol";
 
 contract NFTFixedSwapContract is
     Initializable,
@@ -34,20 +35,19 @@ contract NFTFixedSwapContract is
     using SafeMathUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    // BUSD contract
-    IERC20Upgradeable busdToken;
-
     /**
         DATA Structure
      */
     struct POOL_INFO {
         address addressItem;
+        address addressPayable;
         uint256 startTime;
         uint256 endTime;
         uint256 startPrice; // initialPrice
         bool isPublic; // if isPublic, cannot update pool
         bool ended; // Ended to picker winners
         bool requireWhitelist;
+        uint16[] whitelistIds;
         uint256 maxBuyPerAddress;
         uint256 maxBuyPerOrder;
     }
@@ -67,7 +67,7 @@ contract NFTFixedSwapContract is
     }
     mapping(uint16 => POOL_INFO) public pools;
     mapping(uint16 => uint256[]) public poolSaleTokenIds; // poolId => List tokenId for sale
-    uint16[] public poolIds;
+    uint16[] poolIds;
 
     mapping(uint16 => POOL_STATS) public poolStats; // poolId => pool stats
     mapping(uint16 => BID_INFO[]) public bids; // poolId => bids
@@ -76,9 +76,7 @@ contract NFTFixedSwapContract is
     // Operation
     mapping(address => bool) admins;
     address public WITHDRAW_ADDRESS;
-
-    // Whitelist by pool
-    mapping(uint16 => mapping(address => bool)) public whitelistAddresses; // poolId => buyer => whitelist
+    address public WHITELIST_ADDRESS;
 
     // Buyer record
     mapping(uint16 => mapping(address => uint256)) public buyerItemsTotal; // poolId => buyer => total
@@ -91,10 +89,8 @@ contract NFTFixedSwapContract is
         uint256 totalAmount
     );
 
-    function initialize(address _busdAddress) public initializer {
+    function initialize() public initializer {
         __Ownable_init();
-
-        busdToken = IERC20Upgradeable(_busdAddress);
 
         // Default grant the admin role to a specified account
         admins[owner()] = true;
@@ -144,10 +140,15 @@ contract NFTFixedSwapContract is
             "Invalid quantity / sold out"
         );
 
-        require(
-            !pool.requireWhitelist || whitelistAddresses[_poolId][_msgSender()],
-            "Caller is not in whitelist"
-        );
+        if (pool.requireWhitelist) {
+            require(
+                IWhitelist(WHITELIST_ADDRESS).isValid(
+                    _msgSender(),
+                    pool.whitelistIds
+                ),
+                "Caller is not in whitelist"
+            );
+        }
 
         require(pool.maxBuyPerOrder >= _quantity, "Got limited per order");
 
@@ -159,7 +160,9 @@ contract NFTFixedSwapContract is
 
         // Check balance BUSD
         uint256 totalAmount = pool.startPrice.mul(_quantity);
-        busdToken.safeTransferFrom(_msgSender(), address(this), totalAmount);
+
+        IERC20Upgradeable payableToken = IERC20Upgradeable(pool.addressPayable);
+        payableToken.safeTransferFrom(_msgSender(), address(this), totalAmount);
 
         BID_INFO memory bidding = BID_INFO({
             poolId: _poolId,
@@ -170,7 +173,7 @@ contract NFTFixedSwapContract is
         bids[_poolId].push(bidding);
 
         // transfer BUSD to WITHDRAW_ADDRESS
-        busdToken.safeTransfer(WITHDRAW_ADDRESS, totalAmount);
+        payableToken.safeTransfer(WITHDRAW_ADDRESS, totalAmount);
 
         buyerBid[_poolId][_msgSender()].push(poolStats[_poolId].totalBid);
         buyerItemsTotal[_poolId][_msgSender()] += _quantity;
@@ -202,23 +205,17 @@ contract NFTFixedSwapContract is
     }
 
     /**
-     * @dev function to set Admin
+     * @dev function to set WITHDRAW_ADDRESS
      */
     function setWithdrawAddress(address _addr) public onlyOwner {
         WITHDRAW_ADDRESS = _addr;
     }
 
     /**
-     * @dev function to set white list address
+     * @dev function to set Whitelist Address Contract
      */
-    function setWhitelist(
-        uint16 _poolId,
-        address[] memory _addresses,
-        bool _allow
-    ) public onlyAdmin {
-        for (uint256 i = 0; i < _addresses.length; i++) {
-            whitelistAddresses[_poolId][_addresses[i]] = _allow;
-        }
+    function setWhitelistAddress(address _addr) public onlyOwner {
+        WHITELIST_ADDRESS = _addr;
     }
 
     /**
@@ -252,10 +249,12 @@ contract NFTFixedSwapContract is
     function addOrUpdatePool(
         uint16 _poolId,
         address _addressItem,
+        address _addressPayable,
         uint256 _startTime,
         uint256 _endTime,
         uint256 _startPrice,
         bool _requireWhitelist,
+        uint16[] calldata _whitelistIds,
         uint256 _maxBuyPerAddress,
         uint256 _maxBuyPerOrder
     ) external onlyAdmin {
@@ -270,10 +269,13 @@ contract NFTFixedSwapContract is
 
         // do update
         pool.addressItem = _addressItem;
+        pool.addressPayable = _addressPayable;
         pool.startTime = _startTime;
         pool.endTime = _endTime;
         pool.startPrice = _startPrice;
         pool.requireWhitelist = _requireWhitelist;
+        pool.whitelistIds = _whitelistIds;
+
         pool.maxBuyPerAddress = _maxBuyPerAddress;
         pool.maxBuyPerOrder = _maxBuyPerOrder;
 
@@ -341,5 +343,13 @@ contract NFTFixedSwapContract is
 
     function getPoolIds() external view returns (uint16[] memory) {
         return poolIds;
+    }
+
+    function getWhitelistIds(uint16 _poolId)
+        external
+        view
+        returns (uint16[] memory)
+    {
+        return pools[_poolId].whitelistIds;
     }
 }

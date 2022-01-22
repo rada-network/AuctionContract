@@ -21,6 +21,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "./interfaces/IWhitelist.sol";
 
 contract NFTAuctionContract is
     Initializable,
@@ -32,20 +33,19 @@ contract NFTAuctionContract is
     using SafeMathUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    // BUSD contract
-    IERC20Upgradeable busdToken;
-
     /**
         DATA Structure
      */
     struct POOL_INFO {
         address addressItem;
+        address addressPayable;
         uint256 startTime;
         uint256 endTime;
         uint256 startPrice; // Start price for bidding
         bool isPublic; // if isPublic, cannot update pool
         bool ended; // Ended to picker winners
         bool requireWhitelist;
+        uint16[] whitelistIds;
         uint256 maxBuyPerAddress;
     }
     struct POOL_STATS {
@@ -67,16 +67,17 @@ contract NFTAuctionContract is
     mapping(uint16 => POOL_INFO) public pools;
     mapping(uint16 => uint256[]) public poolSaleTokenIds; // poolId => List tokenId for sale
 
-    uint16[] public poolIds;
+    uint16[] poolIds;
     mapping(uint16 => POOL_STATS) public poolStats; // poolId => pool stats
     mapping(uint16 => BID_INFO[]) public bids; // poolId => bids
 
     // Operation
     mapping(address => bool) admins;
     address public WITHDRAW_ADDRESS;
+    address public WHITELIST_ADDRESS;
 
     // Whitelist by pool
-    mapping(uint16 => mapping(address => bool)) public whitelistAddresses; // poolId => buyer => whitelist
+    // mapping(uint16 => mapping(address => bool)) public whitelistAddresses; // poolId => buyer => whitelist
     // Buyer record
     mapping(uint16 => mapping(address => uint32[])) public buyerBid; // poolId => bid index
 
@@ -95,10 +96,8 @@ contract NFTAuctionContract is
     ); */
     event ClaimAll(address buyerAddress, uint16 indexed poolId);
 
-    function initialize(address _busdAddress) public initializer {
+    function initialize() public initializer {
         __Ownable_init();
-
-        busdToken = IERC20Upgradeable(_busdAddress);
 
         // Default grant the admin role to a specified account
         admins[owner()] = true;
@@ -123,8 +122,7 @@ contract NFTAuctionContract is
         require(admins[_msgSender()] == true, "Caller is not an admin");
     }
 
-    function _checkPoolOpen(uint16 _poolId) private view {
-        POOL_INFO memory pool = pools[_poolId];
+    function _checkPoolOpen(POOL_INFO memory pool) private view {
         require(
             pool.ended == false &&
                 block.timestamp >= pool.startTime &&
@@ -135,7 +133,7 @@ contract NFTAuctionContract is
     }
 
     /**
-     * @dev function to place bid, // uint256 _nonce
+     * @dev function to place bid
      */
     function placeBid(
         uint16 _poolId,
@@ -145,11 +143,14 @@ contract NFTAuctionContract is
         POOL_INFO memory pool = pools[_poolId];
 
         // require pool is open
-        _checkPoolOpen(_poolId);
+        _checkPoolOpen(pool);
 
         if (pool.requireWhitelist) {
             require(
-                whitelistAddresses[_poolId][_msgSender()],
+                IWhitelist(WHITELIST_ADDRESS).isValid(
+                    _msgSender(),
+                    pool.whitelistIds
+                ),
                 "Caller is not in whitelist"
             );
         }
@@ -167,10 +168,12 @@ contract NFTAuctionContract is
             "Required valid limit/quantity/price/balance"
         ); // Not allow quantity = 0, valid price
 
+        IERC20Upgradeable payableToken = IERC20Upgradeable(pool.addressPayable);
+
         // transfer BUSD
-        busdToken.safeTransferFrom(_msgSender(), address(this), totalAmount);
+        payableToken.safeTransferFrom(_msgSender(), address(this), totalAmount);
         // transfer BUSD to WITHDRAW_ADDRESS
-        busdToken.safeTransfer(WITHDRAW_ADDRESS, totalAmount);
+        payableToken.safeTransfer(WITHDRAW_ADDRESS, totalAmount);
 
         BID_INFO memory bidding = BID_INFO({
             creator: _msgSender(),
@@ -206,7 +209,7 @@ contract NFTAuctionContract is
         uint256 _priceEach
     ) external nonReentrant {
         // require pool is open
-        _checkPoolOpen(_poolId);
+        _checkPoolOpen(pools[_poolId]);
         BID_INFO storage bid = bids[_poolId][_bidIndex];
 
         require(
@@ -221,10 +224,14 @@ contract NFTAuctionContract is
         uint256 oldAmountBusd = bid.quantity * bid.priceEach;
         uint256 amountAdded = newAmountBusd.sub(oldAmountBusd);
 
+        IERC20Upgradeable payableToken = IERC20Upgradeable(
+            pools[_poolId].addressPayable
+        );
+
         // transfer BUSD
-        busdToken.safeTransferFrom(_msgSender(), address(this), amountAdded);
+        payableToken.safeTransferFrom(_msgSender(), address(this), amountAdded);
         // transfer BUSD to WITHDRAW_ADDRESS
-        busdToken.safeTransfer(WITHDRAW_ADDRESS, amountAdded);
+        payableToken.safeTransfer(WITHDRAW_ADDRESS, amountAdded);
 
         bid.quantity = _quantity;
         bid.priceEach = _priceEach;
@@ -250,24 +257,26 @@ contract NFTAuctionContract is
         uint32[] calldata bidsIndex,
         uint32[] calldata quantityWin
     ) external onlyAdmin {
-        require(!pools[_poolId].ended, "Pool ended");
-
-        pools[_poolId].ended = true;
-
-        uint256 sum;
-
+        /* uint256 sum;
         for (uint32 i = 0; i < quantityWin.length; i++) {
             sum = sum + quantityWin[i];
         }
-        require(poolSaleTokenIds[_poolId].length >= sum, "Wrong quantity");
+        require(poolSaleTokenIds[_poolId].length >= sum, "Wrong quantity"); */
 
+        uint256 sum;
         for (uint32 i = 0; i < bidsIndex.length; i++) {
             require(
                 bids[_poolId][bidsIndex[i]].quantity >= quantityWin[i],
                 "Wrong quantity Bid"
             );
             bids[_poolId][bidsIndex[i]].winQuantity = quantityWin[i];
+            sum = sum + quantityWin[i];
         }
+        require(
+            poolSaleTokenIds[_poolId].length >= sum && !pools[_poolId].ended,
+            "Wrong quantity / Pool ended"
+        );
+        pools[_poolId].ended = true;
     }
 
     /**
@@ -317,11 +326,13 @@ contract NFTAuctionContract is
             }
         }
 
+        IERC20Upgradeable payableToken = IERC20Upgradeable(pool.addressPayable);
+
         if (totalRemainBusd > 0) {
-            busdToken.safeTransfer(_msgSender(), totalRemainBusd);
+            payableToken.safeTransfer(_msgSender(), totalRemainBusd);
         }
         if (totalSoldAmount > 0) {
-            busdToken.safeTransfer(WITHDRAW_ADDRESS, totalSoldAmount);
+            payableToken.safeTransfer(WITHDRAW_ADDRESS, totalSoldAmount);
         }
         poolStats[_poolId].totalSoldAmount += totalSoldAmount;
 
@@ -346,23 +357,17 @@ contract NFTAuctionContract is
     }
 
     /**
-     * @dev function to set Admin
+     * @dev function to set Withdraw Address
      */
     function setWithdrawAddress(address _addr) public onlyOwner {
         WITHDRAW_ADDRESS = _addr;
     }
 
     /**
-     * @dev function to set white list address
+     * @dev function to set Whitelist Address Contract
      */
-    function setWhitelist(
-        uint16 _poolId,
-        address[] memory _addresses,
-        bool _allow
-    ) public onlyAdmin {
-        for (uint256 i = 0; i < _addresses.length; i++) {
-            whitelistAddresses[_poolId][_addresses[i]] = _allow;
-        }
+    function setWhitelistAddress(address _addr) public onlyOwner {
+        WHITELIST_ADDRESS = _addr;
     }
 
     /**
@@ -374,9 +379,9 @@ contract NFTAuctionContract is
         uint256[] memory _tokenIds
     ) external onlyOwner {
         if (_amount > 0) {
-            busdToken = IERC20Upgradeable(_address);
+            IERC20Upgradeable payableToken = IERC20Upgradeable(_address);
 
-            busdToken.safeTransfer(WITHDRAW_ADDRESS, _amount);
+            payableToken.safeTransfer(WITHDRAW_ADDRESS, _amount);
         } else {
             IERC721Upgradeable nft = IERC721Upgradeable(_address);
 
@@ -397,14 +402,16 @@ contract NFTAuctionContract is
     function addOrUpdatePool(
         uint16 _poolId,
         address _addressItem,
+        address _addressPayable,
         uint256 _startTime,
         uint256 _endTime,
         uint256 _startPrice,
         bool _requireWhitelist,
+        uint16[] calldata _whitelistIds,
         uint256 _maxBuyPerAddress
     ) external onlyAdmin {
         POOL_INFO storage pool = pools[_poolId]; // pool info
-        require(_startPrice > 0 && !pool.isPublic, "Pool is public");
+        require(_startPrice > 0 && !pool.isPublic, "Invalid / Pool is public");
 
         // Not exist then add pool
         if (pool.startPrice == 0) {
@@ -413,11 +420,13 @@ contract NFTAuctionContract is
 
         // do update
         pool.addressItem = _addressItem;
+        pool.addressPayable = _addressPayable;
         pool.startTime = _startTime;
         pool.endTime = _endTime;
         pool.startPrice = _startPrice;
         pool.requireWhitelist = _requireWhitelist;
         pool.maxBuyPerAddress = _maxBuyPerAddress;
+        pool.whitelistIds = _whitelistIds;
     }
 
     function updateSalePool(uint16 _poolId, uint256[] memory _saleTokenIds)
@@ -469,5 +478,13 @@ contract NFTAuctionContract is
 
     function getPoolIds() external view returns (uint16[] memory) {
         return poolIds;
+    }
+
+    function getWhitelistIds(uint16 _poolId)
+        external
+        view
+        returns (uint16[] memory)
+    {
+        return pools[_poolId].whitelistIds;
     }
 }

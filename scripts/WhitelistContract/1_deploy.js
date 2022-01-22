@@ -1,5 +1,5 @@
 const { ethers, upgrades, hardhatArguments } = require('hardhat');
-const { addresses: whitelistAddresses } = require('../WhitelistContract/proxyAddresses');
+const { addresses: busdAddresses } = require('../BUSDAddresses');
 const { pe,fe,fu,pu } = require('../../utils');
 
 async function main() {
@@ -9,13 +9,10 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const NFTFixedSwapContract = await ethers.getContractFactory("NFTFixedSwapContract");
+  const WhitelistContract = await ethers.getContractFactory("WhitelistContract");
 
-  const contractDeploy = await upgrades.deployProxy(NFTFixedSwapContract, [], { kind: 'uups' });
+  const contractDeploy = await upgrades.deployProxy(WhitelistContract, [], { kind: 'uups' });
   console.log("Contract address:", contractDeploy.address);
-
-  console.log("Set Whitelist Address",whitelistAddresses[network]);
-  await contractDeploy.setWhitelistAddress(whitelistAddresses[network]);
 
   const afterDeploy = fe(await deployer.getBalance());
   console.log("Cost deploy:", (beforeDeploy-afterDeploy));

@@ -1,5 +1,5 @@
 const { ethers, upgrades, hardhatArguments } = require('hardhat');
-const { addresses: busdAddresses } = require('../BUSDAddresses');
+const { addresses: whitelistAddresses } = require('../WhitelistContract/proxyAddresses');
 const { pe,fe,fu,pu } = require('../../utils');
 
 async function main() {
@@ -11,15 +11,11 @@ async function main() {
 
   const RadaFixedSwapContract = await ethers.getContractFactory("RadaFixedSwapContract");
 
-  const contractDeploy = await upgrades.deployProxy(RadaFixedSwapContract, [busdAddresses[network]], { kind: 'uups' });
+  const contractDeploy = await upgrades.deployProxy(RadaFixedSwapContract, [], { kind: 'uups' });
   console.log("Contract address:", contractDeploy.address);
 
-  /* await contractDeploy.deployed();
-  const txHash = contractDeploy.deployTransaction.hash;
-  console.log(`Tx hash: ${txHash}\nWaiting for transaction to be mined...`);
-  const txReceipt = await ethers.provider.waitForTransaction(txHash);
-
-  console.log("Contract address:", txReceipt.contractAddress); */
+  console.log("Set Whitelist Address",whitelistAddresses[network]);
+  await contractDeploy.setWhitelistAddress(whitelistAddresses[network]);
 
   const afterDeploy = fe(await deployer.getBalance());
   console.log("Cost deploy:", (beforeDeploy-afterDeploy));
