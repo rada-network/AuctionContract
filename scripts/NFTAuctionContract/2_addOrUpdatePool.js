@@ -1,6 +1,7 @@
 const { ethers, upgrades, hardhatArguments } = require('hardhat');
 const { addresses: contractAddresses } = require('./proxyAddresses');
 const { addresses: nftAddresses } = require('../RadaNftAddresses');
+const { addresses: bUsdAddresses } = require('../BUSDAddresses');
 
 const { pe,fe,fu,pu, sleep } = require('../../utils');
 
@@ -10,6 +11,7 @@ async function main() {
   const network = hardhatArguments.network;
   const contractAddress = contractAddresses[network];
   const nftAddress = nftAddresses[network];
+  const bUsdAddress = bUsdAddresses[network];
 
   console.log("With the account:", deployer.address);
   console.log("With NFTAuctionContract address:", contractAddress);
@@ -18,7 +20,7 @@ async function main() {
   const instanceContract = await ethers.getContractAt("NFTAuctionContract",contractAddress);
 
   // TODO: Fill your poolId
-  const poolId = 10; // 2
+  const poolId = 21; // 2
   const startPrice = pe("150");
   const addressItem = nftAddress; // Address of NFT or Token
 
@@ -26,11 +28,12 @@ async function main() {
   const endTime = 1672379856; // Friday, December 30, 2022 12:57:36 PM GMT+07:00
   const maxBuyPerAddress = 10;
   const requireWhitelist = false;
+  const whitelistIds = [];
 
   await instanceContract.handlePublicPool(poolId, false);
   console.log("Pool changed status: false");
   await sleep(5000);
-  await instanceContract.addOrUpdatePool(poolId, addressItem, startTime, endTime, startPrice, requireWhitelist, maxBuyPerAddress);
+  await instanceContract.addOrUpdatePool(poolId, addressItem, bUsdAddress, startTime, endTime, startPrice, requireWhitelist, whitelistIds, maxBuyPerAddress);
   console.log("addOrUpdatePool "+poolId+" success");
   await instanceContract.handlePublicPool(poolId, true);
   console.log("Pool changed status: true");

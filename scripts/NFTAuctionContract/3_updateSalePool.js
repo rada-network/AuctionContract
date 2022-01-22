@@ -16,10 +16,10 @@ async function main() {
   const instanceContract = await ethers.getContractAt("NFTAuctionContract",contractAddress);
 
   // TODO: Fill your poolId
-  const poolId = 10; // 2
+  const poolId = 21; // 2
 
-  const tokenIdStart = 180000;
-  const tokenIdEnd = 180049;
+  const tokenIdStart = 2100;
+  const tokenIdEnd = 2199;
   let saleTokenIds = [];
   for (let i=tokenIdStart;i<=tokenIdEnd;i++) {
     saleTokenIds.push(i);

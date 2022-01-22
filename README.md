@@ -24,6 +24,18 @@ npx hardhat run scripts/CheckValidPool/NFT_FixedSwap.js --network polygonMumbai
 
 ```
 
+## Step by step Deploy Whitelist Contract to polygonMumbai / mainnet
+
+```shell
+npx hardhat run scripts/WhitelistContract/1_deploy.js --network polygonMumbai
+npx hardhat run scripts/WhitelistContract/2_addList.js --network polygonMumbai
+npx hardhat run scripts/WhitelistContract/3_updateList.js --network polygonMumbai
+# npx hardhat run scripts/WhitelistContract/upgradeContract_v2.js --network polygonMumbai
+
+# npx hardhat run scripts/WhitelistContract/getImplementationAddress.js --network polygonMumbai
+# npx hardhat verify --network polygonMumbai DDDDDDDDD
+```
+
 ## Step by step Deploy NFT SALE to polygonMumbai / mainnet
 
 ```shell
@@ -62,7 +74,7 @@ npx hardhat run scripts/RadaFixedSwapContract/1_deploy.js --network polygonMumba
 # Copy Contract address to proxyAddresses.js
 
 # TODO: Require setMinterFactories for NFTMan at NFT Contract
-# REMEMBER: owner need update WITHDRAW_ADDRESS at 2 contracts
+# REMEMBER: owner need update WITHDRAW_ADDRESS at 2 contracts, default is deployer
 
 npx hardhat run scripts/RadaFixedSwapContract/setAdmin.js --network polygonMumbai
 npx hardhat run scripts/RadaAuctionContract/setAdmin.js --network polygonMumbai

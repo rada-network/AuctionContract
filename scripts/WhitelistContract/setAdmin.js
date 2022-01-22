@@ -1,34 +1,31 @@
-const { ethers, hardhatArguments } = require('hardhat');
+const { ethers, upgrades, hardhatArguments } = require('hardhat');
 const { addresses: contractAddresses } = require('./proxyAddresses');
-
 const { pe,fe,fu,pu } = require('../../utils');
 
 async function main() {
-
   const [deployer] = await ethers.getSigners();
 
   const network = hardhatArguments.network;
   const contractAddress = contractAddresses[network];
 
   console.log("With the account:", deployer.address);
-  console.log("With RandomizeByRarity address:", contractAddress);
+  console.log("With WhitelistContract address:", contractAddress);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const RandomizeByRarity = await ethers.getContractAt("RandomizeByRarity",contractAddress);
+  const instanceContract = await ethers.getContractAt("WhitelistContract",contractAddress);
 
-  // Create first campaign
-  // TODO: Fill your poolId
-  const poolId = 19; // 2 Auction Token
+  // TODO: add real whitelist
+  const admins = [
+    "0xAE51701F3eB7b897eB6EE5ecdf35c4fEE29BFAe6",
+    "0xA8f68bB8d525f5874df9202c63C1f02eeC3dFE1f",
+    "0x0c1954CEB2227e3C5E6155B40fd929C1fF64F5f5",
+    "0xE8AE51B507CeB672712E99588a8b3Aa991A05420",
+  ];
 
-  const title = "LaunchVerse New Year";
-  // const rarity = [1000,10,10,3,3,3,2,2,2,1,1,1];
-  const rarity = [21,21,20,9,8,8,4,3,3,1,1,1];
-  const rarityIds = [1,2,3,4,5,6,7,8,9,10,11,12];
-
-  await RandomizeByRarity.addPool(poolId, title, rarity, rarityIds);
-
-
-  console.log("addPool # "+poolId+" success");
+  for (var i=0;i<admins.length;i++) {
+    await instanceContract.setAdmin(admins[i],true);
+    console.log("setAdmin " + admins[i]);
+  }
 
   const afterDeploy = fe(await deployer.getBalance());
   console.log("Cost spent:", (beforeDeploy-afterDeploy));

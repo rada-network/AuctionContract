@@ -21,9 +21,9 @@ async function main() {
   /* const poolId = 15; // 15 auction, 16 fixed
   var startId = 1000;
   var endId = 1999; */
-  const poolId = 17; // 15 auction, 16 fixed
-  var startId = 1000;
-  var endId = 1099;
+  const poolId = 19; // 15 auction, 16 fixed
+  var startId = 1200;
+  var endId = 1299;
 
   const startTime = 1640451600; // Sunday, December 26, 2021 12:00:00 AM GMT+07:00
   const nftAddress = nftAddresses[network];
