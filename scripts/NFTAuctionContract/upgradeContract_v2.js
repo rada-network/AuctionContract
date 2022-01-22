@@ -1,7 +1,7 @@
 const { ethers, upgrades, hardhatArguments } = require('hardhat');
 const { addresses } = require('./proxyAddresses');
 
-const contractName = "RadaAuctionContract";
+const contractName = "NFTAuctionContract";
 
 async function main() {
   const [deployer] = await ethers.getSigners();

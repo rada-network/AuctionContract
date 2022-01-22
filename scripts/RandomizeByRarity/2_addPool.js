@@ -18,7 +18,7 @@ async function main() {
 
   // Create first campaign
   // TODO: Fill your poolId
-  const poolId = 17; // 2 Auction Token
+  const poolId = 19; // 2 Auction Token
 
   const title = "LaunchVerse New Year";
   // const rarity = [1000,10,10,3,3,3,2,2,2,1,1,1];

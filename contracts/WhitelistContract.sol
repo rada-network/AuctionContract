@@ -120,4 +120,8 @@ contract WhitelistContract is
     function getCountList() external view returns (uint256) {
         return listIds.length;
     }
+
+    function getList() external view returns (uint16[] memory) {
+        return listIds;
+    }
 }

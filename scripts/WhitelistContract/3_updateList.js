@@ -22,6 +22,7 @@ async function main() {
     "0xA8f68bB8d525f5874df9202c63C1f02eeC3dFE1f",
     "0x0c1954CEB2227e3C5E6155B40fd929C1fF64F5f5",
     "0xE8AE51B507CeB672712E99588a8b3Aa991A05420",
+    "0xC0129E7E233d6D9D4f2717Ba3e1837A4FE6C03af",
   ];
   const allow = true;
   await instanceContract.updateList(listId, title, whitelist, allow);

@@ -30,6 +30,8 @@ npx hardhat run scripts/CheckValidPool/NFT_FixedSwap.js --network polygonMumbai
 npx hardhat run scripts/WhitelistContract/1_deploy.js --network polygonMumbai
 npx hardhat run scripts/WhitelistContract/2_addList.js --network polygonMumbai
 npx hardhat run scripts/WhitelistContract/3_updateList.js --network polygonMumbai
+# npx hardhat run scripts/WhitelistContract/upgradeContract_v2.js --network polygonMumbai
+
 # npx hardhat run scripts/WhitelistContract/getImplementationAddress.js --network polygonMumbai
 # npx hardhat verify --network polygonMumbai DDDDDDDDD
 ```

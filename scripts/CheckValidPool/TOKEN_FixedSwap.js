@@ -19,7 +19,7 @@ async function main() {
   console.log("With the account:", deployer.address);
 
   // TODO: Change your poolId
-  const poolId = 17;
+  const poolId = 18;
   const fixedSwapContract = await ethers.getContractAt("RadaFixedSwapContract", fixedSwapAddress);
   const nftManContract = await ethers.getContractAt("NFTManContract", nftManAddress);
   const randomizeContract = await ethers.getContractAt("RandomizeByRarity", randomizeAddress);
