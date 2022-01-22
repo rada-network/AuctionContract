@@ -12,16 +12,16 @@ describe('IDOClaimContract', function () {
 
     let boxTokenAddress
     let tokenAddress
-    let tokenPrice = '0.05'
-    let tokenAllocationBusd = '3700'
+    let tokenPrice = '0.1'
+    let tokenAllocationBusd = '4000'
     let nftAddress
     let buyerUser1, buyerUser2, buyerUser3, user
-    let totalClaimedToken = '10000'
+    let totalClaimedToken = '40000'
 
     let ntfArray1 = [
         //20001: nftId, 1: rarityId, 500: rarityAllocationsBusd
         [20001, '1', '500'],
-        [20002, '2', '300'],
+        [20002, '2', '200'],
         [20003, '3', '100'],
     ]
 
@@ -29,14 +29,14 @@ describe('IDOClaimContract', function () {
         //20004: nftId, 4: rarityId, 1000: rarityAllocationsBusd
         [20004, '4', '1000'],
         [20005, '5', '200'],
-        [20006, '6', '100'],
+        [20006, '6', '200'],
     ]
 
     let ntfArray3 = [
         //20007: nftId, 7: rarityId, 800: rarityAllocationsBusd
         [20007, '7', '800'],
         [20008, '8', '600'],
-        [20009, '9', '100'],
+        [20009, '9', '400'],
     ]
 
     const startId = 20001
@@ -81,7 +81,7 @@ describe('IDOClaimContract', function () {
 
         // IDOClaim
         const IDOClaimContract = await ethers.getContractFactory(
-            'IDOClaimContract'
+            'NFTClaimContract'
         )
         contractIDOClaim = await upgrades.deployProxy(IDOClaimContract, [
             contractNFTMan.address,
@@ -357,12 +357,54 @@ describe('IDOClaimContract', function () {
         await expect(contractIDOClaim.connect(user).claim(poolId, [20001])).to
             .be.reverted
 
-        // NFT 1
-        await testMint(buyerUser1, ntfArray1)
-        // NFT 2
-        await testMint(buyerUser2, ntfArray2)
+        // revert - no vesting plan
+        await expect(contractIDOClaim.connect(buyerUser1).claim(poolId, ntfArray1)).to.be.reverted
+
+        // add vesting plan
+        const times = [];
+        times.push(Math.floor(Date.now() / 1000) - 86400); // Now - 1 day
+        times.push(Math.floor(Date.now() / 1000) - 86400 + 86400*30); // Next month
+        times.push(Math.floor(Date.now() / 1000) - 86400 + 86400*60); // Next month
+        times.push(Math.floor(Date.now() / 1000) - 86400 + 86400*90); // Next month
+
+        const volumes = [25000, 25000, 25000, 25000];
+        await contractIDOClaim.connect(adminUser).updateVestingPlan(poolId, times, volumes);
+
+        let balance1, balance2;
+        // NFT 1, first vesting 25% 8000 => 2000
+        balance1 = await contractToken.balanceOf(buyerUser1.address)
+        await contractIDOClaim.connect(buyerUser1).claim(poolId, ntfArray1.map(el => el[0]));
+        balance2 = await contractToken.balanceOf(buyerUser1.address)
+        expect (fe(balance2.sub(balance1))).to.equal("2000.0");
+
+        // NFT 2, first vesting 25% 14000 => 3500
+        balance1 = await contractToken.balanceOf(buyerUser2.address)
+        await contractIDOClaim.connect(buyerUser2).claim(poolId, ntfArray2.map(el => el[0]));
+        balance2 = await contractToken.balanceOf(buyerUser2.address)
+        expect (fe(balance2.sub(balance1))).to.equal("3500.0");
+
+        // move time next vesting
+        await ethers.provider.send("evm_increaseTime", [86400*30]);
+        await ethers.provider.send("evm_mine", []) // force mine the next block
+
+        // NFT 1, next vesting 25% 8000 => 2000
+        balance1 = await contractToken.balanceOf(buyerUser1.address)
+        await contractIDOClaim.connect(buyerUser1).claim(poolId, ntfArray1.map(el => el[0]));
+        balance2 = await contractToken.balanceOf(buyerUser1.address)
+        expect (fe(balance2.sub(balance1))).to.equal("2000.0");
+
+        // NFT 3, 2 vesting 50% 18000 => 9000
+        balance1 = await contractToken.balanceOf(buyerUser3.address)
+        await contractIDOClaim.connect(buyerUser3).claim(poolId, ntfArray3.map(el => el[0]));
+        balance2 = await contractToken.balanceOf(buyerUser3.address)
+        expect (fe(balance2.sub(balance1))).to.equal("9000.0");
+
+        // // NFT 1
+        // await testMint(buyerUser1, ntfArray1)
+        // // NFT 2
+        // await testMint(buyerUser2, ntfArray2)
 
         // NFT 3
-        ntfArray3.forEach(async (el) => await testMint(buyerUser3, [el]))
+        // ntfArray3.forEach(async (el) => await testMint(buyerUser3, [el]))
     })
 })
