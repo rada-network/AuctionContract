@@ -24,7 +24,7 @@ npx hardhat run scripts/CheckValidPool/NFT_FixedSwap.js --network polygonMumbai
 
 ```
 
-## Step by step Deploy Whitelist Contract to polygonMumbai / mainnet
+## Deploy Whitelist Contract to polygonMumbai / mainnet
 
 ```shell
 npx hardhat run scripts/WhitelistContract/1_deploy.js --network polygonMumbai
@@ -32,11 +32,10 @@ npx hardhat run scripts/WhitelistContract/2_addList.js --network polygonMumbai
 npx hardhat run scripts/WhitelistContract/3_updateList.js --network polygonMumbai
 # npx hardhat run scripts/WhitelistContract/upgradeContract_v2.js --network polygonMumbai
 
-# npx hardhat run scripts/WhitelistContract/getImplementationAddress.js --network polygonMumbai
-# npx hardhat verify --network polygonMumbai DDDDDDDDD
+# npx hardhat run scripts/WhitelistContract/verify.js --network polygonMumbai
 ```
 
-## Step by step Deploy NFT SALE to polygonMumbai / mainnet
+## Deploy NFT SALE to polygonMumbai / mainnet
 
 ```shell
 npx hardhat run scripts/NFTAuctionContract/1_deploy.js --network polygonMumbai
@@ -57,13 +56,20 @@ npx hardhat run scripts/NFTAuctionContract/3_updateSalePool.js --network polygon
 npx hardhat run scripts/NFTFixedSwapContract/2_addOrUpdatePool.js --network polygonMumbai
 npx hardhat run scripts/NFTFixedSwapContract/3_updateSalePool.js --network polygonMumbai
 
-# npx hardhat run scripts/NFTAuctionContract/getImplementationAddress.js --network polygonMumbai
-# npx hardhat run scripts/NFTFixedSwapContract/getImplementationAddress.js --network polygonMumbai
-# npx hardhat verify --network polygonMumbai DDDDDDDDD
+# npx hardhat run scripts/NFTAuctionContract/verify.js --network polygonMumbai
+# npx hardhat run scripts/NFTFixedSwapContract/verify.js --network polygonMumbai
 
 ```
 
-## Step by step Deploy Token SALE to polygonMumbai / mainnet
+## Deploy NFTClaim Contract to polygonMumbai / mainnet
+
+```shell
+npx hardhat run scripts/NFTClaimContract/deploy.js --network polygonMumbai
+# npx hardhat run scripts/NFTClaimContract/upgrade.js --network polygonMumbai
+
+```
+
+## Deploy Token SALE to polygonMumbai / mainnet
 
 ```shell
 npx hardhat run scripts/NFTManContract/1_deploy.js --network polygonMumbai
@@ -88,9 +94,8 @@ npx hardhat run scripts/RadaFixedSwapContract/TOKEN_2_addOrUpdatePool.js --netwo
 
 # npx hardhat run scripts/RadaAuctionContract/4_handleEndAuction.js --network polygonMumbai
 
-# npx hardhat run scripts/RadaFixedSwapContract/getImplementationAddress.js --network polygonMumbai
-# npx hardhat run scripts/RadaAuctionContract/getImplementationAddress.js --network polygonMumbai
-# npx hardhat verify --network polygonMumbai ADDRESS_IMPLEMENT
+# npx hardhat run scripts/RadaFixedSwapContract/verify.js --network polygonMumbai
+# npx hardhat run scripts/RadaAuctionContract/verify.js --network polygonMumbai
 ```
 
 ## NFTMan to polygonMumbai / mainnet
@@ -104,8 +109,7 @@ npx hardhat run scripts/NFTManContract/TOKEN_2_addOrUpdatePool.js --network poly
 npx hardhat run scripts/NFTManContract/setAdmin.js --network polygonMumbai
 npx hardhat run scripts/NFTManContract/upgradeContract_v2.js --network polygonMumbai
 
-npx hardhat run scripts/NFTManContract/getImplementationAddress.js --network polygonMumbai
-npx hardhat verify --network polygonMumbai DDDDDDDDD
+# npx hardhat run scripts/NFTManContract/verify.js --network polygonMumbai
 ```
 
 ## RandomizeByRarity to polygonMumbai / polygon

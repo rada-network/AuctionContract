@@ -7,18 +7,24 @@ async function main() {
   const [deployer] = await ethers.getSigners();
   const network = hardhatArguments.network;
 
+  const contractName = "NFTAuctionContract";
+
   console.log("Deploying contracts with the account:", deployer.address);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const NFTAuctionContract = await ethers.getContractFactory("NFTAuctionContract");
+  const contractFactory = await ethers.getContractFactory(contractName);
 
   // Deploy
-  const contractDeploy = await upgrades.deployProxy(NFTAuctionContract, [], { kind: 'uups' });
-  console.log("Contract address:", contractDeploy.address);
+  const contractDeploy = await upgrades.deployProxy(contractFactory, [], { kind: 'uups' });
+  await contractDeploy.deployed();
+  const proxyAddress = contractDeploy.address;
+
+  console.log(contractName, "Contract deployed to:", proxyAddress);
 
   console.log("Set Whitelist Address",whitelistAddresses[network]);
   await contractDeploy.setWhitelistAddress(whitelistAddresses[network]);
 
+  
 
   const afterDeploy = fe(await deployer.getBalance());
   console.log("Cost deploy:", (beforeDeploy-afterDeploy));

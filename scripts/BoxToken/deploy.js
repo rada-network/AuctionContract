@@ -1,3 +1,6 @@
+const { updateDeployedAddress } = require('./../../utils/proxyAddress')
+const contractName = "BoxToken";
+
 async function main() {
   const [deployer] = await ethers.getSigners();
 
@@ -5,17 +8,22 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const BoxToken = await ethers.getContractFactory("BoxToken");
+  const contractFactory = await ethers.getContractFactory(contractName);
   // Deploy 100k token
-  const contractDeploy = await BoxToken.deploy();
-
+  const contractDeploy = await contractFactory.deploy();
 
   await contractDeploy.deployed();
   const txHash = contractDeploy.deployTransaction.hash;
   console.log(`Tx hash: ${txHash}\nWaiting for transaction to be mined...`);
   const txReceipt = await ethers.provider.waitForTransaction(txHash);
+  const contractAddress = txReceipt.contractAddress
+  console.log("Contract deployed to:", contractAddress);
 
-  console.log("Contract address:", txReceipt.contractAddress);
+  await hre.run("verify:verify", {
+    address: contractAddress,
+    constructorArguments: [],
+  });
+
 }
 
 main()

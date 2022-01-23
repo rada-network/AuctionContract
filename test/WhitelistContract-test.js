@@ -14,7 +14,7 @@ describe("Whitelist Contract", function () {
 
   beforeEach(async function () {
 
-    [owner, approvalUser, adminUser, invalidUser, user1, user2, user3, user4, user5, user6, ...addrs] = await ethers.getSigners();
+    [owner, approvalUser, adminUser, invalidUser, user1, user2, user3, user4, user5, user6, user7, ...addrs] = await ethers.getSigners();
 
     // Get the ContractFactory
     const WhitelistContract = await ethers.getContractFactory("WhitelistContract");
@@ -70,6 +70,7 @@ describe("Whitelist Contract", function () {
     const title = "CoinCu 2";
     const whitelist = [
       user5.address,
+      user7.address,
     ];
     const allow = false;
     // Add list
@@ -78,5 +79,7 @@ describe("Whitelist Contract", function () {
     expect(await contractWhitelist.isValid(user4.address, [0,1])).to.equal(true);
     expect(await contractWhitelist.isValid(user5.address, [0,1])).to.equal(false);
 
+    const listAddress = await contractWhitelist.getListAddress(listId);
+    expect(listAddress.length).to.equal(4);
   });
 });

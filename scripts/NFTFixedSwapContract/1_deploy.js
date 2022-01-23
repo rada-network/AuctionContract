@@ -5,14 +5,18 @@ const { pe,fe,fu,pu } = require('../../utils');
 async function main() {
   const [deployer] = await ethers.getSigners();
   const network = hardhatArguments.network;
+  const contractName = "NFTFixedSwapContract";
 
   console.log("Deploying contracts with the account:", deployer.address);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const NFTFixedSwapContract = await ethers.getContractFactory("NFTFixedSwapContract");
+  const contractFactory = await ethers.getContractFactory(contractName);
 
-  const contractDeploy = await upgrades.deployProxy(NFTFixedSwapContract, [], { kind: 'uups' });
-  console.log("Contract address:", contractDeploy.address);
+  const contractDeploy = await upgrades.deployProxy(contractFactory, [], { kind: 'uups' });
+  await contractDeploy.deployed();
+  const proxyAddress = contractDeploy.address;
+
+  console.log(contractName, "Contract deployed to:", proxyAddress);
 
   console.log("Set Whitelist Address",whitelistAddresses[network]);
   await contractDeploy.setWhitelistAddress(whitelistAddresses[network]);

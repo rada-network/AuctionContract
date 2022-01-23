@@ -5,23 +5,19 @@ const { pe,fe,fu,pu } = require('../../utils');
 async function main() {
   const [deployer] = await ethers.getSigners();
   const network = hardhatArguments.network;
+  const contractName = "NFTManContract";
 
   console.log("Deploying contracts with the account:", deployer.address);
   const beforeDeploy = fe(await deployer.getBalance());
 
-  const NFTManContract = await ethers.getContractFactory("NFTManContract");
+  const contractFactory = await ethers.getContractFactory(contractName);
 
-  const contractDeploy = await upgrades.deployProxy(NFTManContract, { kind: 'uups' });
-  // const contractDeploy = await upgrades.deployProxy(NFTManContract, [], { initializer: 'initialize' });
-
+  const contractDeploy = await upgrades.deployProxy(contractFactory, { kind: 'uups' });
   await contractDeploy.deployed();
-  console.log('Contract deployed to:', contractDeploy.address);
+  const proxyAddress = contractDeploy.address;
+  
+  console.log(contractName, 'Contract deployed to:', proxyAddress);
 
-  /* await contractDeploy.deployed();
-  const txHash = contractDeploy.deployTransaction.hash;
-  console.log(`Tx hash: ${txHash}\nWaiting for transaction to be mined...`);
-  const txReceipt = await ethers.provider.waitForTransaction(txHash);
-  console.log("Contract address:", txReceipt.contractAddress); */
 
   const afterDeploy = fe(await deployer.getBalance());
   console.log("Cost deploy:", (beforeDeploy-afterDeploy));

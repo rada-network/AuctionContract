@@ -14,7 +14,7 @@ async function main() {
   console.log(`Tx hash: ${txHash}\nWaiting for transaction to be mined...`);
   const txReceipt = await ethers.provider.waitForTransaction(txHash);
 
-  console.log("Contract address:", txReceipt.contractAddress);
+  console.log("Contract deployed to:", txReceipt.contractAddress);
 
   // console.log("BUSD Token address:", contractDeploy.address);
 }
