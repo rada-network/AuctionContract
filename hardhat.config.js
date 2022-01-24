@@ -103,11 +103,11 @@ module.exports = {
     gasPrice: 21,
     coinmarketcap: "8a859b7f-a9d8-40fe-8d22-5f1c8525ed69"
   },
-  contractSizer: {
+  /* contractSizer: {
     alphaSort: true,
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
     only: ['RadaAuctionContract','RadaFixedSwapContract', 'NFTManContract', 'RandomizeByRarity', 'IDOClaimContract', 'NFTFixedSwapContract', 'NFTAuctionContract','WhitelistContract'],
-  }
+  } */
 };

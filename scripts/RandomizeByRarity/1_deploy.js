@@ -25,11 +25,13 @@ async function main() {
   const txHash = contractDeploy.deployTransaction.hash;
   console.log(`Tx hash: ${txHash}\nWaiting for transaction to be mined...`);
   const txReceipt = await ethers.provider.waitForTransaction(txHash);
-  const contractAddress = contractDeploy.address;
+  console.log(contractName, "Contract deployed to:", txReceipt.contractAddress);
 
-  console.log(contractName, "Contract deployed to:", contractAddress);
-
-  // console.log("RandomizeByRarity address: find at website");
+  const implementedAddress = await upgrades.erc1967.getImplementationAddress(txReceipt.contractAddress);
+  await hre.run("verify:verify", {
+    address: implementedAddress,
+    constructorArguments: [linkToken, vrfCoordinator, keyHash, pe(fee)],
+  });
 }
 
 main()
