@@ -4,7 +4,7 @@
 
 ```shell
 npx hardhat run scripts/BoxToken/deploy.js --network polygonMumbai
-# Copy Token address to tokenAddresses.js
+# Copy Token address to ../BoxTokenAddresses.js
 ```
 
 ## RandomizeByRarity
