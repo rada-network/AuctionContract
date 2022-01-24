@@ -4,6 +4,7 @@ const { pe,fe,fu,pu } = require('../../utils');
 
 async function main() {
   const [deployer] = await ethers.getSigners();
+  const contractName = "RandomizeByRarity";
 
   const network = hardhatArguments.network;
   const linkToken = linkTokens[network];
@@ -16,7 +17,7 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const RandomizeByRarity = await ethers.getContractFactory("RandomizeByRarity");
+  const RandomizeByRarity = await ethers.getContractFactory(contractName);
 
   const contractDeploy = await RandomizeByRarity.deploy(linkToken, vrfCoordinator, keyHash, pe(fee));
 
@@ -24,7 +25,9 @@ async function main() {
   const txHash = contractDeploy.deployTransaction.hash;
   console.log(`Tx hash: ${txHash}\nWaiting for transaction to be mined...`);
   const txReceipt = await ethers.provider.waitForTransaction(txHash);
-  console.log("Contract address:", txReceipt.contractAddress);
+  const contractAddress = contractDeploy.address;
+
+  console.log(contractName, "Contract deployed to:", contractAddress);
 
   // console.log("RandomizeByRarity address: find at website");
 }

@@ -21,3 +21,5 @@ data
 ignore
 
 .deps
+
+.deployed.json

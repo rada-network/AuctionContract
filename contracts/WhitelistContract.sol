@@ -31,6 +31,7 @@ contract WhitelistContract is
     // Whitelist by list
     mapping(uint16 => mapping(address => bool)) public whitelistAddresses; // listId => address => true/false
     mapping(uint16 => string) public listTitle; // listId => title
+    mapping(uint16 => address[]) public listAddresses; // listId => address[]
 
     function initialize() public initializer {
         __Ownable_init();
@@ -98,6 +99,14 @@ contract WhitelistContract is
 
         for (uint256 i = 0; i < _addresses.length; i++) {
             whitelistAddresses[_listId][_addresses[i]] = _allow;
+
+            bool exist;
+            for (uint256 j = 0; j < listAddresses[_listId].length; j++) {
+                if (listAddresses[_listId][j] == _addresses[i]) exist = true;
+            }
+            if (!exist) {
+                listAddresses[_listId].push(_addresses[i]);
+            }
         }
     }
 
@@ -117,11 +126,20 @@ contract WhitelistContract is
         return admins[_address];
     }
 
-    function getCountList() external view returns (uint256) {
+    function getCountList() external view onlyAdmin returns (uint256) {
         return listIds.length;
     }
 
-    function getList() external view returns (uint16[] memory) {
+    function getList() external view onlyAdmin returns (uint16[] memory) {
         return listIds;
+    }
+
+    function getListAddress(uint16 _listId)
+        external
+        view
+        onlyAdmin
+        returns (address[] memory)
+    {
+        return listAddresses[_listId];
     }
 }

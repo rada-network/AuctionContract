@@ -6,10 +6,15 @@ async function main() {
   const network = hardhatArguments.network;
   const proxyAddress = addresses[network];
 
-  const address = await upgrades.erc1967.getImplementationAddress(proxyAddress);
+  const implementedAddress = await upgrades.erc1967.getImplementationAddress(proxyAddress);
 
   console.log("Proxy address is:", proxyAddress);
-  console.log("Implementation address is:", address);
+  console.log("Implementation address is:", implementedAddress);
+
+  await hre.run("verify:verify", {
+    address: implementedAddress,
+    constructorArguments: [],
+  });
 
 }
 
