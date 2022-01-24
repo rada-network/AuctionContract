@@ -3,7 +3,6 @@
 ## BoxToken
 
 ```shell
-# Deploy &  Verify
 npx hardhat run scripts/BoxToken/deploy.js --network polygonMumbai
 # Copy Token address to tokenAddresses.js
 ```
@@ -11,7 +10,6 @@ npx hardhat run scripts/BoxToken/deploy.js --network polygonMumbai
 ## RandomizeByRarity
 
 ```shell
-# Deploy &  Verify
 npx hardhat run scripts/RandomizeByRarity/1_deploy.js --network polygonMumbai
 # Copy Contract address to proxyAddresses.js
 # TODO: Remember send LINK+MATIC token to Contract
@@ -52,4 +50,6 @@ npx hardhat run scripts/RadaFixedSwapContract/verify.js --network polygonMumbai
 npx hardhat run scripts/RadaAuctionContract/verify.js --network polygonMumbai
 npx hardhat run scripts/NFTManContract/verify.js --network polygonMumbai
 npx hardhat run scripts/WhitelistContract/verify.js --network polygonMumbai
+npx hardhat run scripts/BoxToken/verify.js --network polygonMumbai
+
 ```

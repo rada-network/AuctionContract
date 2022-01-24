@@ -19,11 +19,6 @@ async function main() {
   const contractAddress = txReceipt.contractAddress
   console.log("Contract deployed to:", contractAddress);
 
-  await hre.run("verify:verify", {
-    address: contractAddress,
-    constructorArguments: [],
-  });
-
 }
 
 main()

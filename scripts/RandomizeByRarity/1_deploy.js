@@ -25,12 +25,12 @@ async function main() {
   const txHash = contractDeploy.deployTransaction.hash;
   console.log(`Tx hash: ${txHash}\nWaiting for transaction to be mined...`);
   const txReceipt = await ethers.provider.waitForTransaction(txHash);
-  console.log(contractName, "Contract deployed to:", txReceipt.contractAddress);
+  const contractAddress = txReceipt.contractAddress
+  console.log("Contract deployed to:", contractAddress);
 
-  await hre.run("verify:verify", {
-    address: txReceipt.contractAddress,
-    constructorArguments: [linkToken, vrfCoordinator, keyHash, pe(fee)],
-  });
+  // Try waiting for a minute before verifying your contract. If you are invoking this from a script,
+  // try to wait for five confirmations of your contract deployment transaction before running the verification subtask.
+
 }
 
 main()
