@@ -27,9 +27,8 @@ async function main() {
   const txReceipt = await ethers.provider.waitForTransaction(txHash);
   console.log(contractName, "Contract deployed to:", txReceipt.contractAddress);
 
-  const implementedAddress = await upgrades.erc1967.getImplementationAddress(txReceipt.contractAddress);
   await hre.run("verify:verify", {
-    address: implementedAddress,
+    address: txReceipt.contractAddress,
     constructorArguments: [linkToken, vrfCoordinator, keyHash, pe(fee)],
   });
 }
