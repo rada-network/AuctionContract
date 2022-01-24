@@ -396,4 +396,20 @@ contract NFTClaimContract is
     {
         return _busd.mul(1e18).div(pools[_poolId].tokenPrice);
     }
+
+        // uint16[] memory _rarityIds,
+        // uint256[] memory _rarityAllocationsBusd
+
+        // uint256[] memory _times,
+        // uint256[] memory _volumes
+    /** GETTER */
+    function getRarities (uint16 _poolId) external view returns (uint16[] memory _rarityIds, uint256[] memory _rarityAllocationsBusd) {
+        _rarityIds = rarityAllocations[_poolId].ids;
+        _rarityAllocationsBusd = new uint256[](_rarityIds.length);
+        for(uint256 i; i<_rarityIds.length; i++) _rarityAllocationsBusd[i] = rarityAllocations[_poolId].allocationBusd[_rarityIds[i]];
+    }
+
+    function getVestingPlans (uint16 _poolId) external view returns (POOL_VESTING memory) {
+        return vestingPlans[_poolId];
+    }
 }
