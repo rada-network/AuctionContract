@@ -3,6 +3,7 @@
 ## BoxToken
 
 ```shell
+# Deploy &  Verify
 npx hardhat run scripts/BoxToken/deploy.js --network polygonMumbai
 # Copy Token address to tokenAddresses.js
 ```
@@ -10,6 +11,7 @@ npx hardhat run scripts/BoxToken/deploy.js --network polygonMumbai
 ## RandomizeByRarity
 
 ```shell
+# Deploy &  Verify
 npx hardhat run scripts/RandomizeByRarity/1_deploy.js --network polygonMumbai
 # Copy Contract address to proxyAddresses.js
 # TODO: Remember send LINK+MATIC token to Contract
@@ -21,6 +23,8 @@ npx hardhat run scripts/RandomizeByRarity/setAdmin.js --network polygonMumbai
 
 ```shell
 npx hardhat run scripts/WhitelistContract/1_deploy.js --network polygonMumbai
+# Copy Contract address to proxyAddresses.js
+
 ```
 
 ## Token SALE to polygonMumbai / mainnet
@@ -35,7 +39,7 @@ npx hardhat run scripts/RadaAuctionContract/1_deploy.js --network polygonMumbai
 npx hardhat run scripts/RadaFixedSwapContract/1_deploy.js --network polygonMumbai
 # Copy Contract address to proxyAddresses.js
 
-# REMEMBER: owner need update WITHDRAW_ADDRESS at 2 contracts, default is deployer
+# REMEMBER: Deployer need update WITHDRAW_ADDRESS at 2 contracts, default is deployer
 
 # Set Admins
 npx hardhat run scripts/WhitelistContract/setAdmin.js --network polygonMumbai
