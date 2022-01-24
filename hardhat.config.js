@@ -108,6 +108,6 @@ module.exports = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
-    only: ['RadaAuctionContract','RadaFixedSwapContract', 'NFTManContract', 'RandomizeByRarity', 'IDOClaimContract', 'NFTFixedSwapContract', 'NFTAuctionContract','WhitelistContract'],
+    only: ['RadaAuctionContract','RadaFixedSwapContract', 'NFTManContract', 'RandomizeByRarity', 'NFTClaimContract', 'NFTFixedSwapContract', 'NFTAuctionContract','WhitelistContract'],
   }
 };
