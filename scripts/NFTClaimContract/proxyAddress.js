@@ -20,6 +20,22 @@ module.exports = {
         return deployedData[network][contractName]?.proxyAddress;    
     },
 
+    getImplementedAddress: (contractName) => {
+        let deployedData;
+        try {
+            deployedData = require(file_path);
+        } catch (e) {
+            deployedData = {};
+        }  
+    
+        //const contractName = "NFTClaimContract";
+        if (!deployedData[network] || !deployedData[network][contractName]?.implementedAddress) {
+        console.log(`Contract ${contractName} has not deployed`);
+        return;
+        }
+        return deployedData[network][contractName]?.implementedAddress;    
+    },
+
     updateDeployedAddress: (contractName, addresses) => {
         let deployedData;
         try {

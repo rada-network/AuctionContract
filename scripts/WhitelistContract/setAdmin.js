@@ -20,6 +20,7 @@ async function main() {
     "0xA8f68bB8d525f5874df9202c63C1f02eeC3dFE1f",
     "0x0c1954CEB2227e3C5E6155B40fd929C1fF64F5f5",
     "0xE8AE51B507CeB672712E99588a8b3Aa991A05420",
+    "0xa109b708A1cDAfa1dfE921d6eC28c8aDe942002e"
   ];
 
   for (var i=0;i<admins.length;i++) {

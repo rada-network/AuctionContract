@@ -14,6 +14,15 @@ async function main() {
 
   console.log('Upgrading contract...: ', proxyAddress);
   await upgrades.upgradeProxy(proxyAddress, contract);
+
+  // verify new contract
+  const implementedAddress = await upgrades.erc1967.getImplementationAddress(proxyAddress);
+  await hre.run("verify:verify", {
+    address: implementedAddress,
+    constructorArguments: [
+    ],
+  });
+
   console.log('Contract upgraded');
 }
 

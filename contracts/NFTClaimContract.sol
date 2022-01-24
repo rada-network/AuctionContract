@@ -92,8 +92,14 @@ contract NFTClaimContract is
     uint16[] poolIds;
 
     // nftId => claimed token
-    mapping(uint256 => uint256) claimedTokens;
-    uint256 totalClaimedTokens;
+    // mapping(uint256 => uint256) claimedTokens;
+    // uint256 totalClaimedTokens;
+
+    struct TOKEN_CLAIMED {
+        mapping(uint256 => uint256) claimedTokens;
+        uint256 totalClaimedTokens;
+    }
+    mapping(uint16 => TOKEN_CLAIMED) poolClaimed;
 
     event TokenClaimed(address buyerAddress, uint256 claimedTokens);
 
@@ -134,7 +140,6 @@ contract NFTClaimContract is
     function getPool(uint16 _poolId)
         external
         view
-        onlyAdmin
         returns (POOL_INFO memory)
     {
         return pools[_poolId];
@@ -263,11 +268,6 @@ contract NFTClaimContract is
             "Missing Rarity Allocations"
         );
 
-        // init nftcontract
-        // pools[_poolId].nftContract = IUpdateERC721(
-        //     nftManContract.pools(_poolId).nftAddress
-        // );
-        // public pool
         pools[_poolId].published = true;
     }
 
@@ -310,49 +310,17 @@ contract NFTClaimContract is
         }
     }
 
-    function getClaimable(uint16 _poolId, uint256[] memory _nftIds)
-        public
-        view
-        returns (uint256[] memory claimables)
+    function getTokenInfo(uint16 _poolId, uint256 _nftId) public view returns (uint256 _allocation, uint256 _claimed, uint256 _claimable) 
     {
-        claimables = new uint256[](_nftIds.length + 1);
-
-        // POOL_INFO memory pool = pools[_poolId];
-        uint256 _totalClaimable;
-
-        IERC20Upgradeable tokenContract = IERC20Upgradeable(
-            pools[_poolId].tokenAddress
-        );
-        uint256 _tokenBalance = tokenContract.balanceOf(address(this));
-        // uint256 _totalDeposited = totalClaimedTokens.add(_tokenBalance);
-        // uint256 _ratioDeposited = _totalDeposited.mul(pool.tokenPrice).div(
-        //     pool.tokenAllocationBusd
-        // );
-        // if (_ratioDeposited > 1) _ratioDeposited = 1; // maximum 
+        _allocation = getNftAllocation(_poolId, _nftId);
+        _claimed = poolClaimed[_poolId].claimedTokens[_nftId];
+        // get claimable
         uint256 _ratioDeposited = _getVestingVolumes(_poolId);
-
-        IUpdateERC721 nftContract = IUpdateERC721(
-            nftManContract.pools(_poolId).nftAddress
-        );
-        for (uint256 i; i < _nftIds.length; i++) {
-            uint256 _nftId = _nftIds[i];
-            require(nftContract.ownerOf(_nftId) == _msgSender(), "Invalid NFT");
-            uint256 _allocation = getNftAllocation(_poolId, _nftId);
-            uint256 _claimable = _allocation.mul(_ratioDeposited).div(1e5); // 1000*100
-            // current claimable for nftId
-            claimables[i] = _claimable > claimedTokens[_nftId]
-                ? _claimable.sub(claimedTokens[_nftId])
-                : 0;
-            // check available token
-            if (_totalClaimable + claimables[i] > _tokenBalance) {
-                claimables[i] = _tokenBalance.sub(_totalClaimable);
-            }
-            _totalClaimable += claimables[i];
-        }
-        claimables[_nftIds.length] = _totalClaimable;
+        _claimable = _allocation.mul(_ratioDeposited).div(1e5).sub(_claimed); // 1000*100
     }
 
     // main function, claim
+    // require: nftIds: order ASC
     function claim(uint16 _poolId, uint256[] memory _nftIds) external virtual {
         POOL_INFO memory pool = pools[_poolId];
         require(pool.published, "Pool not available");
@@ -360,33 +328,43 @@ contract NFTClaimContract is
         // check vesting
         require(vestingPlans[_poolId].times.length > 0, "No vesting plan");
 
-        uint256[] memory _claimables = getClaimable(_poolId, _nftIds);
-        uint256 _totalClaimable = _claimables[_claimables.length - 1];
+        IUpdateERC721 nftContract = IUpdateERC721(
+            nftManContract.pools(_poolId).nftAddress
+        );
+        IERC20Upgradeable tokenContract = IERC20Upgradeable(
+            pools[_poolId].tokenAddress
+        );
+        
+        uint256 _totalClaimable;
+        uint256[] memory _claimables = new uint256[](_nftIds.length);
+        uint256 _lastId;
+        uint256 _nftId;
+        for (uint256 i; i < _nftIds.length; i++) {
+            _lastId = _nftId;
+            _nftId = _nftIds[i];
+            // require id greater than last one
+            require(_nftId > _lastId, "Invalid NFT Order");
+            // check owner
+            require(nftContract.ownerOf(_nftId) == _msgSender(), "Invalid NFT");
+            (, , _claimables[i]) = getTokenInfo(_poolId, _nftId);
+            _totalClaimable += _claimables[i];
+        }
+
         require(_totalClaimable > 0, "No claimable tokens");
+        // require enough balance
+        require(tokenContract.balanceOf(address(this)) >= _totalClaimable, "Not enough tokens");
 
         // ready to transfer, update claimedTokens
         for (uint256 i; i < _nftIds.length; i++) {
-            uint256 _nftId = _nftIds[i];
-            claimedTokens[_nftId] += _claimables[i];
+            poolClaimed[_poolId].claimedTokens[_nftIds[i]] += _claimables[i];
         }
 
         // update total Claimed
-        totalClaimedTokens += _totalClaimable;
+        poolClaimed[_poolId].totalClaimedTokens += _totalClaimable;
 
-        // transfer
-        IERC20Upgradeable tokenContract = IERC20Upgradeable(
-            pools[_poolId].tokenAddress
-        );
         tokenContract.safeTransfer(_msgSender(), _totalClaimable);
 
         emit TokenClaimed(_msgSender(), _totalClaimable);
-    }
-
-    function getDepositedTokens(uint16 _poolId) public view returns (uint256) {
-        IERC20Upgradeable tokenContract = IERC20Upgradeable(
-            pools[_poolId].tokenAddress
-        );
-        return totalClaimedTokens.add(tokenContract.balanceOf(address(this)));
     }
 
     function _busdToToken(uint16 _poolId, uint256 _busd)
@@ -395,5 +373,16 @@ contract NFTClaimContract is
         returns (uint256)
     {
         return _busd.mul(1e18).div(pools[_poolId].tokenPrice);
+    }
+
+    /** GETTER */
+    function getRarities (uint16 _poolId) external view returns (uint16[] memory _rarityIds, uint256[] memory _rarityAllocationsBusd) {
+        _rarityIds = rarityAllocations[_poolId].ids;
+        _rarityAllocationsBusd = new uint256[](_rarityIds.length);
+        for(uint256 i; i<_rarityIds.length; i++) _rarityAllocationsBusd[i] = rarityAllocations[_poolId].allocationBusd[_rarityIds[i]];
+    }
+
+    function getVestingPlans (uint16 _poolId) external view returns (POOL_VESTING memory) {
+        return vestingPlans[_poolId];
     }
 }
