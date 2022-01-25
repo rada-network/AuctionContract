@@ -27,7 +27,7 @@ async function main() {
   for (var i=0;i<admins.length;i++) {
     console.log("setAdmin " + admins[i]);
     try {
-      await instanceContract.setAdmin(admins[i]);
+      await instanceContract.setAdmin(admins[i], true);
     } catch (e) {}
   }
 

@@ -26,7 +26,7 @@ async function main() {
   for (var i=0;i<admins.length;i++) {
     console.log("setAdmin " + admins[i]);
     try {
-      await NFTManContract.setAdmin(admins[i]);
+      await NFTManContract.setAdmin(admins[i], true);
     } catch (e) {}
   }
 
