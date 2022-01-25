@@ -19,7 +19,7 @@ async function main() {
   console.log("With the account:", deployer.address);
 
   // TODO: Change your poolId
-  const poolId = 18;
+  const poolId = 1;
   const fixedSwapContract = await ethers.getContractAt("RadaFixedSwapContract", fixedSwapAddress);
   const nftManContract = await ethers.getContractAt("NFTManContract", nftManAddress);
   const randomizeContract = await ethers.getContractAt("RandomizeByRarity", randomizeAddress);
@@ -36,7 +36,10 @@ async function main() {
         console.log(`${key}: ${value}`);
         const tokenContract = await ethers.getContractAt(erc20Abi, value);
         const nameToken = await tokenContract.name();
+
+        const balanceContract = await tokenContract.balanceOf(fixedSwapContract.address);
         console.log('\x1b[36m%s\x1b[0m', 'Token name:',nameToken);
+        console.log('\x1b[36m%s\x1b[0m', 'BalanceOf contract:',fu(balanceContract, fu(await tokenContract.decimals())));
       } else if (key=='startPrice') {
         console.log('startPrice',fe(value),'$');
       } else {

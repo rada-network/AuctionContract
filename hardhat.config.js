@@ -4,7 +4,7 @@ require('@nomiclabs/hardhat-ethers');
 
 require('@openzeppelin/hardhat-upgrades');
 require("hardhat-gas-reporter");
-require('dotenv').config({ path: process.argv.includes('polygon') ? '.env.mainnet' : '.env' })
+require('dotenv').config({ path: (process.argv.includes('polygon') || process.argv.includes('mainnet')) ? '.env.mainnet' : '.env' })
 require('hardhat-contract-sizer');
 
 // a new App in its dashboard, and replace "KEY" with its key

@@ -20,13 +20,14 @@ async function main() {
   const instanceContract = await ethers.getContractAt("RadaFixedSwapContract",contractAddress);
 
   // TODO: Fill your poolId
-  const poolId = 18;
-  const startPrice = pe("150");
-  const addressItem = tokenAddress; // Address of NFT or Token
+  const poolId = 1;
+  const startPrice = pe("1");
+  const addressItem = "0x8050D3D903c4aB5042F0C7457B18E3cc3105a789"; // Address of NFT or Token
+  const addressPayable = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F";
   const totalItems = 100;
 
-  const startTime = 1640451600; // Sunday, December 26, 2021 12:00:00 AM GMT+07:00
-  const endTime = 1672379856; // Friday, December 30, 2022 12:57:36 PM GMT+07:00
+  const startTime = 1643076000; // Sunday, December 26, 2021 12:00:00 AM GMT+07:00
+  const endTime = 1643389229; // Friday, December 30, 2022 12:57:36 PM GMT+07:00
   const maxBuyPerAddress = 10;
   const maxBuyPerOrder = 2;
   const requireWhitelist = true;
@@ -35,7 +36,7 @@ async function main() {
   await instanceContract.handlePublicPool(poolId, false);
   console.log("Pool changed status: false");
   await sleep(5000);
-  await instanceContract.addOrUpdatePool(poolId, addressItem, bUsdAddress, totalItems, startTime, endTime, startPrice, requireWhitelist, maxBuyPerAddress, maxBuyPerOrder);
+  await instanceContract.addOrUpdatePool(poolId, addressItem, addressPayable, totalItems, startTime, endTime, startPrice, requireWhitelist, maxBuyPerAddress, maxBuyPerOrder);
   console.log("addOrUpdatePool "+poolId+" success");
   await instanceContract.setWhitelistIds(poolId, whitelistIds);
 
