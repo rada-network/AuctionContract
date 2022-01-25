@@ -10,7 +10,13 @@ async function main() {
 
   const contractFactory = await ethers.getContractFactory(contractName);
   // Deploy 100k token
-  const contractDeploy = await contractFactory.deploy();
+
+  const name = "Box RADA";
+  const symbol = "BoxRADA";
+  const initialSupply = 100_000;
+  const decimals = 0;
+
+  const contractDeploy = await contractFactory.deploy(name, symbol, initialSupply, decimals);
 
   await contractDeploy.deployed();
   const txHash = contractDeploy.deployTransaction.hash;
