@@ -237,7 +237,7 @@ contract RandomizeByRarity is VRFConsumerBase, Ownable {
         return poolIds;
     }
 
-    function isAdmin(address _address) external view onlyAdmin returns (bool) {
+    function isAdmin(address _address) external view returns (bool) {
         return admins[_address];
     }
 }
