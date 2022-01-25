@@ -19,7 +19,7 @@ async function main() {
     // "0xAE51701F3eB7b897eB6EE5ecdf35c4fEE29BFAe6",
     // "0x0c1954CEB2227e3C5E6155B40fd929C1fF64F5f5",
     // "0xA8f68bB8d525f5874df9202c63C1f02eeC3dFE1f",
-    "0xE8AE51B507CeB672712E99588a8b3Aa991A05420",
+    "0x9d48959C8A287e5EdF3289861B29b60FD14D18f9", // Backend
   ];
 
   for (var i=0;i<admins.length;i++) {
