@@ -52,6 +52,10 @@ interface INFTMan {
     function pools(uint16 _poolId) external view returns (POOL_INFO memory);
 }
 
+interface IERC20 is IERC20Upgradeable {
+    function decimals() external view returns (uint8);
+}
+
 contract NFTClaimContract is
     Initializable,
     UUPSUpgradeable,
@@ -59,7 +63,7 @@ contract NFTClaimContract is
     ReentrancyGuardUpgradeable
 {
     using SafeMathUpgradeable for uint256;
-    using SafeERC20Upgradeable for IERC20Upgradeable;
+    using SafeERC20Upgradeable for IERC20;
 
     INFTMan nftManContract;
 
@@ -331,7 +335,7 @@ contract NFTClaimContract is
         IUpdateERC721 nftContract = IUpdateERC721(
             nftManContract.pools(_poolId).nftAddress
         );
-        IERC20Upgradeable tokenContract = IERC20Upgradeable(
+        IERC20 tokenContract = IERC20(
             pools[_poolId].tokenAddress
         );
         
@@ -372,7 +376,9 @@ contract NFTClaimContract is
         view
         returns (uint256)
     {
-        return _busd.mul(1e18).div(pools[_poolId].tokenPrice);
+        IERC20 _tokenContract = IERC20(pools[_poolId].tokenAddress);
+        uint8 _decimal = _tokenContract.decimals();
+        return _busd.mul(10 ** _decimal).div(pools[_poolId].tokenPrice);
     }
 
     /** GETTER */
@@ -384,5 +390,13 @@ contract NFTClaimContract is
 
     function getVestingPlans (uint16 _poolId) external view returns (POOL_VESTING memory) {
         return vestingPlans[_poolId];
+    }
+
+    /** Withdraw to owner */
+    function withdrawToken (address _tokenAddress) external virtual onlyOwner {
+        IERC20 tokenContract = IERC20(_tokenAddress);
+        uint256 _balance = tokenContract.balanceOf(address(this));
+        require(_balance > 0, "Empty");
+        tokenContract.safeTransfer(owner(), _balance);
     }
 }
