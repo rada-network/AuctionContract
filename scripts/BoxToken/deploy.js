@@ -11,9 +11,9 @@ async function main() {
   const contractFactory = await ethers.getContractFactory(contractName);
   // Deploy 100k token
 
-  const name = "Box RADA";
-  const symbol = "BoxRADA";
-  const initialSupply = 100_000;
+  const name = "New Year Ticket";
+  const symbol = "Card1";
+  const initialSupply = 1000;
   const decimals = 0;
 
   const contractDeploy = await contractFactory.deploy(name, symbol, initialSupply, decimals);

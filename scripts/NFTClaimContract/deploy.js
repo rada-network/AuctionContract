@@ -4,6 +4,7 @@ const { pe, fe, fu, pu } = require('../../utils');
 const fs = require('fs');
 const { updateDeployedAddress } = require('./proxyAddress')
 const contractName = "NFTClaimContract";
+const { addresses: nftManContractAddress } = require('../NFTManContract/proxyAddresses');
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -14,9 +15,9 @@ async function main() {
 
   const contractFactory = await ethers.getContractFactory(contractName);
 
-  const nftManContractAddress = "0x77f866b1E2528544C8CBfda8D58001dd1abcE70e";
+  // const nftManContractAddress = "0x77f866b1E2528544C8CBfda8D58001dd1abcE70e";
 
-  const contractDeploy = await upgrades.deployProxy(contractFactory, [nftManContractAddress], { kind: 'uups' });
+  const contractDeploy = await upgrades.deployProxy(contractFactory, [nftManContractAddress[network]], { kind: 'uups' });
 
   await contractDeploy.deployed();
   const proxyAddress = contractDeploy.address;

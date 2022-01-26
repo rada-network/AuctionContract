@@ -67,7 +67,7 @@ describe('IDOClaimContract', function () {
 
         // BoxToken
         const BoxToken = await ethers.getContractFactory('BoxToken')
-        contractBoxToken = await BoxToken.deploy()
+        contractBoxToken = await BoxToken.deploy('TestBox', 'TestBox', 100000, 0);
 
         // Rada NFT
         const RadaNftContract = await ethers.getContractFactory(

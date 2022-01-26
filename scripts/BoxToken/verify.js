@@ -7,10 +7,14 @@ async function main() {
   const contractAddress = tokenAddresses[network];
 
   console.log("Contract address is:", contractAddress);
+  const name = "New Year Ticket";
+  const symbol = "Card1";
+  const initialSupply = 1000;
+  const decimals = 0;
 
   await hre.run("verify:verify", {
     address: contractAddress,
-    constructorArguments: [],
+    constructorArguments: [name, symbol, initialSupply, decimals],
   });
 
 }

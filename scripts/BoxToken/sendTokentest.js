@@ -15,7 +15,7 @@ async function main() {
 
   // TODO: add list
   const topUpList = [
-    "0x49117A8E02872C0B6b399829823bD912Bf74B097"
+    "0x71d7e26bE11518495F268860Df643811133C5a5a"
   ];
 
   const tokenTopUp = pu("1000"); // 1000 box (decimals 0)
