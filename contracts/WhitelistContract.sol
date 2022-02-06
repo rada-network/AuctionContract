@@ -117,7 +117,7 @@ contract WhitelistContract is
     {
         bool valid;
         for (uint256 i = 0; i < _listIds.length; i++) {
-            if (!valid) valid = whitelistAddresses[listIds[i]][_address];
+            if (!valid) valid = whitelistAddresses[_listIds[i]][_address];
         }
         return valid;
     }
