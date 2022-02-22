@@ -47,6 +47,7 @@ contract NFTAuctionContract is
         bool requireWhitelist;
         uint16[] whitelistIds;
         uint256 maxBuyPerAddress;
+        uint256 timeForWhitelist;
     }
     struct POOL_STATS {
         uint32 totalBid; // Total bid in pool
@@ -132,6 +133,32 @@ contract NFTAuctionContract is
         ); // The pool have not started / Expired / isPublic
     }
 
+    function isPurchasable(uint16 _poolId) public view returns (bool) {
+        POOL_INFO memory pool = pools[_poolId];
+
+        bool allow = false;
+        if (pool.ended == false &&
+                block.timestamp >= pool.startTime &&
+                block.timestamp <= pool.endTime &&
+                pool.isPublic) {
+            allow = true;
+        }
+
+        if (pool.requireWhitelist) {
+            allow = false;
+            if (IWhitelist(WHITELIST_ADDRESS).isValid(_msgSender(), pool.whitelistIds)) {
+                allow = true;
+            }
+
+            // Allow whitelist in amount time
+            if (pool.timeForWhitelist>0 && block.timestamp >= (pool.startTime+pool.timeForWhitelist)) {
+                allow = true;
+            }
+        }
+
+        return allow;
+    }
+
     /**
      * @dev function to place bid
      */
@@ -145,7 +172,9 @@ contract NFTAuctionContract is
         // require pool is open
         _checkPoolOpen(pool);
 
-        if (pool.requireWhitelist) {
+        require(isPurchasable(_poolId), "Require purchasable");
+
+        /* if (pool.requireWhitelist) {
             require(
                 IWhitelist(WHITELIST_ADDRESS).isValid(
                     _msgSender(),
@@ -153,7 +182,7 @@ contract NFTAuctionContract is
                 ),
                 "Caller is not in whitelist"
             );
-        }
+        } */
 
         uint256 totalItemBought;
         for (uint256 i = 0; i < buyerBid[_poolId][_msgSender()].length; i++) {
@@ -408,7 +437,8 @@ contract NFTAuctionContract is
         uint256 _startPrice,
         bool _requireWhitelist,
         uint16[] calldata _whitelistIds,
-        uint256 _maxBuyPerAddress
+        uint256 _maxBuyPerAddress,
+        uint256 _timeForWhitelist
     ) external onlyAdmin {
         POOL_INFO storage pool = pools[_poolId]; // pool info
         require(_startPrice > 0 && !pool.isPublic, "Invalid / Pool is public");
@@ -427,6 +457,7 @@ contract NFTAuctionContract is
         pool.requireWhitelist = _requireWhitelist;
         pool.maxBuyPerAddress = _maxBuyPerAddress;
         pool.whitelistIds = _whitelistIds;
+        pool.timeForWhitelist = _timeForWhitelist;
     }
 
     function updateSalePool(uint16 _poolId, uint256[] memory _saleTokenIds)

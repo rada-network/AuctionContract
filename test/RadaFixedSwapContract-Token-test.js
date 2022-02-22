@@ -56,7 +56,7 @@ describe("Fixed Swap Contract - Token", function () {
 
     /* WhitelistContract */
     var whitelist = [buyerUser.address,buyerUser2.address,buyerUser3.address];
-    await contractWhitelist.addList("Raders", whitelist, true);
+    await contractWhitelist.addList("Raders", whitelist);
 
     // Add ERC20 token to Contract
     await contractERC20.transfer(contractFixedSwap.address, pu("2000"));

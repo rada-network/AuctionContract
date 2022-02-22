@@ -35,9 +35,11 @@ describe("Auction Contract - NFT", function () {
   const pu = (num, decimals = 0) => ethers.utils.parseUnits(num, decimals) // parseUnits
   const fu = (num, decimals = 0) => ethers.utils.formatUnits(num, decimals) // formatEther
 
-  beforeEach(async function () {
+  let snapshotId;
 
-    [owner, approvalUser, adminUser, withdrawUser, buyerUser, buyerUser2, buyerUser3, invalidUser, ...addrs] = await ethers.getSigners();
+  beforeEach(async function () {
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
+    [owner, approvalUser, adminUser, withdrawUser, buyerUser, buyerUser2, buyerUser3, notWhitelistUser, ...addrs] = await ethers.getSigners();
 
     const RadaNftContract = await ethers.getContractFactory("RadaNftContract");
     contractNFT = await RadaNftContract.deploy();
@@ -78,7 +80,7 @@ describe("Auction Contract - NFT", function () {
 
     /* WhitelistContract */
     var whitelist = [buyerUser.address,buyerUser2.address,buyerUser3.address];
-    await contractWhitelist.addList("Raders", whitelist, true);
+    await contractWhitelist.addList("Raders", whitelist);
 
     poolId = 10;
     quantity = 1;
@@ -89,11 +91,16 @@ describe("Auction Contract - NFT", function () {
     const startTime = Math.floor(Date.now() / 1000) - 86400*1; // Now - 1 day
     const endTime = Math.floor(Date.now() / 1000) + 86400*7; // Now + 7 days
     const whitelistIds = [0];
+    const timeForWhitelist = 0;
     // Add/update pool
     await contractAuction.handlePublicPool(poolId, false);
-    await contractAuction.addOrUpdatePool(poolId, addressItem, bUSDToken.address, startTime, endTime, priceEach, requireWhitelist, whitelistIds, maxBuyPerAddress);
+    await contractAuction.addOrUpdatePool(poolId, addressItem, bUSDToken.address, startTime, endTime, priceEach, requireWhitelist, whitelistIds, maxBuyPerAddress,timeForWhitelist);
     await contractAuction.updateSalePool(poolId, saleTokenIds);
     await contractAuction.handlePublicPool(poolId, true);
+  });
+
+  afterEach(async () => {
+    await ethers.provider.send("evm_revert", [snapshotId]);
   });
 
   it('Deploy v1 and should set admin address', async function () {
@@ -107,9 +114,10 @@ describe("Auction Contract - NFT", function () {
     const startTime = Math.floor(Date.now() / 1000) - 86400*1; // Now - 1 day
     const endTime = Math.floor(Date.now() / 1000) + 86400*7; // Now + 7 days
     const whitelistIds = [0];
+    const timeForWhitelist = 0;
     // Add/update pool
     await contractAuction.handlePublicPool(poolId_2, false);
-    await contractAuction.addOrUpdatePool(poolId_2, addressItem, bUSDToken.address, startTime, endTime, priceEach, requireWhitelist, whitelistIds, maxBuyPerAddress);
+    await contractAuction.addOrUpdatePool(poolId_2, addressItem, bUSDToken.address, startTime, endTime, priceEach, requireWhitelist, whitelistIds, maxBuyPerAddress,timeForWhitelist);
     await contractAuction.updateSalePool(poolId_2, saleTokenIds);
     await contractAuction.handlePublicPool(poolId_2, true);
 
@@ -143,7 +151,7 @@ describe("Auction Contract - NFT", function () {
     const maxBuyPerAddress = 2;
     await contractAuction.handlePublicPool(poolId, false);
     const whitelistIds = await contractAuction.getWhitelistIds(poolId);
-    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.startTime, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, maxBuyPerAddress);
+    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.startTime, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, maxBuyPerAddress, pool.timeForWhitelist);
     await contractAuction.handlePublicPool(poolId, true);
     await bUSDToken.connect(buyerUser).approve(contractAuction.address, pe("300"));
 
@@ -180,9 +188,9 @@ describe("Auction Contract - NFT", function () {
   it('Should revert place Bid if not in white list - whitelist', async function () {
 
     // Not in white list should revert
-    await bUSDToken.transfer(invalidUser.address, pe("150"));
-    await bUSDToken.connect(invalidUser).approve(contractAuction.address, pe("150"));
-    await expect(contractAuction.connect(invalidUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("Caller is not in whitelist");
+    await bUSDToken.transfer(notWhitelistUser.address, pe("150"));
+    await bUSDToken.connect(notWhitelistUser).approve(contractAuction.address, pe("150"));
+    await expect(contractAuction.connect(notWhitelistUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("Require purchasable");
 
   });
 
@@ -195,7 +203,7 @@ describe("Auction Contract - NFT", function () {
     await contractAuction.handlePublicPool(poolId, false);
     const maxBuyPerAddress = 10;
     const whitelistIds = await contractAuction.getWhitelistIds(poolId);
-    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, whitelistIds, maxBuyPerAddress);
+    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, whitelistIds, maxBuyPerAddress, pool.timeForWhitelist);
     await contractAuction.handlePublicPool(poolId, true);
     // Approve allowance
     await bUSDToken.connect(buyerUser).approve(contractAuction.address, pe("2000"));
@@ -289,7 +297,7 @@ describe("Auction Contract - NFT", function () {
     const requireWhitelist = false;
     await contractAuction.handlePublicPool(poolId, false);
     const whitelistIds = await contractAuction.getWhitelistIds(poolId);
-    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, whitelistIds, pool.maxBuyPerAddress);
+    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, whitelistIds, pool.maxBuyPerAddress, pool.timeForWhitelist);
     await contractAuction.handlePublicPool(poolId, true);
 
     // Approve allowance
@@ -327,7 +335,7 @@ describe("Auction Contract - NFT", function () {
     const timeNotStart = Math.round(new Date().getTime()/1000) + 86400*2; // Today plus 2 days
     await contractAuction.handlePublicPool(poolId, false);
     var whitelistIds = await contractAuction.getWhitelistIds(poolId);
-    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, pool.maxBuyPerAddress);
+    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, pool.maxBuyPerAddress, pool.timeForWhitelist);
     await contractAuction.handlePublicPool(poolId, true);
     // Should reverted
     await expect(contractAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("Not Started");
@@ -335,7 +343,7 @@ describe("Auction Contract - NFT", function () {
     const timeStart = Math.round(new Date().getTime()/1000) - 86400*2; // Today plus 2 days
     await contractAuction.handlePublicPool(poolId, false);
     whitelistIds = await contractAuction.getWhitelistIds(poolId);
-    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, pool.maxBuyPerAddress);
+    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, pool.maxBuyPerAddress, pool.timeForWhitelist);
     await contractAuction.handlePublicPool(poolId, true);
     // Now
     // Bought success
@@ -351,6 +359,43 @@ describe("Auction Contract - NFT", function () {
     // Should reverted
     await expect(contractAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("Expired");;
 
+  });
+
+
+  it('Should allow user buy after time for whitelist', async function () {
+    // Approve & top up BUSD
+    await bUSDToken.connect(notWhitelistUser).approve(contractAuction.address, pe("1500"));
+    await bUSDToken.transfer(notWhitelistUser.address, pe("1500"));
+    // Approve & top up BUSD
+    await bUSDToken.connect(buyerUser).approve(contractAuction.address, pe("1500"));
+    await bUSDToken.transfer(buyerUser.address, pe("1500"));
+
+    const pool = await contractAuction.pools(poolId)
+    const timeStart = Math.round(new Date().getTime()/1000); // Now
+    const timeForWhitelist = 60*60; // 1 hour
+    await contractAuction.handlePublicPool(poolId, false);
+    whitelistIds = await contractAuction.getWhitelistIds(poolId);
+    await contractAuction.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, pool.maxBuyPerAddress, timeForWhitelist);
+    await contractAuction.handlePublicPool(poolId, true);
+
+    // console.log(await contractAuction.connect(notWhitelistUser).isPurchasable(poolId));
+    // console.log(await contractAuction.connect(buyerUser).isPurchasable(poolId));
+
+    // Should reverted
+    await expect(contractAuction.connect(notWhitelistUser).placeBid(poolId, quantity, priceEach)).to.be.revertedWith("Require purchasable");;
+    await expect(contractAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.not.be.reverted;
+
+    const increaseTime = timeForWhitelist;
+    await ethers.provider.send("evm_increaseTime", [increaseTime]);
+    await ethers.provider.send("evm_mine", []) // force mine the next block
+
+
+    // console.log(await contractAuction.connect(notWhitelistUser).isPurchasable(poolId));
+    // console.log(await contractAuction.connect(buyerUser).isPurchasable(poolId));
+
+    // Should not revert
+    await expect(contractAuction.connect(notWhitelistUser).placeBid(poolId, quantity, priceEach)).to.not.be.reverted;
+    await expect(contractAuction.connect(buyerUser).placeBid(poolId, quantity, priceEach)).to.not.be.reverted;
   });
 
 });

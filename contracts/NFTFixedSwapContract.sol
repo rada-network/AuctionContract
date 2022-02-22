@@ -50,6 +50,7 @@ contract NFTFixedSwapContract is
         uint16[] whitelistIds;
         uint256 maxBuyPerAddress;
         uint256 maxBuyPerOrder;
+        uint256 timeForWhitelist;
     }
 
     struct POOL_STATS {
@@ -115,6 +116,29 @@ contract NFTFixedSwapContract is
         return admins[_msgSender()] == true;
     }
 
+    function isPurchasable(uint16 _poolId) public view returns (bool) {
+        POOL_INFO memory pool = pools[_poolId];
+
+        bool allow = false;
+        if (block.timestamp >= pool.startTime && block.timestamp <= pool.endTime && pool.isPublic) {
+            allow = true;
+        }
+
+        if (pool.requireWhitelist) {
+            allow = false;
+            if (IWhitelist(WHITELIST_ADDRESS).isValid(_msgSender(), pool.whitelistIds)) {
+                allow = true;
+            }
+
+            // Allow whitelist in amount time
+            if (pool.timeForWhitelist>0 && block.timestamp >= (pool.startTime+pool.timeForWhitelist)) {
+                allow = true;
+            }
+        }
+
+        return allow;
+    }
+
     /**
      * @dev function to place order
      */
@@ -126,12 +150,10 @@ contract NFTFixedSwapContract is
         POOL_INFO memory pool = pools[_poolId];
 
         // require pool is open
-        require(
-            block.timestamp >= pool.startTime &&
-                block.timestamp <= pool.endTime &&
-                pool.isPublic,
-            "Not Started / Expired / is not public"
-        ); // The pool have not started / Expired / isPublic
+        require(block.timestamp >= pool.startTime && block.timestamp <= pool.endTime && pool.isPublic,
+        "Not Started / Expired / is not public"); // The pool have not started / Expired / isPublic
+
+        require(isPurchasable(_poolId), "Require purchasable");
 
         require(
             poolSaleTokenIds[_poolId].length >=
@@ -140,7 +162,7 @@ contract NFTFixedSwapContract is
             "Invalid quantity / sold out"
         );
 
-        if (pool.requireWhitelist) {
+        /* if (pool.requireWhitelist) {
             require(
                 IWhitelist(WHITELIST_ADDRESS).isValid(
                     _msgSender(),
@@ -148,7 +170,7 @@ contract NFTFixedSwapContract is
                 ),
                 "Caller is not in whitelist"
             );
-        }
+        } */
 
         require(pool.maxBuyPerOrder >= _quantity, "Got limited per order");
 
@@ -256,7 +278,8 @@ contract NFTFixedSwapContract is
         bool _requireWhitelist,
         uint16[] calldata _whitelistIds,
         uint256 _maxBuyPerAddress,
-        uint256 _maxBuyPerOrder
+        uint256 _maxBuyPerOrder,
+        uint256 _timeForWhitelist
     ) external onlyAdmin {
         require(_startPrice > 0, "Invalid");
 
@@ -278,6 +301,7 @@ contract NFTFixedSwapContract is
 
         pool.maxBuyPerAddress = _maxBuyPerAddress;
         pool.maxBuyPerOrder = _maxBuyPerOrder;
+        pool.timeForWhitelist = _timeForWhitelist;
 
         pools[_poolId] = pool;
     }

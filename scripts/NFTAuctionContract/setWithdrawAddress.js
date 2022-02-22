@@ -15,14 +15,8 @@ async function main() {
   const instanceContract = await ethers.getContractAt("NFTAuctionContract",contractAddress);
 
   // TODO: add real whitelist
-  const whitelist = [
-    "0xAE51701F3eB7b897eB6EE5ecdf35c4fEE29BFAe6", // Quang
-    "0xA8f68bB8d525f5874df9202c63C1f02eeC3dFE1f", // Tan
-  ];
-
-  const poolId = fu(await instanceContract.campaignCount()) - 1;
-
-  await instanceContract.setWhitelist(poolId, whitelist,true);
+  const WITHDRAW_ADDRESS = "0x16DA4c7B28dc30BCE9e2B384E17a7b0078Fb97AE";
+  await instanceContract.setWithdrawAddress(WITHDRAW_ADDRESS);
 
   console.log("setWhitelist success");
 

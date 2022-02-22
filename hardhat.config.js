@@ -46,7 +46,7 @@ module.exports = {
     },
     hardhat: {},
     testnet: {
-      url: "https://data-seed-prebsc-2-s3.binance.org:8545/",
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
       chainId: 97,
       // gas: 2100000,
       // gasPrice: 20000000000,
@@ -85,8 +85,8 @@ module.exports = {
     }
   },
   etherscan: {
-    // apiKey: BSC_API_KEY
-    apiKey: PLO_API_KEY
+    apiKey: BSC_API_KEY
+    // apiKey: PLO_API_KEY
   },
   /* etherscan: {
     apiKey: {
@@ -117,6 +117,6 @@ module.exports = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
-    only: ['RadaAuctionContract','RadaFixedSwapContract', 'NFTManContract', 'RandomizeByRarity', 'NFTClaimContract', 'NFTFixedSwapContract', 'NFTAuctionContract','WhitelistContract'],
-  } 
+    only: ['RadaAuctionContract','RadaFixedSwapContract', 'NFTClaimContract', 'NFTFixedSwapContract', 'NFTAuctionContract'],
+  }
 };

@@ -34,9 +34,12 @@ describe("Fixed Swap Contract - NFT", function () {
   const pu = (num, decimals = 0) => ethers.utils.parseUnits(num, decimals) // parseUnits
   const fu = (num, decimals = 0) => ethers.utils.formatUnits(num, decimals) // formatEther
 
-  beforeEach(async function () {
+  let snapshotId;
 
-    [owner, approvalUser, adminUser, withdrawUser, buyerUser, buyerUser2, buyerUser3, invalidUser, ...addrs] = await ethers.getSigners();
+
+  beforeEach(async function () {
+    snapshotId = await ethers.provider.send("evm_snapshot", []);
+    [owner, approvalUser, adminUser, withdrawUser, buyerUser, buyerUser2, buyerUser3, notWhitelistUser, ...addrs] = await ethers.getSigners();
 
 
     const BUSDToken = await ethers.getContractFactory("BUSDToken");
@@ -62,7 +65,7 @@ describe("Fixed Swap Contract - NFT", function () {
 
     /* WhitelistContract */
     var whitelist = [buyerUser.address,buyerUser2.address,buyerUser3.address];
-    await contractWhitelist.addList("Raders", whitelist, true);
+    await contractWhitelist.addList("Raders", whitelist);
 
     // Set owner is minterFactory for NFT
     await contractNFT.setMintFactory(owner.address);
@@ -86,12 +89,17 @@ describe("Fixed Swap Contract - NFT", function () {
     const whitelistIds = [0];
     const startTime = Math.floor(Date.now() / 1000) - 86400*1; // Now - 1 day
     const endTime = Math.floor(Date.now() / 1000) + 86400*7; // Now + 7 days
+    const timeForWhitelist = 0;
 
     // Add/update pool
     await contractFixedSwap.handlePublicPool(poolId, false);
-    await contractFixedSwap.addOrUpdatePool(poolId, addressItem, addressPayable, startTime, endTime, priceEach, requireWhitelist, whitelistIds, maxBuyPerAddress, maxBuyPerOrder);
+    await contractFixedSwap.addOrUpdatePool(poolId, addressItem, addressPayable, startTime, endTime, priceEach, requireWhitelist, whitelistIds, maxBuyPerAddress, maxBuyPerOrder, timeForWhitelist);
     await contractFixedSwap.updateSalePool(poolId, saleTokenIds);
     await contractFixedSwap.handlePublicPool(poolId, true);
+  });
+
+  afterEach(async () => {
+    await ethers.provider.send("evm_revert", [snapshotId]);
   });
 
   it('Deploy v1 and should set admin address', async function () {
@@ -120,7 +128,7 @@ describe("Fixed Swap Contract - NFT", function () {
     const maxBuyPerOrder = 2;
     await contractFixedSwap.handlePublicPool(poolId, false);
     const whitelistIds = await contractFixedSwap.getWhitelistIds(poolId);
-    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable,  pool.startTime, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, pool.maxBuyPerAddress, maxBuyPerOrder);
+    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable,  pool.startTime, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, pool.maxBuyPerAddress, maxBuyPerOrder, pool.timeForWhitelist);
     await contractFixedSwap.handlePublicPool(poolId, true);
 
     // Approve allowance
@@ -161,9 +169,11 @@ describe("Fixed Swap Contract - NFT", function () {
   it('Should revert place order if not in white list - whitelist', async function () {
 
     // Not in white list should revert
-    await bUSDToken.transfer(invalidUser.address, pe("150"));
-    await bUSDToken.connect(invalidUser).approve(contractFixedSwap.address, pe("150"));
-    await expect(contractFixedSwap.connect(invalidUser).placeOrder(poolId, quantity)).to.be.revertedWith("Caller is not in whitelist");
+    await bUSDToken.transfer(notWhitelistUser.address, pe("150"));
+    await bUSDToken.connect(notWhitelistUser).approve(contractFixedSwap.address, pe("150"));
+
+    // console.log(await contractFixedSwap.connect(notWhitelistUser).isPurchasable(poolId));
+    await expect(contractFixedSwap.connect(notWhitelistUser).placeOrder(poolId, quantity)).to.be.revertedWith("Require purchasable");
 
   });
 
@@ -177,7 +187,7 @@ describe("Fixed Swap Contract - NFT", function () {
     const maxBuyPerAddress = 10;
     const maxBuyPerOrder = 5;
     const whitelistIds = await contractFixedSwap.getWhitelistIds(poolId);
-    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, whitelistIds, maxBuyPerAddress, maxBuyPerOrder);
+    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, whitelistIds, maxBuyPerAddress, maxBuyPerOrder, pool.timeForWhitelist);
     await contractFixedSwap.handlePublicPool(poolId, true);
 
     // Approve allowance
@@ -211,7 +221,7 @@ describe("Fixed Swap Contract - NFT", function () {
     const requireWhitelist = false;
     const maxBuyPerOrder = 2;
     const whitelistIds = await contractFixedSwap.getWhitelistIds(poolId);
-    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, whitelistIds, pool.maxBuyPerAddress, maxBuyPerOrder);
+    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, whitelistIds, pool.maxBuyPerAddress, maxBuyPerOrder, pool.timeForWhitelist);
     await contractFixedSwap.handlePublicPool(poolId, true);
 
     // Approve allowance
@@ -256,7 +266,7 @@ describe("Fixed Swap Contract - NFT", function () {
     const requireWhitelist = false;
     await contractFixedSwap.handlePublicPool(poolId, false);
     const whitelistIds = await contractFixedSwap.getWhitelistIds(poolId);
-    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, whitelistIds, pool.maxBuyPerAddress, pool.maxBuyPerOrder);
+    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, pool.startTime, pool.endTime, pool.startPrice, requireWhitelist, whitelistIds, pool.maxBuyPerAddress, pool.maxBuyPerOrder, pool.timeForWhitelist);
     await contractFixedSwap.handlePublicPool(poolId, true);
 
     // Approve allowance
@@ -284,14 +294,14 @@ describe("Fixed Swap Contract - NFT", function () {
     const timeNotStart = Math.round(new Date().getTime()/1000) + 86400*2; // Today plus 2 days
     await contractFixedSwap.handlePublicPool(poolId, false);
     const whitelistIds = await contractFixedSwap.getWhitelistIds(poolId);
-    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, pool.maxBuyPerAddress, pool.maxBuyPerOrder);
+    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, timeNotStart, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, pool.maxBuyPerAddress, pool.maxBuyPerOrder, pool.timeForWhitelist);
     await contractFixedSwap.handlePublicPool(poolId, true);
     // Should reverted
     await expect(contractFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Not Started");
 
     const timeStart = Math.round(new Date().getTime()/1000) - 86400*2; // Today plus 2 days
     await contractFixedSwap.handlePublicPool(poolId, false);
-    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, pool.maxBuyPerAddress, pool.maxBuyPerOrder);
+    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, pool.maxBuyPerAddress, pool.maxBuyPerOrder, pool.timeForWhitelist);
     await contractFixedSwap.handlePublicPool(poolId, true);
     // Now
     // Bought success
@@ -306,6 +316,39 @@ describe("Fixed Swap Contract - NFT", function () {
 
     // Should reverted
     await expect(contractFixedSwap.connect(buyerUser).placeOrder(poolId, quantity)).to.be.revertedWith("Expired");;
+
+  });
+
+  it('Should allow user buy after time for whitelist', async function () {
+
+    // Set white list
+    const pool = await contractFixedSwap.pools(poolId)
+    const timeStart = Math.round(new Date().getTime()/1000); // Now
+    await contractFixedSwap.handlePublicPool(poolId, false);
+    const whitelistIds = await contractFixedSwap.getWhitelistIds(poolId);
+    const timeForWhitelist = 60*60; // 1 hour
+
+    await contractFixedSwap.addOrUpdatePool(poolId, pool.addressItem, pool.addressPayable, timeStart, pool.endTime, pool.startPrice, pool.requireWhitelist, whitelistIds, pool.maxBuyPerAddress, pool.maxBuyPerOrder, timeForWhitelist);
+    await contractFixedSwap.handlePublicPool(poolId, true);
+
+    await bUSDToken.transfer(notWhitelistUser.address, pe("150"));
+    await bUSDToken.connect(notWhitelistUser).approve(contractFixedSwap.address, pe("150"));
+
+    // console.log(await contractFixedSwap.connect(notWhitelistUser).isPurchasable(poolId));
+
+    // Should reverted
+    await expect(contractFixedSwap.connect(notWhitelistUser).placeOrder(poolId, quantity)).to.be.revertedWith("Require purchasable");
+
+    // increase 1 hour
+    const increaseTime = timeForWhitelist;
+
+    await ethers.provider.send("evm_increaseTime", [increaseTime]);
+    await ethers.provider.send("evm_mine", []) // force mine the next block
+
+    // console.log(await contractFixedSwap.connect(notWhitelistUser).isPurchasable(poolId));
+
+    // Should not revert
+    await expect(contractFixedSwap.connect(notWhitelistUser).placeOrder(poolId, quantity)).to.not.be.reverted;
 
   });
 
