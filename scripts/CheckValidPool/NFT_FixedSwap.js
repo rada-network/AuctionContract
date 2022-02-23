@@ -13,7 +13,7 @@ async function main() {
   console.log("With the account:", deployer.address);
 
   // TODO: Change your poolId
-  const poolId = 12;
+  const poolId = 22;
   const fixedSwapContract = await ethers.getContractAt("NFTFixedSwapContract", fixedSwapAddress);
 
   console.log('\x1b[31m','Pool Id',poolId);
@@ -40,6 +40,12 @@ async function main() {
 
     }
   }
+  var tokenIds = await fixedSwapContract.getSaleTokenIds(poolId);
+  console.log(`tokenIds: ${tokenIds}`);
+  var whitelistIds = await fixedSwapContract.getWhitelistIds(poolId);
+  console.log(`whitelistIds: ${whitelistIds}`);
+
+
   console.log('\x1b[36m%s\x1b[0m', '===========================');
 }
 
