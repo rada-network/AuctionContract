@@ -27,6 +27,9 @@ npx hardhat run scripts/NFTFixedSwapContract/setAdmin.js --network testnet
 
 # Verify
 npx hardhat run scripts/NFTFixedSwapContract/verify.js --network testnet
+
+# withdrawFund
+npx hardhat run scripts/NFTFixedSwapContract/withdrawFund.js --network testnet
 ```
 
 ## NFT Auction to testnet / mainnet
