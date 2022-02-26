@@ -1,4 +1,4 @@
-# NFT Fixed Swap Contract DEPLOYMENT
+# NFT Sale Contract DEPLOYMENT
 
 ## Whitelist Contract
 
@@ -29,20 +29,20 @@ npx hardhat run scripts/NFTFixedSwapContract/setAdmin.js --network testnet
 npx hardhat run scripts/NFTFixedSwapContract/verify.js --network testnet
 
 # withdrawFund
-npx hardhat run scripts/NFTFixedSwapContract/withdrawFund.js --network testnet
+# npx hardhat run scripts/NFTFixedSwapContract/withdrawFund.js --network testnet
 ```
 
 ## NFT Auction to testnet / mainnet
 
 ```shell
-npx hardhat run scripts/NFTAuctionContract/1_deploy.js --network testnet
+# npx hardhat run scripts/NFTAuctionContract/1_deploy.js --network testnet
 # Copy Contract address to proxyAddresses.js
 # REMEMBER: Deployer need update WITHDRAW_ADDRESS, default is deployer
-npx hardhat run scripts/NFTAuctionContract/setWithdrawAddress.js --network testnet
+# npx hardhat run scripts/NFTAuctionContract/setWithdrawAddress.js --network testnet
 
 # Set Admins
-npx hardhat run scripts/NFTAuctionContract/setAdmin.js --network testnet
+# npx hardhat run scripts/NFTAuctionContract/setAdmin.js --network testnet
 
 # Verify
-npx hardhat run scripts/NFTAuctionContract/verify.js --network testnet
+# npx hardhat run scripts/NFTAuctionContract/verify.js --network testnet
 ```
